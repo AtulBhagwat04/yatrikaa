@@ -11,14 +11,15 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       LoginSubmitted event,
       Emitter<LoginState> emit,
       ) async {
+
     emit(LoginLoading());
 
     try {
-      // 🔥 Here you will connect repository later
-      // Example:
-      // await authRepository.login(event.email, event.password);
+      // Simulate API delay
+      await Future.delayed(const Duration(seconds: 2));
 
       emit(LoginSuccess());
+
     } catch (e) {
       emit(LoginFailure("Login failed. Please try again."));
     }
