@@ -11,21 +11,33 @@ class AppText extends StatelessWidget {
         super.key,
         this.align = TextAlign.center,
         Color? color,
-      }) : style = AppTextStyles.heading.copyWith(color: color);
+        FontWeight? fontWeight,
+      }) : style = AppTextStyles.heading.copyWith(
+    color: color,
+    fontWeight: fontWeight,
+  );
 
   AppText.body(
       this.text, {
         super.key,
         this.align = TextAlign.center,
         Color? color,
-      }) : style = AppTextStyles.body.copyWith(color: color);
+        FontWeight? fontWeight,
+      }) : style = AppTextStyles.body.copyWith(
+    color: color,
+    fontWeight: fontWeight,
+  );
 
   AppText.caption(
       this.text, {
         super.key,
         this.align = TextAlign.center,
         Color? color,
-      }) : style = AppTextStyles.caption.copyWith(color: color);
+        FontWeight? fontWeight,
+      }) : style = AppTextStyles.caption.copyWith(
+    color: color,
+    fontWeight: fontWeight,
+  );
 
   @override
   Widget build(BuildContext context) {
