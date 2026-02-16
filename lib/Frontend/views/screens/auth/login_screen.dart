@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:bhatkanti_app/Frontend/core/constants/colors.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_button.dart';
@@ -174,19 +174,27 @@ class _LoginScreenState extends State<LoginScreen>
                         listener: (context, state) {
                           if (state is LoginFailure) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(state.message)),
+                              SnackBar(
+                                content: Text(state.message),
+                                backgroundColor: errorColor,
+                              ),
                             );
+                          }
+
+                          if (state is LoginSuccess) {
+                            Navigator.pushReplacementNamed(context, '/home');
                           }
                         },
                         builder: (context, state) {
                           return AppButton(
                             text: 'LOGIN',
                             isLoading: state is LoginLoading,
-                            onPressed:
-                            state is LoginLoading ? null : _submit,
+                            onPressed: _submit,
                           );
+
                         },
                       ),
+
                       const SizedBox(height: AppSpacing.m),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

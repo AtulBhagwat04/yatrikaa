@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:bhatkanti_app/Frontend/core/constants/colors.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_button.dart';

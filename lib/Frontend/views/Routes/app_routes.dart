@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/sign_up_screen.dart';
+import '../screens/home/home_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/auth/bloc/login_bloc.dart';
 import 'route_names.dart';
@@ -24,6 +25,9 @@ class AppRoutes {
 
       case RouteNames.signup:
         return _fadeRoute(const SignUpScreen());
+
+      case RouteNames.home:
+        return _fadeRoute(const HomeScreen());
 
       default:
         return MaterialPageRoute(

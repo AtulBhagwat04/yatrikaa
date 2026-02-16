@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/colors.dart';
+import '../constants/app_colors.dart';
 
 class AppPageIndicator extends StatelessWidget {
   final int count;

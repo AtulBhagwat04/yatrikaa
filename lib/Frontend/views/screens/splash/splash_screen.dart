@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/utils/fade_route.dart';
 import '../auth/login_screen.dart';
 import 'splash_screen_bloc.dart';
-import '../../../core/constants/colors.dart';
+import '../../../core/constants/app_colors.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
