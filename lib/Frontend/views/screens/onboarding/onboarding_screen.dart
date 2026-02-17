@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:bhatkanti_app/Frontend/core/constants/colors.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_button.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_indicator.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 
 import '../auth/login_screen.dart';
 import 'onboarding_bloc.dart';
@@ -51,9 +52,7 @@ class _OnboardingViewState extends State<_OnboardingView> {
             child: SafeArea(
               child: Column(
                 children: [
-                 SizedBox(
-                   height: screenHeight * 0.13,
-                 ),
+                  SizedBox(height: screenHeight * 0.13),
 
                   //page view
                   SizedBox(
@@ -62,9 +61,7 @@ class _OnboardingViewState extends State<_OnboardingView> {
                       controller: _pageController,
                       itemCount: _pages.length,
                       onPageChanged: (index) {
-                        context
-                            .read<OnboardingBloc>()
-                            .add(PageChanged(index));
+                        context.read<OnboardingBloc>().add(PageChanged(index));
                       },
                       itemBuilder: (context, index) {
                         final data = _pages[index];
@@ -125,18 +122,19 @@ class _OnboardingViewState extends State<_OnboardingView> {
                       horizontal: AppSpacing.l,
                     ),
                     child: AppButton(
-                      text:
-                      state.isLastPage ? 'GET STARTED' : 'NEXT',
+                      text: state.isLastPage
+                          ? AppStrings.onboardingBtnStarted
+                          : AppStrings.onboardingBtnNext,
                       onPressed: () {
                         if (state.isLastPage) {
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                               builder: (_) => const LoginScreen(),
-                            ));
+                            ),
+                          );
                         } else {
                           _pageController.nextPage(
-                            duration:
-                            const Duration(milliseconds: 400),
+                            duration: const Duration(milliseconds: 400),
                             curve: Curves.easeOut,
                           );
                         }
@@ -144,50 +142,47 @@ class _OnboardingViewState extends State<_OnboardingView> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.l),
-                ],),),),);},);}}
-
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
 
 //onboarding info
 final List<_OnboardingData> _pages = [
   _OnboardingData(
-    title: 'Discover new places',
-    subtitle:
-    'Explore famous destinations and hidden gems across World.',
+    title: AppStrings.onboardingTitle1,
+    subtitle: AppStrings.onboardingSubTitle1,
     image: 'assets/images/onboarding_1.png',
-    gradient: [
-      onboardingBlueVeryLight,
-      onboardingBlueLight,
-    ],
+    gradient: [onboardingBlueVeryLight, onboardingBlueLight],
   ),
   _OnboardingData(
-    title: 'Plan your journey',
-    subtitle:
-    'Create routes, Save places, and Organize your trips smartly.',
+    title: AppStrings.onboardingTitle2,
+    subtitle: AppStrings.onboardingSubTitle2,
     image: 'assets/images/onboarding_2.png',
-    gradient: [
-      onboardingBlueSoft,
-      onboardingBlueVeryLight,
-    ],
+    gradient: [onboardingBlueSoft, onboardingBlueVeryLight],
   ),
   _OnboardingData(
-    title: 'Travel together',
-    subtitle:
-    'Share trips with friends and connect with fellow travelers.',
+    title: AppStrings.onboardingTitle3,
+    subtitle: AppStrings.onboardingSubTitle3,
     image: 'assets/images/onboarding_3.png',
-    gradient: [
-      onboardingBlue,
-      onboardingBlueLight,
-    ],),];
+    gradient: [onboardingBlue, onboardingBlueLight],
+  ),
+];
 
 class _OnboardingData {
   final String title;
   final String subtitle;
   final String image;
   final List<Color> gradient;
-    _OnboardingData({
-      required this.title,
-      required this.subtitle,
-      required this.image,
-      required this.gradient,
-    });
+  _OnboardingData({
+    required this.title,
+    required this.subtitle,
+    required this.image,
+    required this.gradient,
+  });
 }
