@@ -4,7 +4,6 @@
 *.env
 *.pyc
 *.swp
-*.node_module
 .DS_Store
 .env
 .atom/
@@ -46,3 +45,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Backend related
+Backend/server/node_modules/
+Backend/server/.env
+Backend/server/logs/
+Backend/server/*.log
