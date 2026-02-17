@@ -6,6 +6,7 @@ import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_button.dart';
 import '../../../core/constants/app_input_fields.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 import '../../Routes/route_names.dart';
 import 'bloc/login_bloc.dart';
 import 'bloc/login_event.dart';
@@ -20,7 +21,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -44,15 +44,15 @@ class _LoginScreenState extends State<LoginScreen>
       duration: const Duration(milliseconds: 450),
     );
 
-    _fadeAnimation =
-        CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
   }
@@ -94,10 +94,7 @@ class _LoginScreenState extends State<LoginScreen>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                onboardingBlueVeryLight,
-                onboardingBlueLight,
-              ],
+              colors: [onboardingBlueVeryLight, onboardingBlueLight],
             ),
           ),
           child: SafeArea(
@@ -105,8 +102,7 @@ class _LoginScreenState extends State<LoginScreen>
               padding: EdgeInsets.only(
                 left: AppSpacing.l,
                 right: AppSpacing.l,
-                bottom:
-                MediaQuery.of(context).viewInsets.bottom + AppSpacing.l,
+                bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.l,
               ),
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -118,14 +114,14 @@ class _LoginScreenState extends State<LoginScreen>
                       SizedBox(height: size.height * 0.2),
 
                       AppText.heading(
-                        'Welcome back',
+                        AppStrings.welcomeBack,
                         align: TextAlign.left,
                       ),
 
                       const SizedBox(height: AppSpacing.s),
 
                       AppText.body(
-                        'Login to continue your journey with us.',
+                        AppStrings.loginSubtitle,
                         align: TextAlign.left,
                       ),
 
@@ -133,21 +129,20 @@ class _LoginScreenState extends State<LoginScreen>
 
                       AppInputField(
                         controller: _emailController,
-                        hint: 'Email',
+                        hint: AppStrings.emailHint,
                         prefixIcon: Icons.email_outlined,
                         focusNode: _emailFocus,
                         textInputAction: TextInputAction.next,
                         keyboardType: TextInputType.emailAddress,
                         onFieldSubmitted: (_) =>
-                            FocusScope.of(context)
-                                .requestFocus(_passwordFocus),
+                            FocusScope.of(context).requestFocus(_passwordFocus),
                       ),
 
                       const SizedBox(height: AppSpacing.s),
 
                       AppInputField(
                         controller: _passwordController,
-                        hint: 'Password',
+                        hint: AppStrings.passwordHint,
                         prefixIcon: Icons.lock_outline,
                         isObscure: true,
                         focusNode: _passwordFocus,
@@ -162,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen>
                         child: TextButton(
                           onPressed: () {},
                           child: AppText.caption(
-                            'Forgot password?',
+                            AppStrings.forgotPassword,
                             color: primaryBlue,
                           ),
                         ),
@@ -187,11 +182,10 @@ class _LoginScreenState extends State<LoginScreen>
                         },
                         builder: (context, state) {
                           return AppButton(
-                            text: 'LOGIN',
+                            text: AppStrings.loginBtn,
                             isLoading: state is LoginLoading,
                             onPressed: _submit,
                           );
-
                         },
                       ),
 
@@ -199,13 +193,10 @@ class _LoginScreenState extends State<LoginScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          AppText.caption('Don’t have an account? '),
+                          AppText.caption(AppStrings.noAccountPrompt),
                           TextButton(
                             onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                RouteNames.signup,
-                              );
+                              Navigator.pushNamed(context, RouteNames.signup);
                             },
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
@@ -216,17 +207,15 @@ class _LoginScreenState extends State<LoginScreen>
                               tapTargetSize: MaterialTapTargetSize.padded,
                             ),
                             child: AppText.caption(
-                              'Sign Up',
+                              AppStrings.signupLink,
                               color: primaryBlue,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-
                         ],
                       ),
 
                       const SizedBox(height: AppSpacing.m),
-
                     ],
                   ),
                 ),

@@ -1,552 +1,139 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import '../../../core/constants/app_text.dart';
-import '../../../core/constants/text_styles.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_categories.dart';
+import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
 
-class HomeScreen extends StatefulWidget {
+// BLoC
+import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_bloc.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_event.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_state.dart';
+
+// Widgets
+import 'package:bhatkanti_app/Frontend/views/widgets/home_header.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/location_card.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/section_title.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/place_horizontal_card.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/place_nearby_card.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/category_chip.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/app_bottom_nav.dart';
+
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => HomeBloc()..add(HomeStarted()),
+      child: const HomeView(),
+    );
+  }
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-  int _selectedCategoryIndex = 0;
-
-  String currentLocation = "Fetching location...";
-  bool isLoadingLocation = true;
-
-  final List<String> categories = [
-    "Forts",
-    "Beaches",
-    "Temples",
-    "Trekking",
-    "Hill Stations"
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _initLocation();
-  }
+class HomeView extends StatelessWidget {
+  const HomeView({super.key});
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    if (hour < 20) return "Good Evening";
-    return "Good Night";
+    if (hour < 12) return AppStrings.goodMorning;
+    if (hour < 17) return AppStrings.goodAfternoon;
+    if (hour < 20) return AppStrings.goodEvening;
+    return AppStrings.goodNight;
   }
-
-  // ================= LOCATION =================
-
-  Future<void> _initLocation() async {
-    try {
-      setState(() => isLoadingLocation = true);
-
-      bool serviceEnabled =
-      await Geolocator.isLocationServiceEnabled();
-
-      if (!serviceEnabled) {
-        setState(() {
-          currentLocation = "Turn on GPS";
-          isLoadingLocation = false;
-        });
-        return;
-      }
-
-      LocationPermission permission =
-      await Geolocator.checkPermission();
-
-      if (permission == LocationPermission.denied) {
-        permission =
-        await Geolocator.requestPermission();
-      }
-
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        setState(() {
-          currentLocation = "Location permission needed";
-          isLoadingLocation = false;
-        });
-        return;
-      }
-
-      Position position =
-      await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.best,
-        ),
-      );
-
-      try {
-        List<Placemark> placemarks =
-        await placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
-
-        Placemark place = placemarks.first;
-
-        setState(() {
-          currentLocation =
-          "${place.locality ?? ""}, ${place.administrativeArea ?? ""}";
-          isLoadingLocation = false;
-        });
-      } catch (_) {
-        setState(() {
-          currentLocation =
-          "${position.latitude}, ${position.longitude}";
-          isLoadingLocation = false;
-        });
-      }
-    } catch (_) {
-      setState(() {
-        currentLocation = "Location unavailable";
-        isLoadingLocation = false;
-      });
-    }
-  }
-
-  // ================= UI =================
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: onboardingBlueVeryLight,
-      body: SafeArea(
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.all(AppSpacing.ms),
-          children: [
-
-            /// Greeting + Actions
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: onboardingBlueVeryLight,
+          body: SafeArea(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(AppSpacing.ms),
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                    children: [
-                      AppText.subHeading(
-                        _getGreeting(),
-                        align: TextAlign.left,
-                      ),
-                      SizedBox(height: AppSpacing.xs),
-                      AppText.caption(
-                        "Ready for your next Journey?",
-                        align: TextAlign.left,
-                      ),
-                    ],
+                AppAnimations.fadeIn(
+                  child: HomeHeader(
+                    greeting: _getGreeting(),
+                    onNotificationTap: () {},
+                    onProfileTap: () {},
                   ),
                 ),
-                _notificationButton(),
-                SizedBox(width: AppSpacing.s),
-                _profileButton(),
-              ],
-            ),
-
-            SizedBox(height: AppSpacing.m),
-
-            _buildLocationCard(),
-
-            SizedBox(height: AppSpacing.m),
-
-            _buildCategories(),
-
-            SizedBox(height: AppSpacing.m),
-
-            _buildSectionTitle("Recommended"),
-            SizedBox(height: AppSpacing.m),
-            _buildHorizontalCards(),
-
-            SizedBox(height: AppSpacing.l),
-
-            _buildSectionTitle("Nearby Places"),
-            SizedBox(height: AppSpacing.m),
-            _buildNearbyCard(),
-
-            SizedBox(height: AppSpacing.xl),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  // ================= TOP BUTTONS =================
-
-  Widget _notificationButton() {
-    bool hasNotification = true;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(25),
-        onTap: () {
-          HapticFeedback.lightImpact();
-        },
-        child: Stack(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: primaryBlue.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.notifications_none_rounded,
-                color: primaryBlue,
-                size: 22,
-              ),
-            ),
-            if (hasNotification)
-              Positioned(
-                right: 6,
-                top: 6,
-                child: Container(
-                  height: 8,
-                  width: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
+                const SizedBox(height: AppSpacing.m),
+                AppAnimations.fadeIn(
+                  duration: AppAnimations.slow,
+                  child: LocationCard(
+                    location: state.currentLocation,
+                    isLoading: state.isLoadingLocation,
+                    onTap: () => context.read<HomeBloc>().add(
+                      HomeLocationRefreshRequested(),
+                    ),
+                    onRefresh: () => context.read<HomeBloc>().add(
+                      HomeLocationRefreshRequested(),
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _profileButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(30),
-        onTap: () {
-          HapticFeedback.lightImpact();
-        },
-        child: Container(
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: primaryBlue.withValues(alpha: 0.2),
-            ),
-          ),
-          child: const CircleAvatar(
-            radius: 18,
-            backgroundColor: primaryWhite,
-            child: Icon(
-              Icons.person,
-              color: primaryBlue,
-              size: 20,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ================= LOCATION CARD =================
-
-  Widget _buildLocationCard() {
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.m),
-      decoration: BoxDecoration(
-        color: primaryWhite,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: primaryBlue.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.location_on,
-              color: primaryBlue,
-              size: 20,
-            ),
-          ),
-          SizedBox(width: AppSpacing.m),
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-                AppText.caption(
-                  "Current Location",
-                  align: TextAlign.left,
-                ),
-                SizedBox(height: AppSpacing.xs),
-                AppText.body(
-                  isLoadingLocation
-                      ? "Detecting..."
-                      : currentLocation,
-                  align: TextAlign.left,
-                  fontWeight: FontWeight.w600,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ================= SECTION TITLE =================
-
-  Widget _buildSectionTitle(String title) {
-    return Row(
-      mainAxisAlignment:
-      MainAxisAlignment.spaceBetween,
-      children: [
-        AppText.body(
-          title,
-          align: TextAlign.left,
-          fontWeight: FontWeight.w700,
-        ),
-        AppText.caption(
-          "View All",
-          color: primaryBlue,
-        ),
-      ],
-    );
-  }
-
-  // ================= HORIZONTAL CARDS =================
-
-  Widget _buildHorizontalCards() {
-    return SizedBox(
-      height: 200,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return Container(
-            width: 230,
-            margin: EdgeInsets.only(right: AppSpacing.s),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              image: const DecorationImage(
-                image:
-                AssetImage("assets/images/sample.jpg"),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              padding: EdgeInsets.all(AppSpacing.m),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withValues(alpha: 0.3),
-                    Colors.transparent,
-                  ],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                ),
-              ),
-              alignment: Alignment.bottomCenter,
-              child: AppText.body(
-                "Rajgad Fort",
-                color: appWhite,
-                align: TextAlign.left,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // ================= NEARBY CARD =================
-
-  Widget _buildNearbyCard() {
-    return Container(
-      padding: EdgeInsets.all(AppSpacing.m),
-      decoration: BoxDecoration(
-        color: primaryWhite,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 80,
-            width: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              image: const DecorationImage(
-                image:
-                AssetImage("assets/images/sample.jpg"),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          SizedBox(width: AppSpacing.s),
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-                AppText.body(
-                  "Sinhagad Fort",
-                  align: TextAlign.left,
-                  fontWeight: FontWeight.w600,
-                ),
-                SizedBox(height: AppSpacing.xs),
-                AppText.caption(
-                  "2.5 km away",
-                  align: TextAlign.left,
-                ),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  // ================= BOTTOM NAV =================
-
-  Widget _buildBottomNav() {
-    return Container(
-      height: 75,
-      decoration: BoxDecoration(
-        color: primaryWhite,
-        borderRadius:
-        const BorderRadius.vertical(
-          top: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _navItem(0, Icons.home),
-          _navItem(1, Icons.near_me_rounded),
-          _navItem(2, Icons.search_rounded),
-          _navItem(3, Icons.favorite_rounded),
-        ],
-      ),
-    );
-  }
-
-  Widget _navItem(int index, IconData icon) {
-    final isSelected = _selectedIndex == index;
-
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding:
-            const EdgeInsets.symmetric(vertical: 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected
-                      ? primaryBlue
-                      : Colors.grey,
-                ),
-                AnimatedContainer(
-                  duration:
-                  const Duration(milliseconds: 200),
-                  height: 3,
-                  width: isSelected ? 22 : 0,
-                  margin:
-                  const EdgeInsets.only(top: 6),
-                  decoration: BoxDecoration(
-                    color: primaryBlue,
-                    borderRadius:
-                    BorderRadius.circular(10),
+                const SizedBox(height: AppSpacing.ms),
+                _buildCategories(context, state),
+                const SizedBox(height: AppSpacing.ms),
+                SectionTitle(
+                  title: state.selectedCategory == AppStrings.catAll
+                      ? AppStrings.popularPlaces
+                      : "${AppStrings.famousPrefix}${state.selectedCategory}",
+                  onRefresh: () => context.read<HomeBloc>().add(
+                    HomeCategoryChanged(state.selectedCategory),
                   ),
                 ),
+                const SizedBox(height: AppSpacing.ms),
+                _buildHorizontalCards(state),
+                const SizedBox(height: AppSpacing.ms),
+                SectionTitle(
+                  title: AppStrings.nearbyPopularPlaces,
+                  onRefresh: () => context.read<HomeBloc>().add(
+                    HomeLocationRefreshRequested(),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.ms),
+                _buildNearbySection(state),
+                const SizedBox(height: AppSpacing.ms),
               ],
             ),
           ),
-        ),
-      ),
+          bottomNavigationBar: AppBottomNav(
+            selectedIndex: state.selectedIndex,
+            onItemSelected: (index) =>
+                context.read<HomeBloc>().add(HomeTabChanged(index)),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildCategories() {
+  Widget _buildCategories(BuildContext context, HomeState state) {
+    final categories = AppCategories.categories;
+    final categoryIcons = AppCategories.categoryIcons;
+
     return SizedBox(
       height: 45,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         itemCount: categories.length,
         itemBuilder: (context, index) {
-          final isSelected =
-              _selectedCategoryIndex == index;
-
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedCategoryIndex = index;
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              margin: EdgeInsets.only(right: AppSpacing.s),
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSpacing.m,
-                vertical: AppSpacing.s,
-              ),
-              decoration: BoxDecoration(
-                color: primaryWhite,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isSelected
-                      ? primaryBlue
-                      : Colors.grey.withValues(alpha: 0.3),
-                  width: isSelected ? 2 : 1,
-                ),
-              ),
-              child: AppText.caption(
-                categories[index],
-                color: isSelected
-                    ? primaryBlue
-                    : Colors.black87,
-                fontWeight: isSelected
-                    ? FontWeight.w600
-                    : FontWeight.w500,
-              ),
+          final category = categories[index];
+          final isSelected = state.selectedCategory == category;
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: CategoryChip(
+              label: category,
+              icon: categoryIcons[category] ?? Icons.explore_rounded,
+              isSelected: isSelected,
+              onTap: () =>
+                  context.read<HomeBloc>().add(HomeCategoryChanged(category)),
             ),
           );
         },
@@ -554,4 +141,96 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildHorizontalCards(HomeState state) {
+    if (state.isLoadingRecommended) {
+      return _buildSkeletonHorizontal();
+    }
+
+    if (state.recommendedPlaces.isEmpty) {
+      return Container(
+        height: 220,
+        decoration: BoxDecoration(
+          color: primaryWhite,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.search_off_rounded, color: Colors.grey[300], size: 48),
+              const SizedBox(height: 12),
+              AppText.caption(AppStrings.noPlacesFound),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 250,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: state.recommendedPlaces.length,
+        itemBuilder: (context, index) {
+          return PlaceHorizontalCard(
+            place: state.recommendedPlaces[index],
+            onTap: () {},
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildNearbySection(HomeState state) {
+    if (state.isLoadingNearby) {
+      return _buildSkeletonNearby();
+    }
+
+    if (state.nearbyPlaces.isEmpty) {
+      return Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: primaryWhite,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Center(child: AppText.caption(AppStrings.noPlacesFound)),
+      );
+    }
+
+    return Column(
+      children: state.nearbyPlaces
+          .take(5)
+          .map((place) => PlaceNearbyCard(place: place, onTap: () {}))
+          .toList(),
+    );
+  }
+
+  Widget _buildSkeletonHorizontal() {
+    return SizedBox(
+      height: 240,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: 3,
+        itemBuilder: (context, index) => Container(
+          width: 190,
+          margin: const EdgeInsets.only(right: AppSpacing.m),
+          child: const ShimmerBox(radius: 28),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonNearby() {
+    return Column(
+      children: List.generate(
+        3,
+        (index) => Container(
+          margin: const EdgeInsets.only(bottom: AppSpacing.m),
+          height: 110,
+          child: const ShimmerBox(radius: 24),
+        ),
+      ),
+    );
+  }
 }

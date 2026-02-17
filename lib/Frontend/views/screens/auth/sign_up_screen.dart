@@ -6,6 +6,7 @@ import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_button.dart';
 import '../../../core/constants/app_input_fields.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 import 'bloc/sign_up_bloc.dart';
 import 'bloc/sign_up_event.dart';
 import 'bloc/sign_up_state.dart';
@@ -19,7 +20,6 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen>
     with SingleTickerProviderStateMixin {
-
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -41,15 +41,15 @@ class _SignUpScreenState extends State<SignUpScreen>
       duration: const Duration(milliseconds: 450),
     );
 
-    _fadeAnimation =
-        CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
   }
@@ -93,10 +93,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                onboardingBlueVeryLight,
-                onboardingBlueLight,
-              ],
+              colors: [onboardingBlueVeryLight, onboardingBlueLight],
             ),
           ),
           child: SafeArea(
@@ -104,8 +101,7 @@ class _SignUpScreenState extends State<SignUpScreen>
               padding: EdgeInsets.only(
                 left: AppSpacing.l,
                 right: AppSpacing.l,
-                bottom:
-                MediaQuery.of(context).viewInsets.bottom + AppSpacing.l,
+                bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.l,
               ),
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -117,14 +113,14 @@ class _SignUpScreenState extends State<SignUpScreen>
                       SizedBox(height: size.height * 0.2),
 
                       AppText.heading(
-                        'Create Account',
+                        AppStrings.createAccount,
                         align: TextAlign.left,
                       ),
 
                       const SizedBox(height: AppSpacing.s),
 
                       AppText.body(
-                        'Start your journey with us.',
+                        AppStrings.signupSubtitle,
                         align: TextAlign.left,
                       ),
 
@@ -132,34 +128,32 @@ class _SignUpScreenState extends State<SignUpScreen>
 
                       AppInputField(
                         controller: _nameController,
-                        hint: 'Full Name',
+                        hint: AppStrings.fullNameHint,
                         prefixIcon: Icons.person_outline,
                         focusNode: _nameFocus,
                         textInputAction: TextInputAction.next,
                         onFieldSubmitted: (_) =>
-                            FocusScope.of(context)
-                                .requestFocus(_emailFocus),
+                            FocusScope.of(context).requestFocus(_emailFocus),
                       ),
 
                       const SizedBox(height: AppSpacing.s),
 
                       AppInputField(
                         controller: _emailController,
-                        hint: 'Email',
+                        hint: AppStrings.emailHint,
                         prefixIcon: Icons.email_outlined,
                         focusNode: _emailFocus,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         onFieldSubmitted: (_) =>
-                            FocusScope.of(context)
-                                .requestFocus(_passwordFocus),
+                            FocusScope.of(context).requestFocus(_passwordFocus),
                       ),
 
                       const SizedBox(height: AppSpacing.s),
 
                       AppInputField(
                         controller: _passwordController,
-                        hint: 'Password',
+                        hint: AppStrings.passwordHint,
                         prefixIcon: Icons.lock_outline,
                         isObscure: true,
                         focusNode: _passwordFocus,
@@ -180,7 +174,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                           if (state is SignupSuccess) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text("Account created successfully"),
+                                content: Text(AppStrings.signupSuccessMsg),
                               ),
                             );
 
@@ -189,7 +183,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                         },
                         builder: (context, state) {
                           return AppButton(
-                            text: 'SIGN UP',
+                            text: AppStrings.signupBtn,
                             isLoading: state is SignupLoading,
                             onPressed: state is SignupLoading
                                 ? null

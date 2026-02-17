@@ -1,9 +1,12 @@
 # Miscellaneous
 *.class
 *.log
+*.env
 *.pyc
 *.swp
+*.node_module
 .DS_Store
+.env
 .atom/
 .build/
 .buildlog/
