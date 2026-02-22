@@ -1,139 +1,228 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_categories.dart';
 import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
-
-// BLoC
 import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_bloc.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_event.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_state.dart';
-
-// Widgets
+import 'package:bhatkanti_app/Frontend/views/screens/explore/explore_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/community/community_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/profile/favorites_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/profile/profile_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/home_header.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/location_card.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/section_title.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/place_horizontal_card.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/place_nearby_card.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/category_chip.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/section_title.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/category_chip.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/app_bottom_nav.dart';
+import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
 
-class HomeScreen extends StatelessWidget {
+// ─── HomeScreen — StatefulWidget shell with local tab index ─────────────────
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
+  // HomeBloc lives here — survives tab switches without re-initialising
+  late final HomeBloc _homeBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _homeBloc = HomeBloc()..add(HomeStarted());
+  }
+
+  @override
+  void dispose() {
+    _homeBloc.close();
+    super.dispose();
+  }
+
+  void _onTabTap(int i) {
+    HapticFeedback.selectionClick();
+    setState(() => _selectedIndex = i);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => HomeBloc()..add(HomeStarted()),
-      child: const HomeView(),
+    return BlocProvider.value(
+      value: _homeBloc,
+      child: Scaffold(
+        backgroundColor: onboardingBlueVeryLight,
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            _HomeTab(onGoExplore: () => _onTabTap(1)),
+            const ExploreScreen(),
+            const CommunityScreen(),
+            FavoritesScreen(
+              showBackButton: false,
+              onGoExplore: () => _onTabTap(1),
+            ),
+            const ProfileScreen(showBackButton: false),
+          ],
+        ),
+        bottomNavigationBar: AppBottomNav(
+          selectedIndex: _selectedIndex,
+          onItemSelected: _onTabTap,
+        ),
+      ),
     );
   }
 }
 
-class HomeView extends StatelessWidget {
-  const HomeView({super.key});
+// ─── Custom Bottom Navigation Bar ────────────────────────────────────────────
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return AppStrings.goodMorning;
-    if (hour < 17) return AppStrings.goodAfternoon;
-    if (hour < 20) return AppStrings.goodEvening;
+// ─── Home Tab ─────────────────────────────────────────────────────────────────
+class _HomeTab extends StatelessWidget {
+  final VoidCallback onGoExplore;
+  const _HomeTab({required this.onGoExplore});
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return AppStrings.goodMorning;
+    if (h < 17) return AppStrings.goodAfternoon;
+    if (h < 20) return AppStrings.goodEvening;
     return AppStrings.goodNight;
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeBloc, HomeState>(
-      builder: (context, state) {
-        return Scaffold(
-          backgroundColor: onboardingBlueVeryLight,
-          body: SafeArea(
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(AppSpacing.ms),
-              children: [
-                AppAnimations.fadeIn(
-                  child: HomeHeader(
-                    greeting: _getGreeting(),
-                    onNotificationTap: () {},
-                    onProfileTap: () {},
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.m),
-                AppAnimations.fadeIn(
-                  duration: AppAnimations.slow,
-                  child: LocationCard(
-                    location: state.currentLocation,
-                    isLoading: state.isLoadingLocation,
-                    onTap: () => context.read<HomeBloc>().add(
-                      HomeLocationRefreshRequested(),
+    // AuthBloc for user identity
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        final name = authState is Authenticated ? authState.name : 'Traveler';
+        final role = authState is Authenticated ? authState.role : 'user';
+        final initial = name.isNotEmpty ? name[0] : null;
+
+        // HomeBloc for places / location data
+        return BlocBuilder<HomeBloc, HomeState>(
+          builder: (context, state) {
+            return Scaffold(
+              backgroundColor: onboardingBlueVeryLight,
+              body: SafeArea(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<HomeBloc>().add(HomeStarted());
+                    // Wait a bit for the animation to look natural
+                    await Future.delayed(const Duration(milliseconds: 800));
+                  },
+                  color: primaryBlue,
+                  backgroundColor: Colors.white,
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
                     ),
-                    onRefresh: () => context.read<HomeBloc>().add(
-                      HomeLocationRefreshRequested(),
-                    ),
+                    padding: const EdgeInsets.all(AppSpacing.ms),
+                    children: [
+                      // ── Header ──────────────────────────────────────────
+                      AppAnimations.fadeIn(
+                        child: HomeHeader(
+                          greeting: _greeting(),
+                          role: role,
+                          userInitial: initial,
+                          onNotificationTap: () => Navigator.pushNamed(
+                            context,
+                            RouteNames.notifications,
+                          ),
+                          onProfileTap: () =>
+                              Navigator.pushNamed(context, RouteNames.profile),
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSpacing.m),
+
+                      // ── Location card ────────────────────────────────────
+                      AppAnimations.fadeIn(
+                        duration: AppAnimations.slow,
+                        child: LocationCard(
+                          location: state.currentLocation,
+                          isLoading: state.isLoadingLocation,
+                          onTap: () => context.read<HomeBloc>().add(
+                            HomeLocationRefreshRequested(),
+                          ),
+                          onRefresh: () => context.read<HomeBloc>().add(
+                            HomeLocationRefreshRequested(),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSpacing.ms),
+
+                      // ── Categories ───────────────────────────────────────
+                      _buildCategories(context, state),
+
+                      const SizedBox(height: AppSpacing.ms),
+
+                      // ── Popular Places ───────────────────────────────────
+                      SectionTitle(
+                        title: state.selectedCategory == AppStrings.catAll
+                            ? AppStrings.popularPlaces
+                            : '${AppStrings.famousPrefix}${state.selectedCategory}',
+                        actionLabel: 'See all',
+                        onTap: onGoExplore,
+                      ),
+
+                      const SizedBox(height: AppSpacing.ms),
+                      _buildHorizontalCards(context, state),
+
+                      const SizedBox(height: AppSpacing.ms),
+
+                      // ── Nearby ───────────────────────────────────────────
+                      SectionTitle(
+                        title: AppStrings.nearbyPopularPlaces,
+                        actionLabel: 'See all',
+                        onTap: onGoExplore,
+                      ),
+
+                      const SizedBox(height: AppSpacing.ms),
+                      _buildNearbySection(context, state),
+                    ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.ms),
-                _buildCategories(context, state),
-                const SizedBox(height: AppSpacing.ms),
-                SectionTitle(
-                  title: state.selectedCategory == AppStrings.catAll
-                      ? AppStrings.popularPlaces
-                      : "${AppStrings.famousPrefix}${state.selectedCategory}",
-                  onRefresh: () => context.read<HomeBloc>().add(
-                    HomeCategoryChanged(state.selectedCategory),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.ms),
-                _buildHorizontalCards(state),
-                const SizedBox(height: AppSpacing.ms),
-                SectionTitle(
-                  title: AppStrings.nearbyPopularPlaces,
-                  onRefresh: () => context.read<HomeBloc>().add(
-                    HomeLocationRefreshRequested(),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.ms),
-                _buildNearbySection(state),
-                const SizedBox(height: AppSpacing.ms),
-              ],
-            ),
-          ),
-          bottomNavigationBar: AppBottomNav(
-            selectedIndex: state.selectedIndex,
-            onItemSelected: (index) =>
-                context.read<HomeBloc>().add(HomeTabChanged(index)),
-          ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
+  // ── Categories row ─────────────────────────────────────────────────────────
   Widget _buildCategories(BuildContext context, HomeState state) {
-    final categories = AppCategories.categories;
-    final categoryIcons = AppCategories.categoryIcons;
+    final cats = AppCategories.categories;
+    final icons = AppCategories.categoryIcons;
 
     return SizedBox(
       height: 45,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = state.selectedCategory == category;
+        itemCount: cats.length,
+        itemBuilder: (context, i) {
+          final cat = cats[i];
           return Padding(
             padding: const EdgeInsets.only(right: 12),
             child: CategoryChip(
-              label: category,
-              icon: categoryIcons[category] ?? Icons.explore_rounded,
-              isSelected: isSelected,
+              label: cat,
+              icon: icons[cat] ?? Icons.explore_rounded,
+              isSelected: state.selectedCategory == cat,
               onTap: () =>
-                  context.read<HomeBloc>().add(HomeCategoryChanged(category)),
+                  context.read<HomeBloc>().add(HomeCategoryChanged(cat)),
             ),
           );
         },
@@ -141,16 +230,28 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildHorizontalCards(HomeState state) {
+  // ── Popular places horizontal list ─────────────────────────────────────────
+  Widget _buildHorizontalCards(BuildContext context, HomeState state) {
     if (state.isLoadingRecommended) {
-      return _buildSkeletonHorizontal();
+      return SizedBox(
+        height: 240,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: 3,
+          itemBuilder: (_, i) => Container(
+            width: 190,
+            margin: EdgeInsets.only(right: i < 2 ? AppSpacing.m : 0),
+            child: const ShimmerBox(radius: 28),
+          ),
+        ),
+      );
     }
 
     if (state.recommendedPlaces.isEmpty) {
       return Container(
         height: 220,
         decoration: BoxDecoration(
-          color: primaryWhite,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Center(
@@ -172,26 +273,46 @@ class HomeView extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: state.recommendedPlaces.length,
-        itemBuilder: (context, index) {
-          return PlaceHorizontalCard(
-            place: state.recommendedPlaces[index],
-            onTap: () {},
+        itemBuilder: (context, i) {
+          final place = state.recommendedPlaces[i];
+          return Padding(
+            padding: EdgeInsets.only(
+              right: i < state.recommendedPlaces.length - 1 ? AppSpacing.m : 0,
+            ),
+            child: PlaceHorizontalCard(
+              place: place,
+              onTap: () => Navigator.pushNamed(
+                context,
+                RouteNames.placeDetails,
+                arguments: place.id,
+              ),
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildNearbySection(HomeState state) {
+  // ── Nearby section vertical list ───────────────────────────────────────────
+  Widget _buildNearbySection(BuildContext context, HomeState state) {
     if (state.isLoadingNearby) {
-      return _buildSkeletonNearby();
+      return Column(
+        children: List.generate(
+          3,
+          (i) => Container(
+            margin: const EdgeInsets.only(bottom: AppSpacing.m),
+            height: 110,
+            child: const ShimmerBox(radius: 24),
+          ),
+        ),
+      );
     }
 
     if (state.nearbyPlaces.isEmpty) {
       return Container(
         height: 100,
         decoration: BoxDecoration(
-          color: primaryWhite,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Center(child: AppText.caption(AppStrings.noPlacesFound)),
@@ -201,36 +322,20 @@ class HomeView extends StatelessWidget {
     return Column(
       children: state.nearbyPlaces
           .take(5)
-          .map((place) => PlaceNearbyCard(place: place, onTap: () {}))
+          .map(
+            (place) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.ms),
+              child: PlaceNearbyCard(
+                place: place,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  RouteNames.placeDetails,
+                  arguments: place.id,
+                ),
+              ),
+            ),
+          )
           .toList(),
-    );
-  }
-
-  Widget _buildSkeletonHorizontal() {
-    return SizedBox(
-      height: 240,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 3,
-        itemBuilder: (context, index) => Container(
-          width: 190,
-          margin: const EdgeInsets.only(right: AppSpacing.m),
-          child: const ShimmerBox(radius: 28),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSkeletonNearby() {
-    return Column(
-      children: List.generate(
-        3,
-        (index) => Container(
-          margin: const EdgeInsets.only(bottom: AppSpacing.m),
-          height: 110,
-          child: const ShimmerBox(radius: 24),
-        ),
-      ),
     );
   }
 }

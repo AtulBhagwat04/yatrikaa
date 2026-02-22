@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
@@ -17,100 +16,158 @@ class PlaceNearbyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.m),
-      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: primaryWhite,
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: CachedNetworkImage(
-                imageUrl: place.photoUrl,
-                height: 90,
-                width: 90,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const ShimmerBox(),
-              ),
-            ),
-            const SizedBox(width: 15),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: CachedNetworkImage(
+                        imageUrl: place.photoUrl,
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const ShimmerBox(),
+                      ),
+                    ),
+                    if (place.distance != null)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withAlpha(150),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: AppText.small(
+                            "${place.distance!.toStringAsFixed(1)}km",
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize
+                        .min, // prevent column from expanding infinitely vertically
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryBlue.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: AppText.small(
+                          place.category?.toUpperCase() ?? "TRAVEL",
+                          color: primaryBlue,
+                          fontWeight: FontWeight.w800,
+                          size: 9,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Flexible(
                         child: AppText.body(
                           place.name,
-                          align: TextAlign.left,
-                          fontWeight: FontWeight.w700,
-                          maxLines: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        color: Colors.grey,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: AppText.caption(
-                          place.address ?? AppStrings.nearbyAttraction,
-                          align: TextAlign.left,
-                          maxLines: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        color: Colors.amber,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      AppText.caption(
-                        place.rating.toString(),
-                        fontWeight: FontWeight.w700,
-                      ),
-                      if (place.distance != null) ...[
-                        const SizedBox(width: 12),
-                        const Icon(
-                          Icons.directions_car_outlined,
-                          color: Colors.grey,
+                          fontWeight: FontWeight.w800,
+                          maxLines: 2,
                           size: 16,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 4),
-                        AppText.caption(
-                          "${place.distance!.toStringAsFixed(1)} km",
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_rounded,
+                            color: Colors.grey,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: AppText.caption(
+                              [place.city, place.state]
+                                  .where((s) => s != null && s.isNotEmpty)
+                                  .join(", "),
+                              color: Colors.grey[500],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      if (place.distance != null)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.compare_arrows,
+                              color: primaryBlue,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            AppText.caption(
+                              "${place.distance!.toStringAsFixed(1)} KM",
+                              fontWeight: FontWeight.w800,
+                              color: primaryBlue,
+                              size: 11,
+                            ),
+                          ],
+                        )
+                      else
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Colors.amber,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            AppText.caption(
+                              place.rating.toString(),
+                              fontWeight: FontWeight.w800,
+                            ),
+                            AppText.caption(
+                              " (${place.userRatingsTotal ?? 0})",
+                              color: Colors.grey[400],
+                            ),
+                          ],
                         ),
-                      ],
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

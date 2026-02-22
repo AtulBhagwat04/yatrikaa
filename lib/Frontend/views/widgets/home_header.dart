@@ -6,14 +6,18 @@ import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 
 class HomeHeader extends StatelessWidget {
   final String greeting;
+  final String role;
+  final String? userInitial;
   final VoidCallback onNotificationTap;
   final VoidCallback onProfileTap;
 
   const HomeHeader({
     super.key,
     required this.greeting,
+    required this.role,
     required this.onNotificationTap,
     required this.onProfileTap,
+    this.userInitial,
   });
 
   @override
@@ -41,8 +45,45 @@ class HomeHeader extends StatelessWidget {
         ),
         _notificationButton(),
         const SizedBox(width: 12),
-        _profileButton(),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            _profileButton(),
+            Positioned(bottom: -4, right: -4, child: _roleBadge()),
+          ],
+        ),
       ],
+    );
+  }
+
+  Widget _roleBadge() {
+    Color badgeColor = primaryBlue;
+    if (role.toLowerCase() == 'admin' || role.toLowerCase() == 'super-admin') {
+      badgeColor = Colors.redAccent;
+    }
+    if (role.toLowerCase() == 'guide') badgeColor = Colors.orangeAccent;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: badgeColor,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        role.toUpperCase(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 8,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
@@ -62,9 +103,9 @@ class HomeHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: primaryWhite.withOpacity(0.08),
+                color: primaryWhite.withAlpha(20),
                 shape: BoxShape.circle,
-                border: Border.all(color: primaryBlue.withOpacity(0.2)),
+                border: Border.all(color: primaryBlue.withAlpha(51)),
               ),
               child: const Icon(
                 Icons.notifications_none_rounded,
@@ -104,12 +145,21 @@ class HomeHeader extends StatelessWidget {
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: primaryBlue.withOpacity(0.2)),
+            border: Border.all(color: primaryBlue.withAlpha(51)),
           ),
-          child: const CircleAvatar(
+          child: CircleAvatar(
             radius: 18,
-            backgroundColor: primaryWhite,
-            child: Icon(Icons.person, color: primaryBlue, size: 20),
+            backgroundColor: primaryBlue,
+            child: userInitial != null
+                ? Text(
+                    userInitial!.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : const Icon(Icons.person, color: Colors.white, size: 20),
           ),
         ),
       ),

@@ -47,10 +47,11 @@ class AppStrings {
   static const String catSpiritual = "Spiritual";
 
   // ================= NAVIGATION =================
-  static const String navHome = "Explore";
-  static const String navNearby = "Nearby";
-  static const String navSearch = "Search";
+  static const String navHome = "Home";
+  static const String navNearby = "Explore";
+  static const String navCommunity = "Community";
   static const String navSaved = "Saved";
+  static const String navProfile = "Profile";
 
   // ================= ONBOARDING =================
   static const String onboardingBtnNext = "NEXT";
@@ -83,4 +84,61 @@ class AppStrings {
   static const String fullNameHint = "Full Name";
   static const String signupBtn = "SIGN UP";
   static const String signupSuccessMsg = "Account created successfully";
+
+  // ================= PLACE DETAILS =================
+  static const String pdRetry = "Retry";
+  static const String pdExperience = "Description";
+  static const String pdReadLess = "Read less";
+  static const String pdReadFullStory = "Read full story";
+  static const String pdTravelGuide = "Travel Guide";
+  static const String pdBestTime = "Best Time";
+  static const String pdEntryFee = "Entry Fee";
+  static const String pdTimings = "Timings";
+  static const String pdDifficulty = "Difficulty";
+  static const String pdYearRound = "Year-round";
+  static const String pdFree = "Free";
+  static const String pdOpen247 = "Open 24/7";
+  static const String pdEasy = "Easy";
+  static const String pdParking = "Parking";
+  static const String pdSuitableFor = "Suitable For";
+  static const String pdFacilities = "Facilities";
+  static const String pdPhotography = "Photography";
+  static const String pdPhotographyAllowed = "Allowed";
+  static const String pdPhotographyNotAllowed = "Not Allowed";
+  static const String pdAvailable = "Available";
+  static const String pdNotAvailable = "Not Available";
+  static const String pdOfficialWebsite = "Official Website";
+  static const String pdVisitWebsiteDesc = "Visit for more details";
+  static const String pdGetDirections = "Get Directions";
+  static const String pdOpenInMaps = "Open in Google Maps";
+  static const String pdNearbyAttractions = "Nearby Attractions";
+  static const String pdWallOfReviews = "Wall of Reviews";
+  static const String pdAllReviews = "All reviews";
+  static const String pdStartMyTrip = "Start My Trip";
+  static const String pdStartingTripPrefix = "Starting trip to ";
+  static const String pdStartingTripSuffix = "...";
+  static const String pdShareMsgPrefix = "Check out ";
+  static const String pdShareMsgMid = " on Bhatkanti!\n";
+
+  // ================= ERRORS & FALLBACKS =================
+  static const String errPlaceDetails = "Could not find place details";
+  static const String errNearbyPlaces = "Failed to load nearby popular places";
+  static const String errSearchPlaces = "Failed to search places";
+
+  static const String fbDescriptionPrefix = "Experience the unique charm of ";
+  static const String fbDescriptionSuffix =
+      ". Nestled in the heart of the region, this destination is a perfect blend of culture, history, and nature. Whether you're looking for peaceful surroundings or an adventure into the past, it offers something special for every traveler. A must-visit spot to capture beautiful memories.";
+  static const String fbCity = "Nearby";
+  static const String fbState = "Maharashtra";
+  static const String fbCategory = "Tourist Attraction";
+  static const String fbTimings = "Check local listings";
+  static const String fbEntryFee = "Variable / Free";
+  static const String fbSuitable = "Everyone";
+
+  static const String pdDiscoveryQuery =
+      "Popular tourist attractions famous places";
+  static const String pdOpenNow = "Open Now";
+  static const String pdClosed = "Closed";
+  static const String pdAnonymous = "Anonymous";
+  static const String pdOpenNowAlt = "Open now";
 }
