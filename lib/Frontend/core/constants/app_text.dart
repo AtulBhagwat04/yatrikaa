@@ -9,25 +9,28 @@ class AppText extends StatelessWidget {
   final TextOverflow? overflow;
 
   const AppText._(
-      this.text, {
-        required this.style,
-        this.align = TextAlign.start,
-        this.maxLines,
-        this.overflow,
-        super.key,
-      });
+    this.text, {
+    required this.style,
+    this.align = TextAlign.start,
+    this.maxLines,
+    this.overflow,
+    super.key,
+  });
 
   // ================= HEADING =================
 
   factory AppText.heading(
-      String text, {
-        TextAlign align = TextAlign.start,
-        Color? color,
-        FontWeight? fontWeight,
-        int? maxLines,
-        TextOverflow? overflow,
-        Key? key,
-      }) {
+    String text, {
+    TextAlign align = TextAlign.start,
+    Color? color,
+    FontWeight? fontWeight,
+    double? size,
+    double? letterSpacing,
+    double? height,
+    int? maxLines,
+    TextOverflow? overflow,
+    Key? key,
+  }) {
     return AppText._(
       text,
       key: key,
@@ -37,6 +40,9 @@ class AppText extends StatelessWidget {
       style: AppTextStyles.heading.copyWith(
         color: color,
         fontWeight: fontWeight,
+        fontSize: size,
+        letterSpacing: letterSpacing,
+        height: height,
       ),
     );
   }
@@ -44,14 +50,17 @@ class AppText extends StatelessWidget {
   // ================= SUB HEADING =================
 
   factory AppText.subHeading(
-      String text, {
-        TextAlign align = TextAlign.start,
-        Color? color,
-        FontWeight? fontWeight,
-        int? maxLines,
-        TextOverflow? overflow,
-        Key? key,
-      }) {
+    String text, {
+    TextAlign align = TextAlign.start,
+    Color? color,
+    FontWeight? fontWeight,
+    double? size,
+    double? letterSpacing,
+    double? height,
+    int? maxLines,
+    TextOverflow? overflow,
+    Key? key,
+  }) {
     return AppText._(
       text,
       key: key,
@@ -61,6 +70,9 @@ class AppText extends StatelessWidget {
       style: AppTextStyles.subHeading.copyWith(
         color: color,
         fontWeight: fontWeight,
+        fontSize: size,
+        letterSpacing: letterSpacing,
+        height: height,
       ),
     );
   }
@@ -68,14 +80,17 @@ class AppText extends StatelessWidget {
   // ================= BODY =================
 
   factory AppText.body(
-      String text, {
-        TextAlign align = TextAlign.start,
-        Color? color,
-        FontWeight? fontWeight,
-        int? maxLines,
-        TextOverflow? overflow,
-        Key? key,
-      }) {
+    String text, {
+    TextAlign align = TextAlign.start,
+    Color? color,
+    FontWeight? fontWeight,
+    double? size,
+    double? letterSpacing,
+    double? height,
+    int? maxLines,
+    TextOverflow? overflow,
+    Key? key,
+  }) {
     return AppText._(
       text,
       key: key,
@@ -85,6 +100,9 @@ class AppText extends StatelessWidget {
       style: AppTextStyles.body.copyWith(
         color: color,
         fontWeight: fontWeight,
+        fontSize: size,
+        letterSpacing: letterSpacing,
+        height: height,
       ),
     );
   }
@@ -92,14 +110,17 @@ class AppText extends StatelessWidget {
   // ================= CAPTION =================
 
   factory AppText.caption(
-      String text, {
-        TextAlign align = TextAlign.start,
-        Color? color,
-        FontWeight? fontWeight,
-        int? maxLines,
-        TextOverflow? overflow,
-        Key? key,
-      }) {
+    String text, {
+    TextAlign align = TextAlign.start,
+    Color? color,
+    FontWeight? fontWeight,
+    double? size,
+    double? letterSpacing,
+    double? height,
+    int? maxLines,
+    TextOverflow? overflow,
+    Key? key,
+  }) {
     return AppText._(
       text,
       key: key,
@@ -109,6 +130,9 @@ class AppText extends StatelessWidget {
       style: AppTextStyles.caption.copyWith(
         color: color,
         fontWeight: fontWeight,
+        fontSize: size,
+        letterSpacing: letterSpacing,
+        height: height,
       ),
     );
   }
@@ -116,14 +140,16 @@ class AppText extends StatelessWidget {
   // ================= SMALL =================
 
   factory AppText.small(
-      String text, {
-        TextAlign align = TextAlign.start,
-        Color? color,
-        FontWeight? fontWeight,
-        int? maxLines,
-        TextOverflow? overflow,
-        Key? key,
-      }) {
+    String text, {
+    TextAlign align = TextAlign.start,
+    Color? color,
+    FontWeight? fontWeight,
+    double? size,
+    double? letterSpacing,
+    int? maxLines,
+    TextOverflow? overflow,
+    Key? key,
+  }) {
     return AppText._(
       text,
       key: key,
@@ -131,9 +157,10 @@ class AppText extends StatelessWidget {
       maxLines: maxLines,
       overflow: overflow,
       style: AppTextStyles.caption.copyWith(
-        fontSize: 10,
+        fontSize: size ?? 10,
         color: color,
         fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
       ),
     );
   }
@@ -141,14 +168,16 @@ class AppText extends StatelessWidget {
   // ================= BUTTON =================
 
   factory AppText.button(
-      String text, {
-        TextAlign align = TextAlign.center,
-        Color? color,
-        FontWeight? fontWeight,
-        int? maxLines,
-        TextOverflow? overflow,
-        Key? key,
-      }) {
+    String text, {
+    TextAlign align = TextAlign.center,
+    Color? color,
+    FontWeight? fontWeight,
+    double? size,
+    double? letterSpacing,
+    int? maxLines,
+    TextOverflow? overflow,
+    Key? key,
+  }) {
     return AppText._(
       text,
       key: key,
@@ -158,6 +187,8 @@ class AppText extends StatelessWidget {
       style: AppTextStyles.button.copyWith(
         color: color,
         fontWeight: fontWeight,
+        fontSize: size,
+        letterSpacing: letterSpacing,
       ),
     );
   }

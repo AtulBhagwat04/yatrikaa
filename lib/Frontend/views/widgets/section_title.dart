@@ -5,9 +5,15 @@ import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 
 class SectionTitle extends StatelessWidget {
   final String title;
-  final VoidCallback onRefresh;
+  final String actionLabel;
+  final VoidCallback onTap;
 
-  const SectionTitle({super.key, required this.title, required this.onRefresh});
+  const SectionTitle({
+    super.key,
+    required this.title,
+    this.actionLabel = AppStrings.refresh,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +22,14 @@ class SectionTitle extends StatelessWidget {
       children: [
         AppText.body(title, fontWeight: FontWeight.w700, color: blackOpacity),
         TextButton(
-          onPressed: onRefresh,
+          onPressed: onTap,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           child: AppText.caption(
-            AppStrings.refresh,
+            actionLabel,
             color: primaryBlue,
             fontWeight: FontWeight.w600,
           ),

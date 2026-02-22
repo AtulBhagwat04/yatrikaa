@@ -2,77 +2,47 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/place_model.dart';
 import '../constants/api_constants.dart';
+import '../constants/app_strings.dart';
+import 'auth_service.dart';
 
 class PlacesService {
-  Future<List<PlaceModel>> getFamousMaharashtraPlaces() async {
+  final AuthService _authService = AuthService();
+
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _authService.getToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  Future<List<PlaceModel>> getFamousMaharashtraPlaces({
+    String? category,
+  }) async {
     try {
-      // Define distinct categories with user-requested iconic landmarks
-      final categoryQueries = {
-        'Historical': 'Taj Mahal Gateway of India Raigad Fort Lal Mahal Pune',
-        'Spiritual':
-            'Shirdi Sai Baba Temple Dagdusheth Ganpati Kolhapur Ambabai Temple',
-        'Nature': 'Malvan Beach Konkan Goa Beaches Lonavala Hill Station',
-        'Leisure': 'Rankala Lake Kolhapur Imagica Water Park Wet n Joy',
-        'Heritage': 'Ajanta Ellora Caves Hampi UNESCO Sites India',
-      };
-
-      // Fetch all queries in parallel
-      final Map<String, http.Response> responses = {};
-      final List<String> keys = categoryQueries.keys.toList();
-
-      final fetchedResponses = await Future.wait(
-        keys.map(
-          (key) => http.get(
-            Uri.parse(ApiConstants.getSearchPlacesUrl(categoryQueries[key]!)),
-          ),
-        ),
-      );
-
-      for (int i = 0; i < keys.length; i++) {
-        responses[keys[i]] = fetchedResponses[i];
+      String url = ApiConstants.getPopularPlacesUrl();
+      if (category != null && category != AppStrings.catAll) {
+        url += "?category=${Uri.encodeComponent(category)}";
       }
 
-      Map<String, List<PlaceModel>> categoryResults = {};
+      final response = await http.get(Uri.parse(url));
 
-      // Parse and filter each category
-      for (var entry in responses.entries) {
-        if (entry.value.statusCode == 200) {
-          final data = json.decode(entry.value.body);
-          final List results = data['results'] ?? [];
-          List<PlaceModel> places = results
-              .map((json) => PlaceModel.fromJson(json))
-              .toList();
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        List<PlaceModel> places = results
+            .map((json) => PlaceModel.fromJson(json))
+            .toList();
 
-          // Filter for high quality (Rating >= 4.0)
-          places = places.where((p) => p.rating >= 4.0).toList();
+        // SHUFFLE the results so the order is different on every refresh
+        places.shuffle();
 
-          // SHUFFLE each category pool individually so that we pick
-          // DIFFERENT famous places from that category on every refresh
-          places.shuffle();
-
-          categoryResults[entry.key] = places;
-        }
+        return places;
+      } else {
+        throw Exception("Failed to fetch popular places from DB");
       }
-
-      // 1. Strictly merge all category results into one pool
-      List<PlaceModel> allFoundPlaces = [];
-      for (var list in categoryResults.values) {
-        allFoundPlaces.addAll(list);
-      }
-
-      // 2. REMOVE DUPLICATES - Crucial to prevent same place appearing from different queries
-      final uniqueIds = <String>{};
-      allFoundPlaces.retainWhere((place) => uniqueIds.add(place.id));
-
-      // 3. GLOBAL SHUFFLE - Ensures we don't always pick the same "top" places
-      allFoundPlaces.shuffle();
-
-      // 4. PICK 15-20 FRESH PLACES - This ensures a manageable but diverse list
-      List<PlaceModel> diversePlaces = allFoundPlaces.take(20).toList();
-
-      return diversePlaces;
     } catch (e) {
-      print('Error fetching unique interleaved places: $e');
+      print('Error fetching popular places from DB: $e');
       return [];
     }
   }
@@ -84,7 +54,7 @@ class PlacesService {
       final response = await http.get(
         Uri.parse(
           ApiConstants.getSearchPlacesUrl(
-            'Popular tourist attractions famous places',
+            AppStrings.pdDiscoveryQuery,
             lat: lat,
             lng: lng,
           ),
@@ -102,7 +72,7 @@ class PlacesService {
         places.sort((a, b) => b.userRatingsTotal.compareTo(a.userRatingsTotal));
         return places;
       } else {
-        throw Exception('Failed to load nearby popular places');
+        throw Exception(AppStrings.errNearbyPlaces);
       }
     } catch (e) {
       print('Error fetching nearby popular places: $e');
@@ -129,11 +99,53 @@ class PlacesService {
         places.sort((a, b) => b.userRatingsTotal.compareTo(a.userRatingsTotal));
         return places;
       } else {
-        throw Exception('Failed to search places');
+        throw Exception(AppStrings.errSearchPlaces);
       }
     } catch (e) {
       print('Error searching places: $e');
       return [];
     }
+  }
+
+  Future<PlaceModel?> getPlaceDetails(String placeId) async {
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConstants.getPlaceDetailsUrl(placeId)),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final result = data['result'];
+        if (result != null) {
+          PlaceModel place = PlaceModel.fromJson(result);
+          // Enhance with mock details for the demo UI
+          return _enhancePlaceWithDetails(place);
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching place details: $e');
+      return null;
+    }
+  }
+
+  PlaceModel _enhancePlaceWithDetails(PlaceModel place) {
+    // We prioritize API data. The following are fallbacks for fields
+    // not natively provided by the Google Places API free tier or specific results.
+    return place.copyWith(
+      description:
+          place.description ??
+          "${AppStrings.fbDescriptionPrefix}${place.name}${AppStrings.fbDescriptionSuffix}",
+      city: place.city ?? AppStrings.fbCity,
+      state: place.state ?? AppStrings.fbState,
+      category: place.category ?? AppStrings.fbCategory,
+      timings: place.timings ?? AppStrings.fbTimings,
+      entryFee: place.entryFee ?? AppStrings.fbEntryFee,
+      bestTimeToVisit: place.bestTimeToVisit ?? AppStrings.pdYearRound,
+      difficulty: place.difficulty ?? AppStrings.pdEasy,
+      parkingAvailable: place.parkingAvailable ?? true,
+      suitableFor: place.suitableFor ?? AppStrings.fbSuitable,
+      isOpen: place.isOpen, // Preserve the real open status from API
+    );
   }
 }

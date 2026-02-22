@@ -5,12 +5,14 @@ import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_button.dart';
-import '../../../core/constants/app_input_fields.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_input_fields.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import '../../Routes/route_names.dart';
-import 'bloc/login_bloc.dart';
-import 'bloc/login_event.dart';
-import 'bloc/login_state.dart';
+import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
+import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_bloc.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_event.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_state.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,13 +33,12 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  late LoginBloc _loginBloc;
+  final _loginBloc = LoginBloc();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-
-    _loginBloc = LoginBloc();
 
     _controller = AnimationController(
       vsync: this,
@@ -69,14 +70,15 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _submit() {
-    FocusScope.of(context).unfocus();
-
-    _loginBloc.add(
-      LoginSubmitted(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      ),
-    );
+    if (_formKey.currentState?.validate() ?? false) {
+      FocusScope.of(context).unfocus();
+      _loginBloc.add(
+        LoginSubmitted(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        ),
+      );
+    }
   }
 
   @override
@@ -108,115 +110,140 @@ class _LoginScreenState extends State<LoginScreen>
                 opacity: _fadeAnimation,
                 child: SlideTransition(
                   position: _slideAnimation,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: size.height * 0.2),
-
-                      AppText.heading(
-                        AppStrings.welcomeBack,
-                        align: TextAlign.left,
-                      ),
-
-                      const SizedBox(height: AppSpacing.s),
-
-                      AppText.body(
-                        AppStrings.loginSubtitle,
-                        align: TextAlign.left,
-                      ),
-
-                      const SizedBox(height: AppSpacing.l),
-
-                      AppInputField(
-                        controller: _emailController,
-                        hint: AppStrings.emailHint,
-                        prefixIcon: Icons.email_outlined,
-                        focusNode: _emailFocus,
-                        textInputAction: TextInputAction.next,
-                        keyboardType: TextInputType.emailAddress,
-                        onFieldSubmitted: (_) =>
-                            FocusScope.of(context).requestFocus(_passwordFocus),
-                      ),
-
-                      const SizedBox(height: AppSpacing.s),
-
-                      AppInputField(
-                        controller: _passwordController,
-                        hint: AppStrings.passwordHint,
-                        prefixIcon: Icons.lock_outline,
-                        isObscure: true,
-                        focusNode: _passwordFocus,
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _submit(),
-                      ),
-
-                      const SizedBox(height: AppSpacing.xs),
-
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {},
-                          child: AppText.caption(
-                            AppStrings.forgotPassword,
-                            color: primaryBlue,
+                  child: Form(
+                    key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: size.height * 0.2),
+                        AppText.heading(
+                          AppStrings.welcomeBack,
+                          align: TextAlign.left,
+                        ),
+                        const SizedBox(height: AppSpacing.s),
+                        AppText.body(
+                          AppStrings.loginSubtitle,
+                          align: TextAlign.left,
+                        ),
+                        const SizedBox(height: AppSpacing.l),
+                        AppInputField(
+                          controller: _emailController,
+                          hint: AppStrings.emailHint,
+                          prefixIcon: Icons.email_outlined,
+                          focusNode: _emailFocus,
+                          textInputAction: TextInputAction.next,
+                          keyboardType: TextInputType.emailAddress,
+                          onFieldSubmitted: (_) => FocusScope.of(
+                            context,
+                          ).requestFocus(_passwordFocus),
+                          validator: (value) {
+                            final email = value?.trim() ?? '';
+                            if (email.isEmpty) {
+                              return 'Please enter your email';
+                            }
+                            // Stricter regex to prevent overly simple/invalid emails like a@h.com
+                            final regex = RegExp(
+                              r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$',
+                            );
+                            if (!regex.hasMatch(email)) {
+                              return 'Please enter a valid email address';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.s),
+                        AppInputField(
+                          controller: _passwordController,
+                          hint: AppStrings.passwordHint,
+                          prefixIcon: Icons.lock_outline,
+                          isObscure: true,
+                          focusNode: _passwordFocus,
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _submit(),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your password';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {},
+                            child: AppText.caption(
+                              AppStrings.forgotPassword,
+                              color: primaryBlue,
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: AppSpacing.s),
+                        BlocConsumer<LoginBloc, LoginState>(
+                          listener: (context, state) {
+                            if (state is LoginFailure) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(state.message),
+                                  backgroundColor: errorColor,
+                                ),
+                              );
+                            }
 
-                      const SizedBox(height: AppSpacing.s),
-
-                      BlocConsumer<LoginBloc, LoginState>(
-                        listener: (context, state) {
-                          if (state is LoginFailure) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(state.message),
-                                backgroundColor: errorColor,
-                              ),
+                            if (state is LoginSuccess) {
+                              context.read<AuthBloc>().add(
+                                LoggedIn(
+                                  role: state.role,
+                                  name: state.name,
+                                  email: state.email,
+                                  tripsCount: state.tripsCount,
+                                  savedCount: state.savedCount,
+                                  reviewsCount: state.reviewsCount,
+                                ),
+                              );
+                              Navigator.pushReplacementNamed(
+                                context,
+                                RouteNames.home,
+                              );
+                            }
+                          },
+                          builder: (context, state) {
+                            return AppButton(
+                              text: AppStrings.loginBtn,
+                              isLoading: state is LoginLoading,
+                              onPressed: _submit,
                             );
-                          }
-
-                          if (state is LoginSuccess) {
-                            Navigator.pushReplacementNamed(context, '/home');
-                          }
-                        },
-                        builder: (context, state) {
-                          return AppButton(
-                            text: AppStrings.loginBtn,
-                            isLoading: state is LoginLoading,
-                            onPressed: _submit,
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: AppSpacing.m),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          AppText.caption(AppStrings.noAccountPrompt),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, RouteNames.signup);
-                            },
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 4,
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.m),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AppText.caption(AppStrings.noAccountPrompt),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, RouteNames.signup);
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 4,
+                                ),
+                                minimumSize: const Size(0, 36),
+                                tapTargetSize: MaterialTapTargetSize.padded,
                               ),
-                              minimumSize: const Size(0, 36),
-                              tapTargetSize: MaterialTapTargetSize.padded,
+                              child: AppText.caption(
+                                AppStrings.signupLink,
+                                color: primaryBlue,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                            child: AppText.caption(
-                              AppStrings.signupLink,
-                              color: primaryBlue,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: AppSpacing.m),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.m),
+                      ],
+                    ),
                   ),
                 ),
               ),

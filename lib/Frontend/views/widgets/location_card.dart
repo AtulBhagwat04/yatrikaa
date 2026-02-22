@@ -27,7 +27,7 @@ class LocationCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withAlpha(8),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),

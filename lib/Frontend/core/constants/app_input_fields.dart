@@ -10,6 +10,7 @@ class AppInputField extends StatefulWidget {
   final TextInputAction? textInputAction;
   final TextInputType? keyboardType;
   final Function(String)? onFieldSubmitted;
+  final String? Function(String?)? validator;
 
   const AppInputField({
     super.key,
@@ -21,6 +22,7 @@ class AppInputField extends StatefulWidget {
     this.textInputAction,
     this.keyboardType,
     this.onFieldSubmitted,
+    this.validator,
   });
 
   @override
@@ -47,16 +49,17 @@ class _AppInputFieldState extends State<AppInputField> {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.only(bottom: 4), // Space for error text
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         boxShadow: _isFocused
             ? [
-          BoxShadow(
-            color: primaryBlue.withOpacity(0.15),
-            blurRadius: 8,
-            spreadRadius: 1,
-          )
-        ]
+                BoxShadow(
+                  color: primaryBlue.withOpacity(0.15),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ]
             : [],
       ),
       child: TextFormField(
@@ -66,31 +69,29 @@ class _AppInputFieldState extends State<AppInputField> {
         textInputAction: widget.textInputAction,
         keyboardType: widget.keyboardType,
         onFieldSubmitted: widget.onFieldSubmitted,
+        validator: widget.validator,
         cursorColor: primaryBlue,
         decoration: InputDecoration(
           hintText: widget.hint,
 
           /// Prefix Icon
-          prefixIcon: Icon(
-            widget.prefixIcon,
-            color: primaryBlue,
-          ),
+          prefixIcon: Icon(widget.prefixIcon, color: primaryBlue),
 
           /// 👁 Password Toggle
           suffixIcon: widget.isObscure
               ? IconButton(
-            icon: Icon(
-              _obscureText
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              color: primaryBlue,
-            ),
-            onPressed: () {
-              setState(() {
-                _obscureText = !_obscureText;
-              });
-            },
-          )
+                  icon: Icon(
+                    _obscureText
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: primaryBlue,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                )
               : null,
 
           filled: true,
@@ -104,28 +105,34 @@ class _AppInputFieldState extends State<AppInputField> {
           /// Default Border
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: onboardingBlueSoft,
-              width: 1.2,
-            ),
+            borderSide: const BorderSide(color: onboardingBlueSoft, width: 1.2),
           ),
 
           /// Enabled Border
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: onboardingBlueSoft,
-              width: 1.2,
-            ),
+            borderSide: const BorderSide(color: onboardingBlueSoft, width: 1.2),
           ),
 
           /// Focus Border
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: primaryBlue,
-              width: 1.8,
-            ),
+            borderSide: const BorderSide(color: primaryBlue, width: 1.8),
+          ),
+
+          /// Error Borders
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1.8),
+          ),
+          errorStyle: const TextStyle(
+            color: Colors.redAccent,
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
           ),
         ),
       ),

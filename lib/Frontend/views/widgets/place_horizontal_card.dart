@@ -21,7 +21,7 @@ class PlaceHorizontalCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(25),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -51,8 +51,47 @@ class PlaceHorizontalCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
-                    stops: const [0.6, 1.0],
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.1),
+                      Colors.black.withOpacity(0.8),
+                    ],
+                    stops: const [0.5, 0.7, 1.0],
+                  ),
+                ),
+              ),
+
+              // Floating Rating Tag
+              Positioned(
+                top: 14,
+                right: 14,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Colors.orange,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        place.rating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -62,28 +101,33 @@ class PlaceHorizontalCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppText.body(
+                    AppText.heading(
                       place.name,
                       color: appWhite,
-                      align: TextAlign.left,
-                      fontWeight: FontWeight.w700,
-                      maxLines: 1,
+                      size: 16,
+                      fontWeight: FontWeight.w800,
+                      maxLines: 2,
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          color: Colors.amber,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        AppText.caption(
-                          place.rating.toString(),
-                          color: appWhite,
-                        ),
-                      ],
-                    ),
+                    if (place.city != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_rounded,
+                            color: Colors.white.withOpacity(0.8),
+                            size: 12,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: AppText.caption(
+                              place.city!,
+                              color: Colors.white.withOpacity(0.9),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
