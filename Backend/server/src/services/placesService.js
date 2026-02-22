@@ -133,7 +133,7 @@ class PlacesService {
       const response = await axios.get(`${this.baseUrl}/details/json`, {
         params: {
           place_id: placeId,
-          fields: 'name,rating,user_ratings_total,formatted_address,photos,geometry,reviews,opening_hours,website,types',
+          fields: 'name,rating,user_ratings_total,formatted_address,photos,geometry,reviews,opening_hours,website,types,address_components,editorial_summary',
           key: this.apiKey
         }
       });
