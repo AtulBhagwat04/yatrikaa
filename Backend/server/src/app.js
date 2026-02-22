@@ -1,6 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const config = require('./config');
 const placesRoutes = require('./routes/placesRoutes');
+const authRoutes = require('./routes/authRoutes');
+const seedAdmins = require('./data/seedAdmin');
 
 const app = express();
 
@@ -8,18 +12,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Request logger
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
+// Database Connection
+mongoose.connect(config.MONGODB_URI)
+  .then(async () => {
+    console.log('Connected to MongoDB successfully');
+    await seedAdmins();
+  })
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/places', placesRoutes);
+app.use('/api/auth', authRoutes);
 
 // Base route for health check
 app.get('/', (req, res) => {
-  res.json({ message: 'Bhatkanti API is running' });
+  res.send('Bhatkanti API is running...');
 });
 
 // Error handling middleware
