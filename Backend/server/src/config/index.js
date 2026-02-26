@@ -11,5 +11,10 @@ module.exports = {
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'changeme123',
   // Default SuperAdmin Credentials (Should be set via .env)
   SUPERADMIN_EMAIL: process.env.SUPERADMIN_EMAIL || 'superadmin@example.com',
-  SUPERADMIN_PASSWORD: process.env.SUPERADMIN_PASSWORD || 'changeme123'
+  SUPERADMIN_PASSWORD: process.env.SUPERADMIN_PASSWORD || 'changeme123',
+  CLOUDINARY: {
+    CLOUD_NAME: process.env.CLOUD_NAME,
+    API_KEY: process.env.CLOUDINARY_API_KEY,
+    API_SECRET: process.env.CLOUDINARY_API_SECRET
+  }
 };
