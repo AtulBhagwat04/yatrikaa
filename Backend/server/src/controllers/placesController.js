@@ -105,7 +105,40 @@ class PlacesController {
   // Admin CRUD Operations
   async addPlace(req, res, next) {
     try {
-      const place = await Place.create(req.body);
+      const { uploadImage } = require('../services/cloudinaryService');
+      let body = { ...req.body };
+      
+      // Multi-part form-data sends everything as strings. Parse nested JSON.
+      if (typeof body.geometry === 'string') {
+        try { body.geometry = JSON.parse(body.geometry); } catch (e) {}
+      }
+      if (typeof body.opening_hours === 'string') {
+        try { body.opening_hours = JSON.parse(body.opening_hours); } catch (e) {}
+      }
+      if (typeof body.facilities === 'string') {
+        try { body.facilities = JSON.parse(body.facilities); } catch (e) {}
+      }
+      if (typeof body.types === 'string') {
+        try { body.types = JSON.parse(body.types); } catch (e) {}
+      }
+      if (typeof body.rating === 'string') body.rating = parseFloat(body.rating);
+      if (typeof body.user_ratings_total === 'string') body.user_ratings_total = parseInt(body.user_ratings_total);
+      if (body.parking_available === 'true') body.parking_available = true;
+      if (body.parking_available === 'false') body.parking_available = false;
+      if (body.photography_allowed === 'true') body.photography_allowed = true;
+      if (body.photography_allowed === 'false') body.photography_allowed = false;
+
+      // If a file is uploaded, upload to Cloudinary and set as photo
+      if (req.file) {
+        const result = await uploadImage(req.file);
+        body.photos = [{
+          photo_reference: result.secure_url,
+          width: result.width,
+          height: result.height
+        }];
+      }
+
+      const place = await Place.create(body);
       res.status(201).json({ status: "OK", result: place });
     } catch (error) {
       next(error);

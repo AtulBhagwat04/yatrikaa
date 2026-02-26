@@ -141,4 +141,72 @@ class AppStrings {
   static const String pdClosed = "Closed";
   static const String pdAnonymous = "Anonymous";
   static const String pdOpenNowAlt = "Open now";
+
+  // ================= COMMUNITY =================
+  static const String commJourneys = "Journeys";
+  static const String commSubtitle = "Community stories & tips";
+  static const String commNoJourneys = "No journeys shared yet.";
+  static const String commShare = "Share";
+  static const String commJustNow = "just now";
+  static const String commWeeksAgo = "w ago";
+  static const String commDaysAgo = "d ago";
+  static const String commHoursAgo = "h ago";
+  static const String commMinutesAgo = "m ago";
+  static const String commPostDetail = "Post Detail";
+  static const String commTraveler = "Traveler";
+  static const String commComments = "Comments";
+  static const String commNoComments = "No comments yet. Be the first!";
+  static const String commAddComment = "Add a comment...";
+  static const String commPost = "Post";
+  static const String commCommentDeleted = "Comment deleted";
+  static const String commCreateHeading = "Share your journey";
+  static const String commLocationLabel = "Location";
+  static const String commLocationHint = "e.g. Raigad Fort";
+  static const String commPhotoLabel = "Journey Photo";
+  static const String commPhotoUploadHint = "Click to upload image";
+  static const String commCaptionLabel = "Share Your Experience";
+  static const String commCaptionHint = "Tell us about your trip...";
+  static const String commPostBtn = "Post Journey";
+  static const String commFillFieldsError = "Please fill caption and location";
+  static const String commUploadImageError = "Please upload an image";
+  static const String commCreatePostFailed =
+      "Failed to create post. Are you logged in?";
+
+  // ================= ADD PLACE =================
+  static const String apTitle = "Add New Place";
+  static const String apPlaceIdLabel = "Place ID (Unique)";
+  static const String apPlaceIdHint = "e.g. gateway_of_india_01";
+  static const String apNameLabel = "Place Name";
+  static const String apNameHint = "e.g. Gateway of India";
+  static const String apAddressLabel = "Address";
+  static const String apAddressHint = "Full location address";
+  static const String apLatLabel = "Latitude";
+  static const String apLngLabel = "Longitude";
+  static const String apUseCurrentLoc = "Use Current Location";
+  static const String apDescriptionLabel = "Description";
+  static const String apDescriptionHint = "Tell something about this place...";
+  static const String apCityLabel = "City";
+  static const String apCityHint = "e.g. Mumbai";
+  static const String apStateLabel = "State";
+  static const String apStateHint = "e.g. Maharashtra";
+  static const String apCategoryLabel = "Category";
+  static const String apTimingsLabel = "Timings";
+  static const String apTimingsHint = "e.g. 9:00 AM - 6:00 PM";
+  static const String apEntryFeeLabel = "Entry Fee";
+  static const String apEntryFeeHint = "e.g. Free or ₹20";
+  static const String apBestTimeLabel = "Best Time to Visit";
+  static const String apBestTimeHint = "e.g. Oct - Mar";
+  static const String apDifficultyLabel = "Difficulty Level";
+  static const String apSuitableForLabel = "Suitable For";
+  static const String apSuitableForHint = "e.g. Families, Trekkers";
+  static const String apWebsiteLabel = "Website (Optional)";
+  static const String apWebsiteHint = "https://example.com";
+  static const String apFacilitiesLabel = "Facilities";
+  static const String apFacilitiesHint =
+      "Comma separated (e.g. Water, Toilets)";
+  static const String apParkingLabel = "Parking Available";
+  static const String apPhotographyLabel = "Photography Allowed";
+  static const String apSaveBtn = "Save Place";
+  static const String apSuccessMsg = "Place added successfully!";
+  static const String apFillFieldsError = "Please fill all required fields";
 }

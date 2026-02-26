@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../models/place_model.dart';
 import '../constants/api_constants.dart';
 import '../constants/app_strings.dart';
@@ -7,14 +8,6 @@ import 'auth_service.dart';
 
 class PlacesService {
   final AuthService _authService = AuthService();
-
-  Future<Map<String, String>> _getHeaders() async {
-    final token = await _authService.getToken();
-    return {
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
-    };
-  }
 
   Future<List<PlaceModel>> getFamousMaharashtraPlaces({
     String? category,
@@ -147,5 +140,59 @@ class PlacesService {
       suitableFor: place.suitableFor ?? AppStrings.fbSuitable,
       isOpen: place.isOpen, // Preserve the real open status from API
     );
+  }
+
+  Future<bool> addPlace(Map<String, dynamic> body, {dynamic imageFile}) async {
+    try {
+      final token = await _authService.getToken();
+      final uri = Uri.parse('${ApiConstants.baseUrl}/places');
+      var request = http.MultipartRequest('POST', uri);
+
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // Add all fields from body (handle nested objects as JSON strings)
+      body.forEach((key, value) {
+        if (value is Map || value is List) {
+          request.fields[key] = json.encode(value);
+        } else {
+          request.fields[key] = value.toString();
+        }
+      });
+
+      if (imageFile != null) {
+        final String path = imageFile.path;
+        final String ext = path.split('.').last.toLowerCase();
+
+        MediaType contentType;
+        if (ext == 'png') {
+          contentType = MediaType('image', 'png');
+        } else if (ext == 'webp') {
+          contentType = MediaType('image', 'webp');
+        } else {
+          contentType = MediaType('image', 'jpeg');
+        }
+
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            path,
+            contentType: contentType,
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final responseBody = await streamedResponse.stream.bytesToString();
+
+      if (streamedResponse.statusCode == 201) return true;
+
+      final data = json.decode(responseBody);
+      throw Exception(data['error'] ?? 'Failed to add place');
+    } catch (e) {
+      print('Error adding place: $e');
+      rethrow;
+    }
   }
 }

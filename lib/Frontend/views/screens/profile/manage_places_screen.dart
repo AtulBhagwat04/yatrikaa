@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
 import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
@@ -16,9 +15,11 @@ class ManagePlacesScreen extends StatefulWidget {
 }
 
 class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
-  List<dynamic> _places = [];
+  List<dynamic> _allPlaces = [];
+  List<dynamic> _filteredPlaces = [];
   bool _isLoading = true;
   String? _error;
+  final TextEditingController _searchController = TextEditingController();
   final AuthService _authService = AuthService();
 
   @override
@@ -27,7 +28,14 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     _fetchPlaces();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _fetchPlaces() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = null;
@@ -36,16 +44,19 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
       final response = await http.get(
         Uri.parse('${ApiConstants.baseUrl}/places/popular'),
       );
+      if (!mounted) return;
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          _places = data['results'] ?? [];
+          _allPlaces = data['results'] ?? [];
+          _filteredPlaces = _allPlaces;
           _isLoading = false;
         });
       } else {
         throw Exception('Failed to load places');
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -53,126 +64,417 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     }
   }
 
+  void _filterPlaces(String query) {
+    setState(() {
+      _filteredPlaces = _allPlaces.where((place) {
+        final name = (place['name'] ?? '').toLowerCase();
+        final address = (place['formatted_address'] ?? '').toLowerCase();
+        return name.contains(query.toLowerCase()) ||
+            address.contains(query.toLowerCase());
+      }).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: appBlack,
-            size: 20,
-          ),
-        ),
-        title: AppText.subHeading(
-          'Manage Places',
-          color: appBlack,
-          fontWeight: FontWeight.w800,
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.add_circle_outline_rounded,
-              color: primaryBlue,
-            ),
-            onPressed: () async {
-              final result = await Navigator.pushNamed(
-                context,
-                RouteNames.addPlace,
-              );
-              if (result == true) _fetchPlaces();
-            },
-          ),
+      backgroundColor: onboardingBlueVeryLight,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          _buildAppBar(),
+          _buildSearchBox(),
+          _buildList(),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
-      body: _buildBody(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final result = await Navigator.pushNamed(
+            context,
+            RouteNames.addPlace,
+          );
+          if (result == true) _fetchPlaces();
+        },
+        backgroundColor: primaryBlue,
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        tooltip: 'Add New Place',
+        child: const Icon(
+          Icons.add_location_alt_rounded,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
     );
   }
 
-  Widget _buildBody() {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
+  Widget _buildAppBar() {
+    return SliverAppBar(
+      floating: true,
+      pinned: true,
+      backgroundColor: onboardingBlueVeryLight,
+      elevation: 0,
+      scrolledUnderElevation: 2,
+      surfaceTintColor: Colors.white,
+      leading: IconButton(
+        onPressed: () => Navigator.pop(context),
+        icon: const Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: appBlack,
+          size: 20,
+        ),
+      ),
+      title: AppText.heading(
+        "Manage Places",
+        size: 22,
+        fontWeight: FontWeight.w900,
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          onPressed: _fetchPlaces,
+          icon: const Icon(Icons.refresh_rounded, color: primaryBlue),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildSearchBox() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _searchController,
+            onChanged: _filterPlaces,
+            decoration: InputDecoration(
+              hintText: "Search your places...",
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: primaryBlue,
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 15),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildList() {
+    if (_isLoading) {
+      return const SliverFillRemaining(
+        child: Center(child: CircularProgressIndicator(color: primaryBlue)),
+      );
+    }
+
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AppText.body('Error: $_error', color: Colors.red),
-            TextButton(onPressed: _fetchPlaces, child: const Text('Retry')),
-          ],
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: Colors.redAccent,
+              ),
+              const SizedBox(height: 16),
+              AppText.body("Error loading places", fontWeight: FontWeight.bold),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _fetchPlaces,
+                child: const Text("Retry Now"),
+              ),
+            ],
+          ),
         ),
       );
     }
-    if (_places.isEmpty) return const Center(child: Text('No places found'));
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.m),
-      itemCount: _places.length,
-      itemBuilder: (context, index) {
-        final place = _places[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10),
+    if (_filteredPlaces.isEmpty) {
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.location_off_rounded,
+                size: 64,
+                color: Colors.grey.shade300,
+              ),
+              const SizedBox(height: 16),
+              AppText.body("No places found", color: Colors.grey),
             ],
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(12),
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                _getPhotoUrl(_getPlacePhotoReference(place)),
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 60,
-                  height: 60,
-                  color: Colors.grey.shade200,
-                  child: const Icon(Icons.image_not_supported_outlined),
-                ),
-              ),
-            ),
-            title: AppText.body(
-              place['name'] ?? 'Unknown',
-              fontWeight: FontWeight.bold,
-            ),
-            subtitle: AppText.caption(
-              place['address'] ?? 'No address',
-              maxLines: 1,
-            ),
-            trailing: PopupMenuButton(
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Text('Delete', style: TextStyle(color: Colors.red)),
-                ),
-              ],
-              onSelected: (val) {
-                if (val == 'delete') {
-                  _deletePlace(place['place_id']);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        '$val operation selected for ${place['name']}',
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final place = _filteredPlaces[index];
+          return _buildPlaceCard(place);
+        }, childCount: _filteredPlaces.length),
+      ),
+    );
+  }
+
+  Widget _buildPlaceCard(dynamic place) {
+    final photoRef = _getPlacePhotoReference(place);
+    final categoryList = place['types'] as List?;
+    final category = (categoryList != null && categoryList.isNotEmpty)
+        ? categoryList.first
+        : 'Place';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                Image.network(
+                  _getPhotoUrl(photoRef),
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 160,
+                    width: double.infinity,
+                    color: Colors.grey.shade100,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.image_not_supported_outlined,
+                            color: Colors.grey.shade400,
+                            size: 32,
+                          ),
+                          const SizedBox(height: 4),
+                          AppText.small(
+                            "No Preview",
+                            color: Colors.grey.shade400,
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                }
-              },
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.65),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Colors.amber,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "${place['rating'] ?? '4.5'}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primaryBlue,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: AppText.small(
+                      category.toString().toUpperCase(),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      size: 10,
+                    ),
+                  ),
+                ),
+              ],
             ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppText.subHeading(
+                          place['name'] ?? 'Unknown Place',
+                          size: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              color: Colors.grey,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: AppText.caption(
+                                place['formatted_address'] ??
+                                    'No address available',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildActionMenu(place),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionMenu(dynamic place) {
+    return PopupMenuButton(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: onboardingBlueVeryLight,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.more_vert_rounded,
+          color: primaryBlue,
+          size: 20,
+        ),
+      ),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'edit',
+          child: Row(
+            children: [
+              const Icon(Icons.edit_note_rounded, size: 20, color: primaryBlue),
+              const SizedBox(width: 10),
+              AppText.body("Edit Details"),
+            ],
           ),
-        );
+        ),
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              const Icon(
+                Icons.delete_outline_rounded,
+                size: 20,
+                color: Colors.redAccent,
+              ),
+              const SizedBox(width: 10),
+              AppText.body("Delete Place", color: Colors.redAccent),
+            ],
+          ),
+        ),
+      ],
+      onSelected: (val) {
+        if (val == 'delete') {
+          _confirmDelete(place);
+        }
       },
+    );
+  }
+
+  void _confirmDelete(dynamic place) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: AppText.subHeading("Delete Place?"),
+        content: AppText.body(
+          "Are you sure you want to remove '${place['name']}'? This action cannot be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deletePlace(place['place_id']);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
     );
   }
 

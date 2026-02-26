@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const config = require('./config');
 const placesRoutes = require('./routes/placesRoutes');
 const authRoutes = require('./routes/authRoutes');
+const postRoutes = require('./routes/postRoutes');
 const seedAdmins = require('./data/seedAdmin');
 
 const app = express();
@@ -23,6 +24,7 @@ mongoose.connect(config.MONGODB_URI)
 // Routes
 app.use('/api/places', placesRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/posts', postRoutes);
 
 // Base route for health check
 app.get('/', (req, res) => {

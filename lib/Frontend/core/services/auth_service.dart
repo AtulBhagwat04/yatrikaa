@@ -11,6 +11,7 @@ class AuthService {
   static const String _tripsCountKey = 'user_trips_count';
   static const String _savedCountKey = 'user_saved_count';
   static const String _reviewsCountKey = 'user_reviews_count';
+  static const String _idKey = 'user_id';
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
@@ -23,6 +24,7 @@ class AuthService {
       final data = jsonDecode(response.body);
       await _saveAuthData(
         token: data['token'] ?? '',
+        id: data['id'] ?? '',
         role: data['role'] ?? 'user',
         name: data['name'] ?? 'Traveler',
         email: data['email'] ?? email,
@@ -58,6 +60,7 @@ class AuthService {
       final data = jsonDecode(response.body);
       await _saveAuthData(
         token: data['token'] ?? '',
+        id: data['id'] ?? '',
         role: data['role'] ?? role,
         name: data['name'] ?? name,
         email: data['email'] ?? email,
@@ -90,6 +93,7 @@ class AuthService {
       final data = jsonDecode(response.body);
       await _saveAuthData(
         token: data['token'] ?? '',
+        id: data['id'] ?? '',
         role: data['role'] ?? 'user',
         name: data['name'] ?? name,
         email: data['email'] ?? email,
@@ -129,6 +133,7 @@ class AuthService {
 
   Future<void> _saveAuthData({
     required String token,
+    required String id,
     required String role,
     required String name,
     required String email,
@@ -138,6 +143,7 @@ class AuthService {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
+    await prefs.setString(_idKey, id);
     await prefs.setString(_roleKey, role);
     await prefs.setString(_nameKey, name);
     await prefs.setString(_emailKey, email);
@@ -179,6 +185,11 @@ class AuthService {
   Future<int> getReviewsCount() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_reviewsCountKey) ?? 0;
+  }
+
+  Future<String?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_idKey);
   }
 
   Future<void> logout() async {
