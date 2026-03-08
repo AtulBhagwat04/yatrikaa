@@ -105,6 +105,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
 
   bool _isLoading = false;
   bool _isLocationLoading = false;
+  bool _isPickerActive = false;
   final PlacesService _placesService = PlacesService();
 
   @override
@@ -125,14 +126,23 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70,
-    );
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = pickedFile;
-      });
+    if (_isPickerActive) return;
+
+    setState(() => _isPickerActive = true);
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = pickedFile;
+        });
+      }
+    } catch (e) {
+      debugPrint("Image picking error: $e");
+    } finally {
+      if (mounted) setState(() => _isPickerActive = false);
     }
   }
 

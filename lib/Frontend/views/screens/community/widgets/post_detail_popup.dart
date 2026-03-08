@@ -72,12 +72,12 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
       child: Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(13),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.2),
@@ -91,7 +91,7 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(30),
+                  top: Radius.circular(13),
                 ),
                 child: Stack(
                   children: [

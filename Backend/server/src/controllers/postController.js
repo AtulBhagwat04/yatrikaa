@@ -1,4 +1,5 @@
 const Post = require('../models/Post');
+const User = require('../models/User');
 const { uploadImage } = require('../services/cloudinaryService');
 
 class PostController {
@@ -8,7 +9,8 @@ class PostController {
       let finalImageUrl = imageUrl;
 
       if (req.file) {
-        const result = await uploadImage(req.file);
+        const folderName = `Bhatkanti/Posts/${req.user._id}`;
+        const result = await uploadImage(req.file, folderName);
         finalImageUrl = result.secure_url;
       }
 
@@ -18,6 +20,9 @@ class PostController {
         imageUrl: finalImageUrl,
         caption
       });
+
+      // Increment user postsCount
+      await User.findByIdAndUpdate(req.user._id, { $inc: { postsCount: 1 } });
 
       const populatedPost = await Post.findById(post._id).populate('author', 'name');
 
@@ -105,6 +110,93 @@ class PostController {
       const populatedPost = await Post.findById(postId)
         .populate('author', 'name')
         .populate('comments.user', 'name');
+      res.json(populatedPost);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deletePost(req, res, next) {
+    try {
+      const post = await Post.findById(req.params.id);
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      // Check if user is the author
+      if (post.author.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: 'Unauthorized to delete this post' });
+      }
+
+      // Extract publicId from imageUrl if it's a Cloudinary URL
+      // Example: https://res.cloudinary.com/cloud_name/image/upload/v1/Bhatkanti/Posts/userId/filename.jpg
+      if (post.imageUrl && post.imageUrl.includes('cloudinary.com')) {
+        try {
+          const urlParts = post.imageUrl.split('/');
+          const uploadIndex = urlParts.indexOf('upload');
+          if (uploadIndex !== -1) {
+            // Get everything after the version (v1234567)
+            const publicIdWithExt = urlParts.slice(uploadIndex + 2).join('/');
+            const publicId = publicIdWithExt.split('.')[0];
+            await deleteImage(publicId);
+          }
+        } catch (cloudinaryError) {
+          console.error('Error deleting image from Cloudinary:', cloudinaryError.message);
+        }
+      }
+
+      await Post.findByIdAndDelete(req.params.id);
+
+      // Decrement user postsCount
+      await User.findByIdAndUpdate(req.user._id, { $inc: { postsCount: -1 } });
+
+      res.json({ message: 'Post deleted successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updatePost(req, res, next) {
+    const { location, caption } = req.body;
+    try {
+      let post = await Post.findById(req.params.id);
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      if (post.author.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: 'Unauthorized to edit this post' });
+      }
+
+      post.location = location || post.location;
+      post.caption = caption || post.caption;
+
+      if (req.file) {
+        // Delete old image if exists
+        if (post.imageUrl && post.imageUrl.includes('cloudinary.com')) {
+          try {
+            const urlParts = post.imageUrl.split('/');
+            const uploadIndex = urlParts.indexOf('upload');
+            if (uploadIndex !== -1) {
+              const publicIdWithExt = urlParts.slice(uploadIndex + 2).join('/');
+              const publicId = publicIdWithExt.split('.')[0];
+              await deleteImage(publicId);
+            }
+          } catch (e) {
+            console.error('Error deleting old image:', e.message);
+          }
+        }
+
+        const folderName = `Bhatkanti/Posts/${req.user._id}`;
+        const result = await uploadImage(req.file, folderName);
+        post.imageUrl = result.secure_url;
+      }
+
+      await post.save();
+      const populatedPost = await Post.findById(post._id)
+        .populate('author', 'name')
+        .populate('comments.user', 'name');
+      
       res.json(populatedPost);
     } catch (error) {
       next(error);

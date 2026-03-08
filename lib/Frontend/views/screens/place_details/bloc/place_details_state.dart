@@ -9,6 +9,7 @@ class PlaceDetailsState extends Equatable {
   final bool isFavorite;
   final bool isBookmarked;
   final String? errorMessage;
+  final String? toastMessage;
 
   const PlaceDetailsState({
     this.status = PlaceDetailsStatus.initial,
@@ -16,6 +17,7 @@ class PlaceDetailsState extends Equatable {
     this.isFavorite = false,
     this.isBookmarked = false,
     this.errorMessage,
+    this.toastMessage,
   });
 
   PlaceDetailsState copyWith({
@@ -24,6 +26,7 @@ class PlaceDetailsState extends Equatable {
     bool? isFavorite,
     bool? isBookmarked,
     String? errorMessage,
+    String? toastMessage,
   }) {
     return PlaceDetailsState(
       status: status ?? this.status,
@@ -31,6 +34,7 @@ class PlaceDetailsState extends Equatable {
       isFavorite: isFavorite ?? this.isFavorite,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       errorMessage: errorMessage ?? this.errorMessage,
+      toastMessage: toastMessage, // Always reset unless explicitly passed
     );
   }
 
@@ -41,5 +45,6 @@ class PlaceDetailsState extends Equatable {
     isFavorite,
     isBookmarked,
     errorMessage,
+    toastMessage,
   ];
 }

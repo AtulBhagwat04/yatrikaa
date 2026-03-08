@@ -21,7 +21,12 @@ import 'package:bhatkanti_app/Frontend/views/screens/profile/user_management_scr
 import 'package:bhatkanti_app/Frontend/views/screens/profile/guide_dashboard_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/generic_management_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/add_place_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/profile/my_posts_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/splash/splash_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/admin/add_event_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/events/event_details_screen.dart';
+import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/profile/manage_events_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_bloc.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/place_details/place_details_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
@@ -49,6 +54,18 @@ class AppRoutes {
       case RouteNames.placeDetails:
         final placeId = settings.arguments as String?;
         return _fadeRoute(PlaceDetailsScreen(placeId: placeId ?? ''));
+
+      case RouteNames.eventDetails:
+        final args = settings.arguments;
+        if (args is Map<String, dynamic>) {
+          return _fadeRoute(
+            EventDetailsScreen(
+              eventId: args['id'] ?? '',
+              event: args['event'] as EventModel?,
+            ),
+          );
+        }
+        return _fadeRoute(EventDetailsScreen(eventId: (args as String?) ?? ''));
 
       case RouteNames.profile:
         return _fadeRoute(const ProfileScreen());
@@ -79,6 +96,8 @@ class AppRoutes {
 
       case RouteNames.reviews:
         return _fadeRoute(const ReviewsScreen());
+      case RouteNames.myPosts:
+        return _fadeRoute(const MyPostsScreen());
 
       // Guide Panel
       case RouteNames.guideDashboard:
@@ -113,6 +132,10 @@ class AppRoutes {
         return _fadeRoute(const AddPlaceScreen());
       case RouteNames.reviewModeration:
         return _fadeRoute(const ReviewModerationScreen());
+      case RouteNames.manageEvents:
+        return _fadeRoute(const ManageEventsScreen());
+      case RouteNames.addEvent:
+        return _fadeRoute(const AddEventScreen());
 
       // Super Admin
       case RouteNames.userManagement:

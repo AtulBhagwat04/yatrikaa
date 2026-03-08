@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
 
 abstract class HomeEvent extends Equatable {
   const HomeEvent();
@@ -34,4 +35,12 @@ class HomeTabChanged extends HomeEvent {
 
   @override
   List<Object?> get props => [index];
+}
+
+class HomeEventUpdateEvent extends HomeEvent {
+  final EventModel event;
+  const HomeEventUpdateEvent(this.event);
+
+  @override
+  List<Object?> get props => [event];
 }

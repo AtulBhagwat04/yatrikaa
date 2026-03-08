@@ -10,6 +10,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AppStarted>(_onAppStarted);
     on<LoggedIn>(_onLoggedIn);
     on<LoggedOut>(_onLoggedOut);
+    on<UpdateAuthCounts>(_onUpdateAuthCounts);
   }
 
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
@@ -19,17 +20,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final role = await _authService.getRole();
       final name = await _authService.getName();
       final email = await _authService.getEmail();
+      final id = await _authService.getUserId();
       final tripsCount = await _authService.getTripsCount();
       final savedCount = await _authService.getSavedCount();
       final reviewsCount = await _authService.getReviewsCount();
+      final postsCount = await _authService.getPostsCount();
       emit(
         Authenticated(
+          id: id ?? '',
           role: role ?? 'user',
           name: name ?? 'Traveler',
           email: email ?? '',
           tripsCount: tripsCount,
           savedCount: savedCount,
           reviewsCount: reviewsCount,
+          postsCount: postsCount,
         ),
       );
     } else {
@@ -40,12 +45,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   void _onLoggedIn(LoggedIn event, Emitter<AuthState> emit) {
     emit(
       Authenticated(
+        id: event.id,
         role: event.role,
         name: event.name,
         email: event.email,
         tripsCount: event.tripsCount,
         savedCount: event.savedCount,
         reviewsCount: event.reviewsCount,
+        postsCount: event.postsCount,
       ),
     );
   }
@@ -54,5 +61,40 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     await _authService.logout();
     emit(Unauthenticated());
+  }
+
+  Future<void> _onUpdateAuthCounts(
+    UpdateAuthCounts event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is Authenticated) {
+      final newTripsCount = event.tripsCount ?? currentState.tripsCount;
+      final newSavedCount = event.savedCount ?? currentState.savedCount;
+      final newReviewsCount = event.reviewsCount ?? currentState.reviewsCount;
+      final newPostsCount = event.postsCount ?? currentState.postsCount;
+
+      if (event.tripsCount != null)
+        await _authService.updateTripsCount(newTripsCount);
+      if (event.savedCount != null)
+        await _authService.updateSavedCount(newSavedCount);
+      if (event.reviewsCount != null)
+        await _authService.updateReviewsCount(newReviewsCount);
+      if (event.postsCount != null)
+        await _authService.updatePostsCount(newPostsCount);
+
+      emit(
+        Authenticated(
+          id: currentState.id,
+          role: currentState.role,
+          name: currentState.name,
+          email: currentState.email,
+          tripsCount: newTripsCount,
+          savedCount: newSavedCount,
+          reviewsCount: newReviewsCount,
+          postsCount: newPostsCount,
+        ),
+      );
+    }
   }
 }

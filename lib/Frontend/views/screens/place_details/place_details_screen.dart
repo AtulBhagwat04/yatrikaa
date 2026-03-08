@@ -17,11 +17,15 @@ import 'package:bhatkanti_app/Frontend/views/widgets/review_card.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/rating_badge.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/external_action_card.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/guide_info_card.dart';
+import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
 import 'full_screen_gallery.dart';
 
 import 'bloc/place_details_bloc.dart';
 import 'bloc/place_details_event.dart';
 import 'bloc/place_details_state.dart';
+import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
+import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
 
 class PlaceDetailsScreen extends StatelessWidget {
   final String placeId;
@@ -97,205 +101,234 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PlaceDetailsBloc, PlaceDetailsState>(
-      builder: (context, state) {
-        if (state.status == PlaceDetailsStatus.loading) {
-          return Scaffold(
-            backgroundColor: onboardingBlueVeryLight,
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(
-                    color: primaryBlue,
-                    strokeWidth: 3,
-                  ),
-                  const SizedBox(height: 24),
-                  AppText.body(
-                    "Discovering your destination...",
-                    color: primaryBlue,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
+    return BlocListener<PlaceDetailsBloc, PlaceDetailsState>(
+      listenWhen: (previous, current) =>
+          previous.toastMessage != current.toastMessage,
+      listener: (context, state) {
+        if (state.toastMessage != null) {
+          if (state.toastMessage!.contains("Error")) {
+            CustomToast.error(context, state.toastMessage!);
+          } else {
+            CustomToast.success(context, state.toastMessage!);
+          }
 
-        if (state.status == PlaceDetailsStatus.failure) {
-          return Scaffold(
-            backgroundColor: onboardingBlueVeryLight,
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.l),
+          // Update global character count if successful
+          if (state.toastMessage!.contains("Added") ||
+              state.toastMessage!.contains("Removed")) {
+            final authState = context.read<AuthBloc>().state;
+            if (authState is Authenticated) {
+              context.read<AuthBloc>().add(
+                UpdateAuthCounts(
+                  savedCount: state.isFavorite
+                      ? authState.savedCount + 1
+                      : authState.savedCount - 1,
+                ),
+              );
+            }
+          }
+        }
+      },
+      child: BlocBuilder<PlaceDetailsBloc, PlaceDetailsState>(
+        builder: (context, state) {
+          if (state.status == PlaceDetailsStatus.loading) {
+            return Scaffold(
+              backgroundColor: onboardingBlueVeryLight,
+              body: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(10),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.error_outline_rounded,
-                        size: 64,
-                        color: Colors.redAccent,
-                      ),
+                    const CircularProgressIndicator(
+                      color: primaryBlue,
+                      strokeWidth: 3,
                     ),
-                    const SizedBox(height: 32),
-                    AppText.heading(
-                      "Something went wrong",
-                      size: 22,
-                      fontWeight: FontWeight.w900,
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                     AppText.body(
-                      state.errorMessage ?? AppStrings.error,
-                      align: TextAlign.center,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(height: 40),
-                    SizedBox(
-                      width: 200,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: () => context.read<PlaceDetailsBloc>().add(
-                          PlaceDetailsStarted(widget.placeId),
-                        ),
-                        child: const Text(
-                          AppStrings.pdRetry,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
+                      "Discovering your destination...",
+                      color: primaryBlue,
+                      fontWeight: FontWeight.w700,
                     ),
                   ],
                 ),
               ),
-            ),
-          );
-        }
+            );
+          }
 
-        if (state.status == PlaceDetailsStatus.success && state.place != null) {
-          final place = state.place!;
-          return Scaffold(
-            backgroundColor: const Color(0xFFF9F9F7), // Subtle warm tone
-            body: Stack(
-              children: [
-                CustomScrollView(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    _buildHeroSection(place, state.isFavorite, context),
-                    SliverToBoxAdapter(
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: primaryWhite,
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(0),
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            // Section 1: Title & Overview (White background)
-                            Container(
-                              padding: const EdgeInsets.only(
-                                top: 24,
-                                left: 20,
-                                right: 20,
-                                bottom: 10,
-                              ),
-                              decoration: const BoxDecoration(
-                                color: onboardingBlueVeryLight,
-                                borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(30),
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildTitleSection(place),
-                                  const SizedBox(height: 20),
-                                  _buildFeaturesSection(place),
-                                ],
-                              ),
+          if (state.status == PlaceDetailsStatus.failure) {
+            return Scaffold(
+              backgroundColor: onboardingBlueVeryLight,
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.l),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(10),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
-
-                            // Section 2: Plan Your Visit (Experience + Guide)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.l,
-                                vertical: 8,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildDescriptionSection(place),
-                                  const SizedBox(height: 20),
-                                  _buildInfoSection(place),
-                                ],
-                              ),
-                            ),
-
-                            // Section 4: Map & Nearby
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.l,
-                                vertical: 8,
-                              ),
-                              child: Column(
-                                children: [
-                                  _buildMapSection(place),
-                                  const SizedBox(height: 16),
-                                  _buildNearbySection(place),
-                                ],
-                              ),
-                            ),
-
-                            // Section 5: Reviews
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.l,
-                                vertical: 8,
-                              ),
-                              child: _buildReviewsSection(place),
-                            ),
-
-                            const SizedBox(height: 140),
                           ],
                         ),
+                        child: const Icon(
+                          Icons.error_outline_rounded,
+                          size: 64,
+                          color: Colors.redAccent,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 32),
+                      AppText.heading(
+                        "Something went wrong",
+                        size: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      const SizedBox(height: 12),
+                      AppText.body(
+                        state.errorMessage ?? AppStrings.error,
+                        align: TextAlign.center,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(height: 40),
+                      SizedBox(
+                        width: 200,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: () => context.read<PlaceDetailsBloc>().add(
+                            PlaceDetailsStarted(widget.placeId),
+                          ),
+                          child: const Text(
+                            AppStrings.pdRetry,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                _buildStickyHeader(context, place, state.isFavorite),
-                _buildBottomAction(context, place, state.isBookmarked),
-              ],
-            ),
-          );
-        }
+              ),
+            );
+          }
 
-        return const Scaffold();
-      },
+          if (state.status == PlaceDetailsStatus.success &&
+              state.place != null) {
+            final place = state.place!;
+            return Scaffold(
+              backgroundColor: const Color(0xFFF9F9F7), // Subtle warm tone
+              body: Stack(
+                children: [
+                  CustomScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      _buildHeroSection(place, state.isFavorite, context),
+                      SliverToBoxAdapter(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: primaryWhite,
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(0),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              // Section 1: Title & Overview (White background)
+                              Container(
+                                padding: const EdgeInsets.only(
+                                  top: 24,
+                                  left: 20,
+                                  right: 20,
+                                  bottom: 10,
+                                ),
+                                decoration: const BoxDecoration(
+                                  color: onboardingBlueVeryLight,
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(30),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildTitleSection(place),
+                                    const SizedBox(height: 20),
+                                    _buildFeaturesSection(place),
+                                  ],
+                                ),
+                              ),
+
+                              // Section 2: Plan Your Visit (Experience + Guide)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.l,
+                                  vertical: 8,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildDescriptionSection(place),
+                                    const SizedBox(height: 20),
+                                    _buildInfoSection(place),
+                                  ],
+                                ),
+                              ),
+
+                              // Section 4: Map & Nearby
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.l,
+                                  vertical: 8,
+                                ),
+                                child: Column(
+                                  children: [
+                                    _buildMapSection(place),
+                                    const SizedBox(height: 16),
+                                    _buildNearbySection(place),
+                                  ],
+                                ),
+                              ),
+
+                              // Section 5: Reviews
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.l,
+                                  vertical: 8,
+                                ),
+                                child: _buildReviewsSection(place),
+                              ),
+
+                              const SizedBox(height: 140),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildStickyHeader(context, place, state.isFavorite),
+                  _buildBottomAction(context, place, state.isBookmarked),
+                ],
+              ),
+            );
+          }
+
+          return const Scaffold();
+        },
+      ),
     );
   }
 
@@ -350,9 +383,11 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               const Spacer(),
             _circularHeaderButton(
               icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-              onPressed: () => context.read<PlaceDetailsBloc>().add(
-                PlaceDetailsFavoriteToggled(),
-              ),
+              onPressed: () {
+                context.read<PlaceDetailsBloc>().add(
+                  PlaceDetailsFavoriteToggled(),
+                );
+              },
               iconColor: isFavorite ? Colors.red : Colors.black,
               isLight: !_showAppBarTitle,
             ),
@@ -1081,10 +1116,23 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            AppText.subHeading(
-              AppStrings.pdWallOfReviews,
-              fontWeight: FontWeight.w900,
-              size: 22,
+            TextButton.icon(
+              onPressed: () {
+                final authState = context.read<AuthBloc>().state;
+                if (authState is Authenticated) {
+                  context.read<AuthBloc>().add(
+                    UpdateAuthCounts(reviewsCount: authState.reviewsCount + 1),
+                  );
+                  CustomToast.success(context, "Review added! (Simulated)");
+                }
+              },
+              icon: const Icon(Icons.add_comment_rounded, size: 18),
+              label: AppText.body(
+                "Add Review",
+                color: primaryBlue,
+                fontWeight: FontWeight.w800,
+                size: 14,
+              ),
             ),
           ],
         ),
@@ -1135,9 +1183,21 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => context.read<PlaceDetailsBloc>().add(
-                      PlaceDetailsBookmarkToggled(),
-                    ),
+                    onTap: () {
+                      context.read<PlaceDetailsBloc>().add(
+                        PlaceDetailsBookmarkToggled(),
+                      );
+                      final authState = context.read<AuthBloc>().state;
+                      if (authState is Authenticated) {
+                        context.read<AuthBloc>().add(
+                          UpdateAuthCounts(
+                            savedCount: isBookmarked
+                                ? authState.savedCount - 1
+                                : authState.savedCount + 1,
+                          ),
+                        );
+                      }
+                    },
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
@@ -1172,6 +1232,14 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
+                        final authState = context.read<AuthBloc>().state;
+                        if (authState is Authenticated) {
+                          context.read<AuthBloc>().add(
+                            UpdateAuthCounts(
+                              tripsCount: authState.tripsCount + 1,
+                            ),
+                          );
+                        }
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(

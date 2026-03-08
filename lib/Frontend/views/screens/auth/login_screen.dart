@@ -194,12 +194,14 @@ class _LoginScreenState extends State<LoginScreen>
                             if (state is LoginSuccess) {
                               context.read<AuthBloc>().add(
                                 LoggedIn(
+                                  id: state.id,
                                   role: state.role,
                                   name: state.name,
                                   email: state.email,
                                   tripsCount: state.tripsCount,
                                   savedCount: state.savedCount,
                                   reviewsCount: state.reviewsCount,
+                                  postsCount: state.postsCount,
                                 ),
                               );
                               Navigator.pushReplacementNamed(

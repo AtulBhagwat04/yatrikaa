@@ -19,12 +19,14 @@ import 'package:bhatkanti_app/Frontend/views/screens/profile/profile_screen.dart
 import 'package:bhatkanti_app/Frontend/views/widgets/home_header.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/location_card.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/place_horizontal_card.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/event_horizontal_card.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/place_nearby_card.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/section_title.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/category_chip.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/app_bottom_nav.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
+import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
 
 // ─── HomeScreen — StatefulWidget shell with local tab index ─────────────────
 class HomeScreen extends StatefulWidget {
@@ -182,6 +184,18 @@ class _HomeTab extends StatelessWidget {
 
                       const SizedBox(height: AppSpacing.ms),
 
+                      // ── Popular Events ───────────────────────────────────
+                      SectionTitle(
+                        title: AppStrings.popularEvents,
+                        actionLabel: 'See all',
+                        onTap: onGoExplore,
+                      ),
+
+                      const SizedBox(height: AppSpacing.ms),
+                      _buildEventsHorizontalCards(context, state),
+
+                      const SizedBox(height: AppSpacing.ms),
+
                       // ── Nearby ───────────────────────────────────────────
                       SectionTitle(
                         title: AppStrings.nearbyPopularPlaces,
@@ -286,6 +300,75 @@ class _HomeTab extends StatelessWidget {
                 RouteNames.placeDetails,
                 arguments: place.id,
               ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Popular events horizontal list ──────────────────────────────────────────
+  Widget _buildEventsHorizontalCards(BuildContext context, HomeState state) {
+    if (state.isLoadingEvents) {
+      return SizedBox(
+        height: 240,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: 3,
+          itemBuilder: (_, i) => Container(
+            width: 190,
+            margin: EdgeInsets.only(right: i < 2 ? AppSpacing.m : 0),
+            child: const ShimmerBox(radius: 28),
+          ),
+        ),
+      );
+    }
+
+    if (state.popularEvents.isEmpty) {
+      return Container(
+        height: 180,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.event_busy_rounded, color: Colors.grey[300], size: 48),
+              const SizedBox(height: 12),
+              AppText.caption(AppStrings.noEventsFound),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 250,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: state.popularEvents.length,
+        itemBuilder: (context, i) {
+          final event = state.popularEvents[i];
+          return Padding(
+            padding: EdgeInsets.only(
+              right: i < state.popularEvents.length - 1 ? AppSpacing.m : 0,
+            ),
+            child: EventHorizontalCard(
+              event: event,
+              onTap: () async {
+                final result = await Navigator.pushNamed(
+                  context,
+                  RouteNames.eventDetails,
+                  arguments: {'id': event.id, 'event': event},
+                );
+
+                if (result is EventModel && context.mounted) {
+                  context.read<HomeBloc>().add(HomeEventUpdateEvent(result));
+                }
+              },
             ),
           );
         },

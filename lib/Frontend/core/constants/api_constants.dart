@@ -33,6 +33,9 @@ class ApiConstants {
     return '$baseUrl/places/photo/$photoReference';
   }
 
+  static const String eventsDiscoveryQuery =
+      "Upcoming cultural festivals events and fairs in Maharashtra";
+
   // category queries for discovery
   static const Map<String, String> categoryQueries = {
     'Forts':

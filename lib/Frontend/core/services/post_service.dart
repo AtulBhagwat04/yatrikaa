@@ -137,4 +137,74 @@ class PostService {
       return null;
     }
   }
+
+  Future<bool> deletePost(String postId) async {
+    try {
+      final token = await _authService.getToken();
+      final response = await http.delete(
+        Uri.parse('${ApiConstants.baseUrl}/posts/$postId'),
+        headers: {if (token != null) 'Authorization': 'Bearer $token'},
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error deleting post: $e');
+      return false;
+    }
+  }
+
+  Future<PostModel?> updatePost({
+    required String postId,
+    required String location,
+    required String caption,
+    dynamic imageFile,
+  }) async {
+    try {
+      final token = await _authService.getToken();
+      final uri = Uri.parse('${ApiConstants.baseUrl}/posts/$postId');
+      var request = http.MultipartRequest('PUT', uri);
+
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      request.fields['location'] = location;
+      request.fields['caption'] = caption;
+
+      if (imageFile != null) {
+        final String path = imageFile.path;
+        final String ext = path.split('.').last.toLowerCase();
+
+        MediaType contentType;
+        if (ext == 'png') {
+          contentType = MediaType('image', 'png');
+        } else if (ext == 'webp') {
+          contentType = MediaType('image', 'webp');
+        } else {
+          contentType = MediaType('image', 'jpeg');
+        }
+
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            path,
+            contentType: contentType,
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final responseBody = await streamedResponse.stream.bytesToString();
+
+      if (streamedResponse.statusCode == 200) {
+        return PostModel.fromJson(json.decode(responseBody));
+      } else {
+        print('Update failed: ${streamedResponse.statusCode} - $responseBody');
+        return null;
+      }
+    } catch (e) {
+      print('PostService update Exception: $e');
+      return null;
+    }
+  }
 }

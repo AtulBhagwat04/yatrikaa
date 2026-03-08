@@ -101,15 +101,17 @@ class PlaceModel {
           .where((p) {
             final width = p['width'] as int? ?? 0;
             final height = p['height'] as int? ?? 0;
-            // Filter for decent resolution (at least 500px in one dimension)
-            // and ensure photo_reference exists
             return p['photo_reference'] != null &&
                 (width >= 500 || height >= 500);
           })
-          // Google Places API returns photos by relevance, so taking the first ones is "best"
           .map((p) => p['photo_reference'] as String)
           .take(10)
           .toList();
+    }
+
+    // Fallback to 'images' if 'photos' is empty or null
+    if (imagesList.isEmpty && json['images'] != null && json['images'] is List) {
+      imagesList = List<String>.from(json['images']);
     }
 
     // Extract City and State from address_components
@@ -229,6 +231,30 @@ class PlaceModel {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'place_id': id,
+      'name': name,
+      'formatted_address': address,
+      'city': city,
+      'state': state,
+      'category': category,
+      'description': description,
+      'rating': rating,
+      'user_ratings_total': userRatingsTotal,
+      'photo_reference': photoReference,
+      'lat': lat,
+      'lng': lng,
+      'timings': timings,
+      'entry_fee': entryFee,
+      'best_time': bestTimeToVisit,
+      'difficulty': difficulty,
+      'parking_available': parkingAvailable,
+      'suitable_for': suitableFor,
+      'website': website,
+    };
+  }
+
   PlaceModel copyWith({
     String? id,
     String? name,
@@ -285,11 +311,17 @@ class PlaceModel {
     );
   }
 
-  String get photoUrl => photoReference != null
-      ? ApiConstants.getPhotoUrl(photoReference!)
-      : AppAssets.placeholderImageUrl;
+  String get photoUrl {
+    if (photoReference == null) return AppAssets.placeholderImageUrl;
+    if (photoReference!.startsWith('http')) return photoReference!;
+    return ApiConstants.getPhotoUrl(photoReference!);
+  }
 
-  List<String> get allPhotoUrls => images.isNotEmpty
-      ? images.map((ref) => ApiConstants.getPhotoUrl(ref)).toList()
-      : [photoUrl];
+  List<String> get allPhotoUrls {
+    if (images.isEmpty) return [photoUrl];
+    return images.map((img) {
+      if (img.startsWith('http')) return img;
+      return ApiConstants.getPhotoUrl(img);
+    }).toList();
+  }
 }

@@ -7,10 +7,10 @@ cloudinary.config({
   api_secret: config.CLOUDINARY.API_SECRET
 });
 
-const uploadImage = async (file) => {
+const uploadImage = async (file, folder = 'Bhatkanti/General') => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader.upload_stream({
-      folder: 'bhatkanti_posts'
+      folder: folder
     }, (error, result) => {
       if (error) return reject(error);
       resolve(result);
@@ -18,4 +18,13 @@ const uploadImage = async (file) => {
   });
 };
 
-module.exports = { uploadImage };
+const deleteImage = async (publicId) => {
+  try {
+    const result = await cloudinary.uploader.destroy(publicId);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = { uploadImage, deleteImage };
