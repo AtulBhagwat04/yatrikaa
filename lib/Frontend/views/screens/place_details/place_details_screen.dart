@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -165,11 +166,11 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: appWhite,
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withAlpha(10),
+                              color: shadowColor,
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -178,7 +179,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                         child: const Icon(
                           Icons.error_outline_rounded,
                           size: 64,
-                          color: Colors.redAccent,
+                          color: errorColor,
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -191,7 +192,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                       AppText.body(
                         state.errorMessage ?? AppStrings.error,
                         align: TextAlign.center,
-                        color: Colors.grey[600],
+                        color: appGrey,
                       ),
                       const SizedBox(height: 40),
                       SizedBox(
@@ -199,7 +200,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryBlue,
-                            foregroundColor: Colors.white,
+                            foregroundColor: appWhite,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -209,9 +210,9 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                           onPressed: () => context.read<PlaceDetailsBloc>().add(
                             PlaceDetailsStarted(widget.placeId),
                           ),
-                          child: const Text(
+                          child: Text(
                             AppStrings.pdRetry,
-                            style: TextStyle(
+                            style: GoogleFonts.montserrat(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
@@ -229,7 +230,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               state.place != null) {
             final place = state.place!;
             return Scaffold(
-              backgroundColor: const Color(0xFFF9F9F7), // Subtle warm tone
+              backgroundColor: onboardingBlueVeryLight, // Unified with other screens
               body: Stack(
                 children: [
                   CustomScrollView(
@@ -346,11 +347,11 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
         height: 93,
         padding: const EdgeInsets.only(top: 30, left: 20, right: 20),
         decoration: BoxDecoration(
-          color: _showAppBarTitle ? Colors.white : Colors.transparent,
+          color: _showAppBarTitle ? appWhite : Colors.transparent,
           boxShadow: _showAppBarTitle
               ? [
                   BoxShadow(
-                    color: Colors.black.withAlpha(20),
+                    color: shadowColor,
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -359,11 +360,6 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
         ),
         child: Row(
           children: [
-            _circularHeaderButton(
-              icon: Icons.arrow_back_ios_new_rounded,
-              onPressed: () => Navigator.pop(context),
-              isLight: !_showAppBarTitle,
-            ),
             if (_showAppBarTitle)
               Expanded(
                 child: Padding(
@@ -388,7 +384,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                   PlaceDetailsFavoriteToggled(),
                 );
               },
-              iconColor: isFavorite ? Colors.red : Colors.black,
+              iconColor: isFavorite ? errorColor : appBlack,
               isLight: !_showAppBarTitle,
             ),
             const SizedBox(width: 12),
@@ -412,12 +408,12 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
     return IconButton(
       icon: Icon(
         icon,
-        color: isLight ? Colors.white : iconColor,
+        color: isLight ? appWhite : iconColor,
         size: 24,
         shadows: isLight
             ? [
                 const BoxShadow(
-                  color: Colors.black26,
+                  color: shadowColor,
                   blurRadius: 4,
                   offset: Offset(0, 2),
                 ),
@@ -436,7 +432,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
     return SliverAppBar(
       automaticallyImplyLeading: false,
       expandedHeight: 400,
-      backgroundColor: Colors.black,
+      backgroundColor: appBlack,
       pinned: true,
       stretch: true,
       flexibleSpace: FlexibleSpaceBar(
@@ -470,7 +466,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                     fit: BoxFit.cover,
                     placeholder: (context, url) => const ShimmerBox(),
                     errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[200],
+                      color: appGreyVeryLight,
                       child: const Icon(Icons.image_not_supported),
                     ),
                   ),
@@ -485,9 +481,9 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withAlpha(120),
+                      appBlack.withAlpha(120),
                       Colors.transparent,
-                      Colors.black.withAlpha(200),
+                      appBlack.withAlpha(200),
                     ],
                     stops: const [0.0, 0.4, 1.0],
                   ),
@@ -528,7 +524,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                             ),
                             child: AppText.caption(
                               place.category?.toUpperCase() ?? "DESTINATION",
-                              color: Colors.white,
+                              color: appWhite,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1.2,
                             ),
@@ -536,7 +532,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                           const SizedBox(height: 12),
                           AppText.heading(
                             place.name,
-                            color: Colors.white,
+                            color: appWhite,
                             fontWeight: FontWeight.w900,
                             size: 28,
                             maxLines: 2,
@@ -563,8 +559,8 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                         margin: const EdgeInsets.symmetric(horizontal: 2),
                         decoration: BoxDecoration(
                           color: index == _currentPage
-                              ? Colors.white
-                              : Colors.white.withAlpha(80),
+                              ? appWhite
+                              : appWhite.withAlpha(80),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -612,7 +608,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                   Expanded(
                     child: AppText.body(
                       "${place.city},India",
-                      color: Colors.grey[600],
+                      color: appGrey,
                       fontWeight: FontWeight.w600,
                       size: 14,
                     ),
@@ -624,15 +620,15 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: (place.isOpen ?? false)
-                    ? Colors.green.withAlpha(20)
-                    : Colors.red.withAlpha(20),
+                    ? successColor.withAlpha(20)
+                    : errorColor.withAlpha(20),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: AppText.caption(
                 (place.isOpen ?? false) ? "Open Now" : "Closed",
                 color: (place.isOpen ?? false)
-                    ? Colors.green[700]
-                    : Colors.red[700],
+                    ? successColor
+                    : errorColor,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -647,13 +643,13 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               AppText.body(
                 "Distance: ",
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
+                color: appGrey,
                 size: 14,
               ),
               AppText.body(
                 "${place.distance!.toStringAsFixed(2)} km",
                 fontWeight: FontWeight.w900,
-                color: Colors.grey[600],
+                color: appGrey,
                 size: 14,
               ),
             ],
@@ -742,7 +738,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               padding: const EdgeInsets.only(left: 14, right: 10),
               child: AppText.body(
                 description,
-                color: Colors.grey[800],
+                color: appGreyDark,
                 align: TextAlign.justify,
                 size: 14,
                 height: 1.6,
@@ -933,11 +929,11 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: appWhite,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(10),
+                color: shadowColor,
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -970,12 +966,12 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: const BoxDecoration(
-                            color: Colors.white,
+                            color: appWhite,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.location_on_rounded,
-                            color: Colors.red,
+                            color: errorColor,
                             size: 32,
                           ),
                         ),
@@ -992,11 +988,11 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: appWhite,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withAlpha(10),
+                              color: shadowColor,
                               blurRadius: 4,
                             ),
                           ],
@@ -1036,7 +1032,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                           const SizedBox(height: 4),
                           AppText.caption(
                             place.address ?? "Get directions to this location",
-                            color: Colors.grey[500],
+                            color: appGrey,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1050,7 +1046,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                       label: const Text("Go"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryBlue,
-                        foregroundColor: Colors.white,
+                        foregroundColor: appWhite,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1155,10 +1151,10 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: appWhite,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(10),
+              color: shadowColor,
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -1173,10 +1169,10 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                 decoration: BoxDecoration(
                   color: isBookmarked
                       ? primaryBlue.withAlpha(20)
-                      : Colors.white,
+                      : appWhite,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isBookmarked ? primaryBlue : Colors.grey[300]!,
+                    color: isBookmarked ? primaryBlue : appGreyLight,
                     width: 1.5,
                   ),
                 ),
@@ -1205,7 +1201,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                         isBookmarked
                             ? Icons.bookmark_rounded
                             : Icons.bookmark_border_rounded,
-                        color: isBookmarked ? primaryBlue : Colors.grey[600],
+                        color: isBookmarked ? primaryBlue : appGrey,
                         size: 24,
                       ),
                     ),
@@ -1259,13 +1255,13 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                           children: [
                             const Icon(
                               Icons.near_me_rounded,
-                              color: Colors.white,
+                              color: appWhite,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
                             AppText.button(
                               AppStrings.pdStartMyTrip.toUpperCase(),
-                              color: Colors.white,
+                              color: appWhite,
                               fontWeight: FontWeight.w800,
                               size: 14,
                               letterSpacing: 1.2,

@@ -17,11 +17,11 @@ class AppBottomNav extends StatelessWidget {
     return Container(
       height: 85,
       decoration: BoxDecoration(
-        color: primaryWhite,
+        color: appWhite,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: shadowColor,
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -55,7 +55,7 @@ class AppBottomNav extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isActive ? primaryBlue : Colors.grey[400],
+              color: isActive ? primaryBlue : appGreyLight,
               size: 26,
             ),
             if (isActive)

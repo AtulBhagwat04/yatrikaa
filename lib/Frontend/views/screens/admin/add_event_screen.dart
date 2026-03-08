@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'package:bhatkanti_app/Frontend/core/utils/error_handler.dart';
+import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -84,9 +87,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (_isPickerActive) return;
 
     if (_imageFiles.length >= 3) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Maximum 3 images allowed')));
+      CustomToast.warning(context, 'Maximum 3 images allowed', title: "Hold on!");
       return;
     }
 
@@ -127,8 +128,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: primaryBlue,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
+              onPrimary: appWhite,
+              onSurface: appBlack,
             ),
           ),
           child: child ?? const SizedBox(),
@@ -149,8 +150,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: primaryBlue,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
+              onPrimary: appWhite,
+              onSurface: appBlack,
             ),
           ),
           child: child ?? const SizedBox(),
@@ -248,16 +249,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
       }, _imageFiles.map((x) => File(x.path)).toList());
 
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Event added successfully!')),
-        );
+        CustomToast.success(context, 'Event added successfully!');
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -271,19 +268,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverAppBar(
+          SliverAppBar(automaticallyImplyLeading: false, 
             floating: true,
             pinned: true,
             backgroundColor: onboardingBlueVeryLight,
             elevation: 0,
-            leading: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: appBlack,
-                size: 20,
-              ),
-            ),
             title: AppText.heading(
               "Add New Event",
               size: 22,
@@ -549,11 +538,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appWhite,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: shadowColorLight,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -571,7 +560,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 title.toUpperCase(),
                 size: 13,
                 fontWeight: FontWeight.w800,
-                color: Colors.black,
+                color: appBlack,
                 letterSpacing: 0.5,
               ),
             ],
@@ -642,14 +631,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   onTap: () => _removeImage(index),
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.black54,
+                    decoration: BoxDecoration(
+                      color: appBlack.withAlpha(138),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.close,
                       size: 12,
-                      color: Colors.white,
+                      color: appWhite,
                     ),
                   ),
                 ),
@@ -684,17 +673,17 @@ class _AddEventScreenState extends State<AddEventScreen> {
             keyboardType: isNumber
                 ? const TextInputType.numberWithOptions(decimal: true)
                 : TextInputType.text,
-            style: const TextStyle(
+            style: GoogleFonts.montserrat(
+              color: appBlack.withAlpha(222),
               fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: Colors.black,
+              fontWeight: FontWeight.w600,
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+              hintStyle: GoogleFonts.montserrat(color: appGreyLight, fontSize: 13),
               prefixIcon: Icon(icon, color: primaryBlue, size: 16),
               filled: true,
-              fillColor: onboardingBlueVeryLight.withOpacity(0.5),
+              fillColor: onboardingBlueVeryLight.withAlpha(128),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none,
@@ -717,7 +706,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       child: AppText.caption(
         label,
         fontWeight: FontWeight.w600,
-        color: Colors.black87,
+        color: appBlack.withAlpha(222),
       ),
     );
   }
@@ -732,7 +721,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: onboardingBlueVeryLight.withOpacity(0.5),
+        color: onboardingBlueVeryLight.withAlpha(128),
         borderRadius: BorderRadius.circular(10),
       ),
       child: DropdownButtonHideUnderline(
@@ -744,10 +733,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
             color: primaryBlue,
             size: 18,
           ),
-          style: const TextStyle(
+          style: GoogleFonts.montserrat(
+            color: appBlack.withAlpha(222),
+            fontWeight: FontWeight.w600,
             fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: Colors.black,
           ),
           items: items
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -775,7 +764,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: onboardingBlueVeryLight.withOpacity(0.5),
+          color: onboardingBlueVeryLight.withAlpha(128),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -786,7 +775,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                color: Colors.black,
+                color: appBlack,
               ),
             ),
             const Icon(

@@ -9,18 +9,10 @@ class HelpCenterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
+      backgroundColor: onboardingBlueVeryLight,
+      appBar: AppBar(automaticallyImplyLeading: false, 
+        backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: appBlack,
-            size: 20,
-          ),
-        ),
         title: AppText.subHeading(
           'Help Center',
           color: appBlack,

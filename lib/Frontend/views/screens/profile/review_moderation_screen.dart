@@ -70,18 +70,10 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
+      backgroundColor: onboardingBlueVeryLight,
+      appBar: AppBar(automaticallyImplyLeading: false, 
+        backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: appBlack,
-            size: 20,
-          ),
-        ),
         title: AppText.subHeading(
           'Review Moderation',
           color: appBlack,
@@ -100,7 +92,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppText.body('Error: $_error', color: Colors.red),
+            AppText.body('Error: $_error', color: errorColor),
             TextButton(onPressed: _fetchReviews, child: const Text('Retry')),
           ],
         ),
@@ -114,10 +106,10 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
             Icon(
               Icons.rate_review_outlined,
               size: 64,
-              color: Colors.grey.shade300,
+              color: appGreyLight,
             ),
             const SizedBox(height: 16),
-            AppText.body('No reviews to moderate', color: Colors.grey),
+            AppText.body('No reviews to moderate', color: appGrey),
           ],
         ),
       );
@@ -135,10 +127,10 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: appWhite,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10),
+              BoxShadow(color: shadowColor, blurRadius: 10),
             ],
           ),
           child: Column(
@@ -173,7 +165,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
               AppText.body(
                 review['text'] ?? 'No comment provided',
                 size: 14,
-                color: Colors.grey.shade800,
+                color: appGreyDark,
               ),
               const SizedBox(height: 16),
               Row(
@@ -188,11 +180,11 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
                     icon: Icon(
                       Icons.delete_outline_rounded,
                       size: 18,
-                      color: Colors.red.shade400,
+                      color: errorColor,
                     ),
                     label: Text(
                       'Delete',
-                      style: TextStyle(color: Colors.red.shade400),
+                      style: TextStyle(color: errorColor),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -203,8 +195,8 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF059669),
-                      foregroundColor: Colors.white,
+                      backgroundColor: travelSectionColor,
+                      foregroundColor: appWhite,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -225,17 +217,17 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: ratingColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          const Icon(Icons.star_rounded, color: Colors.orange, size: 14),
+          const Icon(Icons.star_rounded, color: ratingColor, size: 14),
           const SizedBox(width: 4),
           AppText.small(
             rating.toString(),
             fontWeight: FontWeight.bold,
-            color: Colors.orange,
+            color: ratingColor,
           ),
         ],
       ),
@@ -271,7 +263,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
         );
       }
       setState(() => _isLoading = false);

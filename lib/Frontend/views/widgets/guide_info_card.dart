@@ -23,7 +23,7 @@ class GuideInfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: onboardingBlueSoft.withAlpha(50),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[100]!),
+        border: Border.all(color: appGreyVeryLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,7 +42,7 @@ class GuideInfoCard extends StatelessWidget {
             children: [
               AppText.caption(
                 label,
-                color: Colors.grey[500],
+                color: appGrey,
                 fontWeight: FontWeight.w600,
               ),
               const SizedBox(height: 2),

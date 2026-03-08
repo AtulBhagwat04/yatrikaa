@@ -30,6 +30,7 @@ class ApiConstants {
   }
 
   static String getPhotoUrl(String photoReference) {
+    if (photoReference.startsWith('http')) return photoReference;
     return '$baseUrl/places/photo/$photoReference';
   }
 

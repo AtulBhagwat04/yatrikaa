@@ -30,19 +30,19 @@ _RoleConfig _roleConfig(String role) {
       return const _RoleConfig(
         label: 'Super Admin',
         icon: Icons.admin_panel_settings_rounded,
-        color: Color(0xFF7C3AED),
+        color: superAdminColor,
       );
     case 'admin':
       return const _RoleConfig(
         label: 'Admin',
         icon: Icons.verified_user_rounded,
-        color: Color(0xFFDC2626),
+        color: adminColor,
       );
     case 'guide':
       return const _RoleConfig(
         label: 'Verified Guide',
         icon: Icons.verified_rounded,
-        color: Color(0xFF059669),
+        color: guideColor,
       );
     default:
       return const _RoleConfig(
@@ -77,18 +77,8 @@ class ProfileScreen extends StatelessWidget {
             backgroundColor: onboardingBlueVeryLight,
             elevation: 0,
             scrolledUnderElevation: 2,
-            surfaceTintColor: Colors.white,
+            surfaceTintColor: appWhite,
             systemOverlayStyle: SystemUiOverlayStyle.dark,
-            leading: showBackButton
-                ? IconButton(
-                    onPressed: () => Navigator.maybePop(context),
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: appBlack,
-                      size: 20,
-                    ),
-                  )
-                : null,
             automaticallyImplyLeading: false,
             title: AppText.heading(
               authState.name.isEmpty ? 'Profile' : authState.name,
@@ -144,15 +134,6 @@ class ProfileScreen extends StatelessWidget {
                           RouteNames.changePassword,
                         ),
                       ),
-                      _SectionItem(
-                        icon: Icons.notifications_none_rounded,
-                        label: 'Notifications',
-                        color: primaryBlue,
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          RouteNames.notifications,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -167,28 +148,28 @@ class ProfileScreen extends StatelessWidget {
                       _SectionItem(
                         icon: Icons.grid_view_rounded,
                         label: 'My Posts',
-                        color: const Color(0xFF059669),
+                        color: travelSectionColor,
                         onTap: () =>
                             Navigator.pushNamed(context, RouteNames.myPosts),
                       ),
                       _SectionItem(
                         icon: Icons.map_outlined,
                         label: 'My Trips',
-                        color: const Color(0xFF059669),
+                        color: travelSectionColor,
                         onTap: () =>
                             Navigator.pushNamed(context, RouteNames.trips),
                       ),
                       _SectionItem(
                         icon: Icons.favorite_border_rounded,
                         label: 'Liked Places',
-                        color: const Color(0xFF059669),
+                        color: travelSectionColor,
                         onTap: () =>
                             Navigator.pushNamed(context, RouteNames.favorites),
                       ),
                       _SectionItem(
                         icon: Icons.star_border_rounded,
                         label: 'My Reviews',
-                        color: const Color(0xFF059669),
+                        color: travelSectionColor,
                         onTap: () =>
                             Navigator.pushNamed(context, RouteNames.reviews),
                       ),
@@ -209,14 +190,14 @@ class ProfileScreen extends StatelessWidget {
                       _SectionItem(
                         icon: Icons.help_outline_rounded,
                         label: 'Help Center',
-                        color: const Color(0xFF7C3AED),
+                        color: supportSectionColor,
                         onTap: () =>
                             Navigator.pushNamed(context, RouteNames.helpCenter),
                       ),
                       _SectionItem(
                         icon: Icons.privacy_tip_outlined,
                         label: 'Privacy Policy',
-                        color: const Color(0xFF7C3AED),
+                        color: supportSectionColor,
                         onTap: () => Navigator.pushNamed(
                           context,
                           RouteNames.privacyPolicy,
@@ -225,7 +206,7 @@ class ProfileScreen extends StatelessWidget {
                       _SectionItem(
                         icon: Icons.info_outline_rounded,
                         label: 'About Bhatkanti',
-                        color: const Color(0xFF7C3AED),
+                        color: supportSectionColor,
                         onTap: () =>
                             Navigator.pushNamed(context, RouteNames.about),
                       ),
@@ -263,21 +244,21 @@ class ProfileScreen extends StatelessWidget {
               _SectionItem(
                 icon: Icons.dashboard_outlined,
                 label: 'Guide Dashboard',
-                color: const Color(0xFFEA580C),
+                color: guidePanelColor,
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.guideDashboard),
               ),
               _SectionItem(
                 icon: Icons.tour_rounded,
                 label: 'Manage Tours',
-                color: const Color(0xFFEA580C),
+                color: guidePanelColor,
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.manageTours),
               ),
               _SectionItem(
                 icon: Icons.calendar_today_outlined,
                 label: 'Booking Requests',
-                color: const Color(0xFFEA580C),
+                color: guidePanelColor,
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.bookingRequests),
               ),
@@ -297,21 +278,21 @@ class ProfileScreen extends StatelessWidget {
               _SectionItem(
                 icon: Icons.add_location_alt_outlined,
                 label: 'Manage Places',
-                color: const Color(0xFFDC2626),
+                color: adminColor,
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.managePlaces),
               ),
               _SectionItem(
                 icon: Icons.calendar_month_outlined,
                 label: 'Manage Events',
-                color: const Color(0xFFDC2626),
+                color: adminColor,
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.manageEvents),
               ),
               _SectionItem(
                 icon: Icons.rate_review_outlined,
                 label: 'Review Moderation',
-                color: const Color(0xFFDC2626),
+                color: adminColor,
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.reviewModeration),
               ),
@@ -331,20 +312,20 @@ class ProfileScreen extends StatelessWidget {
               _SectionItem(
                 icon: Icons.people_alt_outlined,
                 label: 'User Management',
-                color: const Color(0xFF7C3AED),
+                color: superAdminColor,
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.userManagement),
               ),
               _SectionItem(
                 icon: Icons.analytics_outlined,
                 label: 'Analytics',
-                color: const Color(0xFF7C3AED),
+                color: superAdminColor,
                 onTap: () => Navigator.pushNamed(context, RouteNames.analytics),
               ),
               _SectionItem(
                 icon: Icons.tune_rounded,
                 label: 'System Config',
-                color: const Color(0xFF7C3AED),
+                color: superAdminColor,
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.systemConfig),
               ),
@@ -366,13 +347,13 @@ class ProfileScreen extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
+              decoration: const BoxDecoration(
+                color: errorColorLight,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.logout_rounded,
-                color: Colors.redAccent,
+                color: errorColor,
                 size: 18,
               ),
             ),
@@ -389,7 +370,7 @@ class ProfileScreen extends StatelessWidget {
             child: AppText.caption(
               'Cancel',
               fontWeight: FontWeight.w600,
-              color: Colors.grey,
+              color: appGrey,
             ),
           ),
           ElevatedButton(
@@ -403,8 +384,8 @@ class ProfileScreen extends StatelessWidget {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: errorColor,
+              foregroundColor: appWhite,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -433,11 +414,11 @@ class _ProfileCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.ms),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appWhite,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: shadowColorLight,
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -448,13 +429,13 @@ class _ProfileCard extends StatelessWidget {
           // ── Gradient header strip ──
           Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [onboardingBlue, onboardingBlueSoft],
               ),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: BorderRadius.circular(24),
             ),
             child: Row(
               children: [
@@ -463,16 +444,16 @@ class _ProfileCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.7),
+                      color: appWhite.withAlpha(178),
                       width: 2.5,
                     ),
                   ),
                   child: CircleAvatar(
                     radius: 30,
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: appWhite.withAlpha(51),
                     child: AppText.heading(
                       firstChar,
-                      color: Colors.white,
+                      color: appWhite,
                       size: 24,
                       fontWeight: FontWeight.w800,
                     ),
@@ -485,7 +466,7 @@ class _ProfileCard extends StatelessWidget {
                     children: [
                       AppText.subHeading(
                         state.name.isEmpty ? 'Traveler' : state.name,
-                        color: Colors.white,
+                        color: appWhite,
                         size: 17,
                         fontWeight: FontWeight.w800,
                         maxLines: 1,
@@ -494,55 +475,11 @@ class _ProfileCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       AppText.caption(
                         state.email,
-                        color: Colors.white.withOpacity(0.75),
+                        color: appWhite.withAlpha(191),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── Role badge strip ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: cfg.color.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(cfg.icon, size: 13, color: cfg.color),
-                ),
-                const SizedBox(width: 8),
-                AppText.caption(
-                  cfg.label,
-                  color: cfg.color,
-                  fontWeight: FontWeight.w700,
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: primaryBlue.withOpacity(0.07),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: primaryBlue.withOpacity(0.18)),
-                  ),
-                  child: AppText.small(
-                    'Member',
-                    color: primaryBlue,
-                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -564,11 +501,11 @@ class _StatsRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appWhite,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: shadowColorLight,
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -588,7 +525,7 @@ class _StatsRow extends StatelessWidget {
             icon: Icons.favorite_border_rounded,
             value: '${state.savedCount}',
             label: 'Likes',
-            color: const Color(0xFF059669),
+            color: travelSectionColor,
             onTap: () => Navigator.pushNamed(context, RouteNames.favorites),
           ),
           _verticalDivider(),
@@ -596,7 +533,7 @@ class _StatsRow extends StatelessWidget {
             icon: Icons.star_border_rounded,
             value: '${state.reviewsCount}',
             label: 'Reviews',
-            color: const Color(0xFFFBBF24),
+            color: reviewStatColor,
             onTap: () => Navigator.pushNamed(context, RouteNames.reviews),
           ),
         ],
@@ -605,7 +542,7 @@ class _StatsRow extends StatelessWidget {
   }
 
   Widget _verticalDivider() =>
-      Container(width: 1, height: 36, color: const Color(0xFFE5E7EB));
+      Container(width: 1, height: 36, color: appGreyVeryLight);
 }
 
 class _StatCell extends StatelessWidget {
@@ -642,7 +579,7 @@ class _StatCell extends StatelessWidget {
               ),
               AppText.small(
                 label,
-                color: Colors.grey,
+                color: appGrey,
                 fontWeight: FontWeight.w500,
               ),
             ],
@@ -671,7 +608,7 @@ class _SectionGroup extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: AppText.caption(
               heading.toUpperCase(),
-              color: Colors.grey,
+              color: appGrey,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.1,
               size: 11,
@@ -679,11 +616,11 @@ class _SectionGroup extends StatelessWidget {
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: appWhite,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: shadowColorLight,
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -699,7 +636,7 @@ class _SectionGroup extends StatelessWidget {
                         height: 1,
                         indent: 52,
                         endIndent: 16,
-                        color: Colors.grey.withOpacity(0.1),
+                        color: appGreyVeryLight,
                       ),
                   ],
                 );
@@ -760,7 +697,7 @@ class _SectionItem extends StatelessWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 18,
-                color: Colors.grey.shade400,
+                color: appGreyLight,
               ),
             ],
           ),
@@ -792,7 +729,7 @@ class _LogoutTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
+              border: Border.all(color: errorColor.withOpacity(0.2)),
             ),
             child: Row(
               children: [
@@ -800,20 +737,20 @@ class _LogoutTile extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: errorColorLight,
                     borderRadius: BorderRadius.circular(9),
                   ),
                   child: const Icon(
                     Icons.logout_rounded,
                     size: 16,
-                    color: Colors.redAccent,
+                    color: errorColor,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: AppText.body(
                     'Sign Out',
-                    color: Colors.redAccent,
+                    color: errorColor,
                     fontWeight: FontWeight.w600,
                     size: 15,
                   ),
@@ -821,7 +758,7 @@ class _LogoutTile extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: Colors.redAccent.withOpacity(0.5),
+                  color: errorColor.withOpacity(0.5),
                 ),
               ],
             ),

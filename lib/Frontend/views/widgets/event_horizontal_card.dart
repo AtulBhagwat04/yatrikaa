@@ -26,7 +26,7 @@ class EventHorizontalCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(25),
+            color: shadowColorDark,
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -44,10 +44,10 @@ class EventHorizontalCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => const ShimmerBox(),
                 errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[200],
+                  color: appGreyVeryLight,
                   child: const Icon(
                     Icons.image_not_supported_rounded,
-                    color: Colors.grey,
+                    color: appGrey,
                   ),
                 ),
               ),
@@ -58,8 +58,8 @@ class EventHorizontalCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.1),
-                      Colors.black.withOpacity(0.8),
+                      appBlack.withAlpha(25),
+                      appBlack.withAlpha(200),
                     ],
                     stops: const [0.5, 0.7, 1.0],
                   ),
@@ -80,7 +80,7 @@ class EventHorizontalCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: appBlack.withAlpha(25),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -91,7 +91,7 @@ class EventHorizontalCard extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.calendar_month_rounded,
-                        color: Colors.white,
+                        color: appWhite,
                         size: 12,
                       ),
                       const SizedBox(width: 4),
@@ -100,7 +100,7 @@ class EventHorizontalCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                          color: appWhite,
                         ),
                       ),
                     ],
@@ -120,12 +120,12 @@ class EventHorizontalCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: appWhite.withAlpha(51),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: AppText.caption(
                         event.category.toUpperCase(),
-                        color: Colors.white.withOpacity(0.9),
+                        color: appWhite.withAlpha(230),
                         size: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
@@ -144,14 +144,14 @@ class EventHorizontalCard extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.location_on_rounded,
-                          color: Colors.white.withOpacity(0.8),
+                          color: appWhite.withAlpha(204),
                           size: 12,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: AppText.caption(
                             event.venue,
-                            color: Colors.white.withOpacity(0.9),
+                            color: appWhite.withAlpha(230),
                             fontWeight: FontWeight.w500,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

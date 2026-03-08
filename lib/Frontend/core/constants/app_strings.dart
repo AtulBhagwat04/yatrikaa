@@ -211,4 +211,15 @@ class AppStrings {
   static const String apSaveBtn = "Save Place";
   static const String apSuccessMsg = "Place added successfully!";
   static const String apFillFieldsError = "Please fill all required fields";
+
+  // ================= FRIENDLY ERRORS =================
+  static const String errNoInternet = "No internet connection. Please check your data or Wi-Fi.";
+  static const String errTimeout = "Request timed out. Please try again.";
+  static const String errServer = "Server is temporarily unavailable. We're working on it!";
+  static const String errUnauthorized = "Session expired. Please log in again to continue.";
+  static const String errNotFound = "The requested info could not be found.";
+  static const String errUnexpected = "Something went wrong. Please try again later.";
+  static const String errLocationDenied = "Location permission is required to use this feature.";
+  static const String errInvalidData = "Some information seems incorrect. Please review and try again.";
+  static const String errImageUpload = "Failed to upload image. Please check your internet or try another image.";
 }

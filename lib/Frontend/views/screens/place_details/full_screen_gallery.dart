@@ -40,7 +40,7 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: appWhite,
       body: Column(
         children: [
           // Image Slider & Controls Area
@@ -73,7 +73,7 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                               ),
                             ),
                             errorWidget: (context, url, error) =>
-                                const Icon(Icons.error, color: Colors.white),
+                                const Icon(Icons.error, color: appWhite),
                           ),
                         ),
                       );
@@ -88,7 +88,7 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                   child: IconButton(
                     icon: const Icon(
                       Icons.close,
-                      color: Colors.white,
+                      color: appWhite,
                       size: 28,
                     ),
                     onPressed: () => Navigator.pop(context),
@@ -105,12 +105,12 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(150),
+                      color: overlayColor,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: AppText.body(
                       "${_currentIndex + 1} / ${widget.imageUrls.length}",
-                      color: Colors.white,
+                      color: appWhite,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -131,13 +131,13 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                 bottom: 24,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: appWhite,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withAlpha(50),
+                    color: shadowColorDark,
                     blurRadius: 15,
                     offset: const Offset(0, -5),
                   ),
@@ -181,7 +181,7 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                                             (s) => s != null && s.isNotEmpty,
                                           )
                                           .join(", "),
-                                      color: Colors.grey[600],
+                                      color: appGrey,
                                       size: 15,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -199,21 +199,21 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF9C4), // Light yellow
+                            color: ratingColorLight,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             children: [
                               const Icon(
                                 Icons.star_rounded,
-                                color: Colors.amber,
+                                color: ratingColor,
                                 size: 20,
                               ),
                               const SizedBox(width: 4),
                               AppText.body(
                                 widget.place.rating.toString(),
                                 fontWeight: FontWeight.w800,
-                                color: Colors.orange[800],
+                                color: ratingColorDark,
                               ),
                             ],
                           ),
@@ -248,13 +248,13 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                                 children: [
                                   AppText.caption(
                                     "Distance",
-                                    color: Colors.grey[500],
+                                    color: appGrey,
                                     fontWeight: FontWeight.w600,
                                   ),
                                   AppText.body(
                                     "${widget.place.distance!.toStringAsFixed(2)} km",
                                     fontWeight: FontWeight.w900,
-                                    color: Colors.grey[800],
+                                    color: appGreyDark,
                                   ),
                                 ],
                               ),
@@ -269,13 +269,13 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                           ),
                           decoration: BoxDecoration(
                             color: (widget.place.isOpen ?? false)
-                                ? Colors.green.withAlpha(20)
-                                : Colors.red.withAlpha(20),
+                                ? successColor.withAlpha(20)
+                                : errorColor.withAlpha(20),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: (widget.place.isOpen ?? false)
-                                  ? Colors.green.withAlpha(50)
-                                  : Colors.red.withAlpha(50),
+                                  ? successColor.withAlpha(50)
+                                  : errorColor.withAlpha(50),
                             ),
                           ),
                           child: AppText.caption(
@@ -283,8 +283,8 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                                 ? "Open Now"
                                 : "Closed",
                             color: (widget.place.isOpen ?? false)
-                                ? Colors.green[700]
-                                : Colors.red[700],
+                                ? successColor
+                                : errorColor,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.5,
                           ),

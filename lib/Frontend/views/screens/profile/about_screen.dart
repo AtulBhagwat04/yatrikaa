@@ -9,18 +9,10 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
+      backgroundColor: onboardingBlueVeryLight,
+      appBar: AppBar(automaticallyImplyLeading: false, 
+        backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: appBlack,
-            size: 20,
-          ),
-        ),
         title: AppText.subHeading(
           'About Bhatkanti',
           color: appBlack,
@@ -89,8 +81,15 @@ class AboutScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F6FA),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [

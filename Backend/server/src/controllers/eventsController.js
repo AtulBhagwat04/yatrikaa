@@ -7,12 +7,10 @@ class EventsController {
    */
   addEvent = async (req, res, next) => {
     try {
-      console.log('--- Incoming Add Event Request ---');
       let body = this._parseEventBody(req.body);
 
       // If files are uploaded, upload them to Cloudinary
       if (req.files && req.files.length > 0) {
-        console.log(`Uploading ${req.files.length} images...`);
         // Sanitize folder name: remove special chars, keep alphanumeric and underscores
         const safeTitle = String(body.title || 'unnamed')
           .trim()
@@ -24,15 +22,11 @@ class EventsController {
         const uploadPromises = req.files.map(file => uploadImage(file, folderName));
         const results = await Promise.all(uploadPromises);
         body.images = results.map(res => res.secure_url);
-        console.log('Images uploaded successfully:', body.images.length);
       }
 
       body.createdBy = req.user ? req.user._id : null;
 
-      console.log(`Creating event: "${body.title || 'Untitled'}" by ${req.user ? req.user.name : 'Unknown'}`);
       const event = await Event.create(body);
-      
-      console.log('Event created successfully with ID:', event._id);
       res.status(201).json({
         status: "OK",
         result: event
@@ -92,9 +86,9 @@ class EventsController {
   editEvent = async (req, res, next) => {
     const { id } = req.params;
     try {
-      console.log('--- Incoming Edit Event Request ---');
       let body = this._parseEventBody(req.body);
 
+      // Merge with existing images if any new ones are uploaded
       if (req.files && req.files.length > 0) {
         const safeTitle = String(body.title || 'unnamed')
           .trim()
@@ -104,14 +98,22 @@ class EventsController {
         const folderName = `Bhatkanti/Events/${safeTitle}`;
         const uploadPromises = req.files.map(file => uploadImage(file, folderName));
         const results = await Promise.all(uploadPromises);
-        body.images = results.map(res => res.secure_url);
+        const newImages = results.map(res => res.secure_url);
+        
+        // Merge with existing/updated images list from body
+        let existingImages = Array.isArray(body.images) ? body.images : [];
+        body.images = [...existingImages, ...newImages];
+        console.log(`Merged ${newImages.length} new images with ${existingImages.length} existing ones.`);
       }
 
-      console.log(`Updating event: ${id} ("${body.title || 'no title change'}")`);
+      // Update based on the parsed body
       const event = await Event.findByIdAndUpdate(id, body, { new: true, runValidators: true });
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
+
+      console.log(`Event updated: ${event.title}, total images: ${event.images.length}`);
+
       res.status(200).json({
         status: "OK",
         result: event
@@ -200,12 +202,22 @@ class EventsController {
     if (!body) return {};
     let parsedBody = { ...body };
 
-    // Parse geometry if sent as a JSON string
+    // Parse JSON arrays/objects
     if (parsedBody.geometry && typeof parsedBody.geometry === 'string') {
       try {
         parsedBody.geometry = JSON.parse(parsedBody.geometry);
       } catch (e) {
-        console.warn('Failed to parse geometry JSON, keeping as string');
+        console.warn('Failed to parse geometry JSON');
+      }
+    }
+    // Handle common fields 'images' or 'existing_images' (renamed by frontend to avoid collision)
+    const imagesField = parsedBody.existing_images ? 'existing_images' : 'images';
+    if (parsedBody[imagesField] && typeof parsedBody[imagesField] === 'string') {
+      try {
+        parsedBody.images = JSON.parse(parsedBody[imagesField]);
+        delete parsedBody.existing_images; // Standardize to 'images'
+      } catch (e) {
+        console.warn('Failed to parse images JSON');
       }
     }
 

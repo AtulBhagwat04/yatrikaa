@@ -17,12 +17,12 @@ class PlaceNearbyCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.m),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: appWhite,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
+            color: shadowColorLight,
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -58,12 +58,12 @@ class PlaceNearbyCard extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withAlpha(150),
+                            color: overlayColor,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: AppText.small(
                             "${place.distance!.toStringAsFixed(1)}km",
-                            color: Colors.white,
+                            color: appWhite,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -109,7 +109,7 @@ class PlaceNearbyCard extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.location_on_rounded,
-                            color: Colors.grey,
+                            color: appGrey,
                             size: 14,
                           ),
                           const SizedBox(width: 4),
@@ -118,7 +118,7 @@ class PlaceNearbyCard extends StatelessWidget {
                               [place.city, place.state]
                                   .where((s) => s != null && s.isNotEmpty)
                                   .join(", "),
-                              color: Colors.grey[500],
+                              color: appGrey,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -148,7 +148,7 @@ class PlaceNearbyCard extends StatelessWidget {
                           children: [
                             const Icon(
                               Icons.star_rounded,
-                              color: Colors.amber,
+                              color: ratingColor,
                               size: 16,
                             ),
                             const SizedBox(width: 4),
@@ -158,7 +158,7 @@ class PlaceNearbyCard extends StatelessWidget {
                             ),
                             AppText.caption(
                               " (${place.userRatingsTotal ?? 0})",
-                              color: Colors.grey[400],
+                              color: appGreyLight,
                             ),
                           ],
                         ),

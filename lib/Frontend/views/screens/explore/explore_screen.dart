@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
@@ -10,7 +11,6 @@ import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
 import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/category_chip.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -103,7 +103,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: _buildSearchBar(),
             ),
             _buildCategoryRow(),
-            Expanded(child: _buildGrid()),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _fetchPlaces,
+                color: primaryBlue,
+                backgroundColor: appWhite,
+                child: _buildGrid(),
+              ),
+            ),
           ],
         ),
       ),
@@ -125,7 +132,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const SizedBox(height: 4),
           AppText.body(
             'Discover amazing places around you',
-            color: Colors.grey.shade500,
+            color: appGrey,
             size: 14,
           ),
         ],
@@ -141,26 +148,26 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: appWhite,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: shadowColorLight,
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: TextField(
           controller: _searchController,
           onChanged: (_) => _applyFilter(),
-          style: const TextStyle(fontSize: 14),
+          style: GoogleFonts.montserrat(fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Search places, forts, beaches...',
-            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            hintStyle: GoogleFonts.montserrat(color: appGreyLight, fontSize: 14),
             prefixIcon: Icon(
               Icons.search_rounded,
-              color: Colors.grey.shade400,
+              color: appGreyLight,
               size: 20,
             ),
             suffixIcon: _searchController.text.isNotEmpty
@@ -173,11 +180,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   )
                 : Icon(
                     Icons.tune_rounded,
-                    color: Colors.grey.shade300,
+                    color: appGreyVeryLight,
                     size: 18,
                   ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: appWhite,
             contentPadding: const EdgeInsets.symmetric(
               vertical: 14,
               horizontal: 16,
@@ -231,10 +238,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
             Icon(
               Icons.search_off_rounded,
               size: 64,
-              color: Colors.grey.shade300,
+              color: appGreyVeryLight,
             ),
             const SizedBox(height: 16),
-            AppText.body('No places found', color: Colors.grey),
+            AppText.body('No places found', color: appGrey),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () {
@@ -286,7 +293,7 @@ class _PlaceCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: shadowColor,
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -301,13 +308,14 @@ class _PlaceCard extends StatelessWidget {
               CachedNetworkImage(
                 imageUrl: place.photoUrl,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => const ShimmerBox(),
+                placeholder: (context, url) =>
+                    Container(color: appGreyVeryLight, height: 260),
                 errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[100],
+                  color: appGreyVeryLight,
+                  height: 260,
                   child: const Icon(
                     Icons.image_not_supported_outlined,
-                    color: Colors.grey,
-                    size: 32,
+                    color: appGrey,
                   ),
                 ),
               ),
@@ -320,8 +328,8 @@ class _PlaceCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.1),
-                      Colors.black.withOpacity(0.7),
+                      appBlack.withAlpha(25),
+                      appBlack.withAlpha(178),
                     ],
                     stops: const [0.5, 0.7, 1.0],
                   ),
@@ -339,14 +347,14 @@ class _PlaceCard extends StatelessWidget {
                       place.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: GoogleFonts.montserrat(
                         fontWeight: FontWeight.w800,
                         fontSize: 14,
-                        color: Colors.white,
+                        color: appWhite,
                         letterSpacing: 0.2,
                         shadows: [
-                          Shadow(
-                            color: Colors.black45,
+                          const Shadow(
+                            color: appBlack,
                             offset: Offset(0, 1),
                             blurRadius: 2,
                           ),
@@ -366,7 +374,7 @@ class _PlaceCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               place.city ?? place.category ?? '',
-                              style: TextStyle(
+                              style: GoogleFonts.montserrat(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white.withOpacity(0.9),

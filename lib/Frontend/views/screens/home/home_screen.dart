@@ -27,6 +27,8 @@ import 'package:bhatkanti_app/Frontend/views/widgets/category_chip.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/app_bottom_nav.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
 import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
+import 'package:bhatkanti_app/Frontend/core/services/notification_service.dart';
+
 
 // ─── HomeScreen — StatefulWidget shell with local tab index ─────────────────
 class HomeScreen extends StatefulWidget {
@@ -41,6 +43,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // HomeBloc lives here — survives tab switches without re-initialising
   late final HomeBloc _homeBloc;
+  DateTime? _lastBackPressTime;
+
+  Future<void> _handlePop(bool didPop) async {
+    if (didPop) return;
+
+    if (_selectedIndex != 0) {
+      setState(() => _selectedIndex = 0);
+      return;
+    }
+
+    final now = DateTime.now();
+    if (_lastBackPressTime == null ||
+        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Press back again to exit'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+    SystemNavigator.pop();
+  }
 
   @override
   void initState() {
@@ -63,24 +91,28 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _homeBloc,
-      child: Scaffold(
-        backgroundColor: onboardingBlueVeryLight,
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: [
-            _HomeTab(onGoExplore: () => _onTabTap(1)),
-            const ExploreScreen(),
-            const CommunityScreen(),
-            FavoritesScreen(
-              showBackButton: false,
-              onGoExplore: () => _onTabTap(1),
-            ),
-            const ProfileScreen(showBackButton: false),
-          ],
-        ),
-        bottomNavigationBar: AppBottomNav(
-          selectedIndex: _selectedIndex,
-          onItemSelected: _onTabTap,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) => _handlePop(didPop),
+        child: Scaffold(
+          backgroundColor: onboardingBlueVeryLight,
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              _HomeTab(onGoExplore: () => _onTabTap(1)),
+              const ExploreScreen(),
+              const CommunityScreen(),
+              FavoritesScreen(
+                showBackButton: false,
+                onGoExplore: () => _onTabTap(1),
+              ),
+              const ProfileScreen(showBackButton: false),
+            ],
+          ),
+          bottomNavigationBar: AppBottomNav(
+            selectedIndex: _selectedIndex,
+            onItemSelected: _onTabTap,
+          ),
         ),
       ),
     );
@@ -90,9 +122,30 @@ class _HomeScreenState extends State<HomeScreen> {
 // ─── Custom Bottom Navigation Bar ────────────────────────────────────────────
 
 // ─── Home Tab ─────────────────────────────────────────────────────────────────
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends StatefulWidget {
   final VoidCallback onGoExplore;
   const _HomeTab({required this.onGoExplore});
+
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  final NotificationService _notificationService = NotificationService();
+  bool _hasNewNotifications = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkNotifications();
+  }
+
+  Future<void> _checkNotifications() async {
+    final result = await _notificationService.hasUnreadNotifications();
+    if (mounted) {
+      setState(() => _hasNewNotifications = result);
+    }
+  }
 
   String _greeting() {
     final h = DateTime.now().hour;
@@ -120,11 +173,12 @@ class _HomeTab extends StatelessWidget {
                 child: RefreshIndicator(
                   onRefresh: () async {
                     context.read<HomeBloc>().add(HomeStarted());
+                    await _checkNotifications();
                     // Wait a bit for the animation to look natural
                     await Future.delayed(const Duration(milliseconds: 800));
                   },
                   color: primaryBlue,
-                  backgroundColor: Colors.white,
+                  backgroundColor: appWhite,
                   child: ListView(
                     physics: const BouncingScrollPhysics(
                       parent: AlwaysScrollableScrollPhysics(),
@@ -137,10 +191,14 @@ class _HomeTab extends StatelessWidget {
                           greeting: _greeting(),
                           role: role,
                           userInitial: initial,
-                          onNotificationTap: () => Navigator.pushNamed(
-                            context,
-                            RouteNames.notifications,
-                          ),
+                          hasNewNotifications: _hasNewNotifications,
+                          onNotificationTap: () async {
+                            await Navigator.pushNamed(
+                              context,
+                              RouteNames.notifications,
+                            );
+                            _checkNotifications(); // Refresh dot when returning
+                          },
                           onProfileTap: () =>
                               Navigator.pushNamed(context, RouteNames.profile),
                         ),
@@ -155,11 +213,11 @@ class _HomeTab extends StatelessWidget {
                           location: state.currentLocation,
                           isLoading: state.isLoadingLocation,
                           onTap: () => context.read<HomeBloc>().add(
-                            HomeLocationRefreshRequested(),
-                          ),
+                                HomeLocationRefreshRequested(),
+                              ),
                           onRefresh: () => context.read<HomeBloc>().add(
-                            HomeLocationRefreshRequested(),
-                          ),
+                                HomeLocationRefreshRequested(),
+                              ),
                         ),
                       ),
 
@@ -176,7 +234,7 @@ class _HomeTab extends StatelessWidget {
                             ? AppStrings.popularPlaces
                             : '${AppStrings.famousPrefix}${state.selectedCategory}',
                         actionLabel: 'See all',
-                        onTap: onGoExplore,
+                        onTap: widget.onGoExplore,
                       ),
 
                       const SizedBox(height: AppSpacing.ms),
@@ -188,7 +246,7 @@ class _HomeTab extends StatelessWidget {
                       SectionTitle(
                         title: AppStrings.popularEvents,
                         actionLabel: 'See all',
-                        onTap: onGoExplore,
+                        onTap: widget.onGoExplore,
                       ),
 
                       const SizedBox(height: AppSpacing.ms),
@@ -200,7 +258,7 @@ class _HomeTab extends StatelessWidget {
                       SectionTitle(
                         title: AppStrings.nearbyPopularPlaces,
                         actionLabel: 'See all',
-                        onTap: onGoExplore,
+                        onTap: widget.onGoExplore,
                       ),
 
                       const SizedBox(height: AppSpacing.ms),
@@ -265,14 +323,14 @@ class _HomeTab extends StatelessWidget {
       return Container(
         height: 220,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: appWhite,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.search_off_rounded, color: Colors.grey[300], size: 48),
+              Icon(Icons.search_off_rounded, color: appGreyVeryLight, size: 48),
               const SizedBox(height: 12),
               AppText.caption(AppStrings.noPlacesFound),
             ],
@@ -328,14 +386,14 @@ class _HomeTab extends StatelessWidget {
       return Container(
         height: 180,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: appWhite,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.event_busy_rounded, color: Colors.grey[300], size: 48),
+              Icon(Icons.event_busy_rounded, color: appGreyVeryLight, size: 48),
               const SizedBox(height: 12),
               AppText.caption(AppStrings.noEventsFound),
             ],
@@ -395,7 +453,7 @@ class _HomeTab extends StatelessWidget {
       return Container(
         height: 100,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: appWhite,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Center(child: AppText.caption(AppStrings.noPlacesFound)),

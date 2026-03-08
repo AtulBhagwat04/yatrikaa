@@ -153,6 +153,12 @@ class PlacesController {
   async getPhoto(req, res) {
     const { photoReference } = req.params;
     const { maxwidth } = req.query;
+
+    // If photoReference is already a full URL (e.g. Cloudinary), redirect directly
+    if (photoReference.startsWith('http')) {
+      return res.redirect(photoReference);
+    }
+
     // Just redirect to Google Photos URL
     const url = googlePlacesService.getPhotoUrl(photoReference, maxwidth);
     res.redirect(url);
@@ -204,7 +210,47 @@ class PlacesController {
 
   async editPlace(req, res, next) {
     try {
-      const place = await Place.findOneAndUpdate({ place_id: req.params.id }, req.body, { new: true });
+      const { uploadImage } = require('../services/cloudinaryService');
+      let body = { ...req.body };
+
+      // Multi-part form-data sends everything as strings. Parse nested JSON.
+      const jsonFields = ['geometry', 'opening_hours', 'facilities', 'types', 'photos', 'images'];
+      jsonFields.forEach(field => {
+        if (typeof body[field] === 'string' && body[field].trim() !== '') {
+          try {
+            body[field] = JSON.parse(body[field]);
+          } catch (e) {
+            console.warn(`Failed to parse ${field} JSON`);
+            // If it's supposed to be an array but parsing failed, initialize as empty array
+            if (['photos', 'images', 'facilities', 'types'].includes(field)) {
+              body[field] = [];
+            }
+          }
+        }
+      });
+      
+      if (typeof body.rating === 'string') body.rating = parseFloat(body.rating);
+      if (typeof body.user_ratings_total === 'string') body.user_ratings_total = parseInt(body.user_ratings_total);
+      if (body.parking_available === 'true') body.parking_available = true;
+      if (body.parking_available === 'false') body.parking_available = false;
+      if (body.photography_allowed === 'true') body.photography_allowed = true;
+      if (body.photography_allowed === 'false') body.photography_allowed = false;
+
+      // If a file is uploaded, upload to Cloudinary and append to photos/images
+      if (req.file) {
+        const folderName = `Bhatkanti/Places/${(body.name || 'unnamed').replace(/\s+/g, '_')}`;
+        const result = await uploadImage(req.file, folderName);
+        const newPhoto = {
+          photo_reference: result.secure_url,
+          width: result.width,
+          height: result.height
+        };
+        
+        body.photos = Array.isArray(body.photos) ? [...body.photos, newPhoto] : [newPhoto];
+        body.images = Array.isArray(body.images) ? [...body.images, result.secure_url] : [result.secure_url];
+      }
+
+      const place = await Place.findOneAndUpdate({ place_id: req.params.id }, body, { new: true });
       if (!place) return res.status(404).json({ error: "Place not found" });
       res.status(200).json({ status: "OK", result: place });
     } catch (error) {
@@ -259,9 +305,6 @@ class PlacesController {
       if (places.length < favoriteIds.length) {
         const foundIds = places.map(p => p.place_id);
         const missingIds = favoriteIds.filter(id => !foundIds.includes(id));
-        
-        console.log(`Checking ${missingIds.length} missing favorite places for user ${user.email}`);
-
         for (const missingId of missingIds) {
           try {
             // Fetch from Google
@@ -320,7 +363,6 @@ class PlacesController {
         const dbPlace = await Place.findOne({ place_id: placeId });
         if (!dbPlace) {
           try {
-            console.log(`Auto-creating place ${placeId} (${placeData.name})`);
             const newPlace = {
               place_id: placeId,
               name: placeData.name,
@@ -355,8 +397,6 @@ class PlacesController {
       user.savedCount = user.favoritePlaces.length;
       
       await user.save();
-      console.log(`User ${user.email} favoritePlaces updated. Count: ${user.savedCount}`);
-
       res.status(200).json({
         status: "OK",
         isFavorite,
