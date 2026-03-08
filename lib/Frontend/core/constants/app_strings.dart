@@ -22,9 +22,11 @@ class AppStrings {
   static const String locationUnavailable = "Location unavailable";
 
   static const String popularPlaces = "Popular Places";
+  static const String popularEvents = "Popular Events";
   static const String famousPrefix = "Popular ";
   static const String nearbyPopularPlaces = "Nearby Popular Places";
   static const String noPlacesFound = "No places found";
+  static const String noEventsFound = "No events found";
 
   static const String badgeFamous = "FAMOUS";
   static const String nearbyAttraction = "Nearby Attraction";
@@ -50,7 +52,7 @@ class AppStrings {
   static const String navHome = "Home";
   static const String navNearby = "Explore";
   static const String navCommunity = "Community";
-  static const String navSaved = "Saved";
+  static const String navSaved = "Favorites";
   static const String navProfile = "Profile";
 
   // ================= ONBOARDING =================
@@ -63,7 +65,7 @@ class AppStrings {
 
   static const String onboardingTitle2 = "Plan your journey";
   static const String onboardingSubTitle2 =
-      "Create routes, Save places, and Organize your trips smartly.";
+      "Create routes, favorite places, and organize your trips smartly.";
 
   static const String onboardingTitle3 = "Travel together";
   static const String onboardingSubTitle3 =

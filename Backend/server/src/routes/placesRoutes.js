@@ -19,4 +19,8 @@ router.delete('/:id', protect, authorize('admin', 'super-admin'), (req, res, nex
 // Moderation
 router.delete('/:placeId/reviews/:authorName/:time', protect, authorize('admin', 'super-admin'), (req, res, next) => placesController.deleteReview(req, res, next));
 
+// Favorites
+router.get('/favorites', protect, (req, res, next) => placesController.getFavoritePlaces(req, res, next));
+router.post('/toggle-favorite', protect, (req, res, next) => placesController.toggleFavorite(req, res, next));
+
 module.exports = router;

@@ -35,6 +35,14 @@ const userSchema = new mongoose.Schema({
   reviewsCount: {
     type: Number,
     default: 0
+  },
+  postsCount: {
+    type: Number,
+    default: 0
+  },
+  favoritePlaces: {
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true

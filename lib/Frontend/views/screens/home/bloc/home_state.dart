@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
+import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
 
 enum HomeStatus { initial, loading, success, failure }
 
@@ -11,8 +12,10 @@ class HomeState extends Equatable {
   final int selectedIndex;
   final List<PlaceModel> recommendedPlaces;
   final List<PlaceModel> nearbyPlaces;
+  final List<EventModel> popularEvents;
   final bool isLoadingRecommended;
   final bool isLoadingNearby;
+  final bool isLoadingEvents;
   final String? errorMessage;
 
   const HomeState({
@@ -21,10 +24,12 @@ class HomeState extends Equatable {
     this.isLoadingLocation = true,
     this.selectedCategory = "All",
     this.selectedIndex = 0,
-    this.recommendedPlaces = const [],
-    this.nearbyPlaces = const [],
+    this.recommendedPlaces = const <PlaceModel>[],
+    this.nearbyPlaces = const <PlaceModel>[],
+    this.popularEvents = const <EventModel>[],
     this.isLoadingRecommended = true,
     this.isLoadingNearby = true,
+    this.isLoadingEvents = true,
     this.errorMessage,
   });
 
@@ -36,8 +41,10 @@ class HomeState extends Equatable {
     int? selectedIndex,
     List<PlaceModel>? recommendedPlaces,
     List<PlaceModel>? nearbyPlaces,
+    List<EventModel>? popularEvents,
     bool? isLoadingRecommended,
     bool? isLoadingNearby,
+    bool? isLoadingEvents,
     String? errorMessage,
   }) {
     return HomeState(
@@ -48,8 +55,10 @@ class HomeState extends Equatable {
       selectedIndex: selectedIndex ?? this.selectedIndex,
       recommendedPlaces: recommendedPlaces ?? this.recommendedPlaces,
       nearbyPlaces: nearbyPlaces ?? this.nearbyPlaces,
+      popularEvents: popularEvents ?? this.popularEvents,
       isLoadingRecommended: isLoadingRecommended ?? this.isLoadingRecommended,
       isLoadingNearby: isLoadingNearby ?? this.isLoadingNearby,
+      isLoadingEvents: isLoadingEvents ?? this.isLoadingEvents,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
@@ -63,8 +72,10 @@ class HomeState extends Equatable {
     selectedIndex,
     recommendedPlaces,
     nearbyPlaces,
+    popularEvents,
     isLoadingRecommended,
     isLoadingNearby,
+    isLoadingEvents,
     errorMessage,
   ];
 }

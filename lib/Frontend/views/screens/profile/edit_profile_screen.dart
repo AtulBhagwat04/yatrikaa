@@ -54,14 +54,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
 
         if (mounted) {
+          final currentAuthState = context.read<AuthBloc>().state;
+          final int currentPostsCount = currentAuthState is Authenticated
+              ? currentAuthState.postsCount
+              : 0;
+
           context.read<AuthBloc>().add(
             LoggedIn(
-              role: data['role'],
-              name: data['name'],
-              email: data['email'],
-              tripsCount: (data['tripsCount'] as num?)?.toInt() ?? 0,
-              savedCount: (data['savedCount'] as num?)?.toInt() ?? 0,
-              reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
+              id:
+                  (data['id'] ??
+                          (currentAuthState is Authenticated
+                              ? currentAuthState.id
+                              : ''))
+                      .toString(),
+              role:
+                  (data['role'] ??
+                          (currentAuthState is Authenticated
+                              ? currentAuthState.role
+                              : 'user'))
+                      .toString(),
+              name:
+                  (data['name'] ??
+                          (currentAuthState is Authenticated
+                              ? currentAuthState.name
+                              : ''))
+                      .toString(),
+              email:
+                  (data['email'] ??
+                          (currentAuthState is Authenticated
+                              ? currentAuthState.email
+                              : ''))
+                      .toString(),
+              tripsCount:
+                  (data['tripsCount'] as num?)?.toInt() ??
+                  (currentAuthState is Authenticated
+                      ? currentAuthState.tripsCount
+                      : 0),
+              savedCount:
+                  (data['savedCount'] as num?)?.toInt() ??
+                  (currentAuthState is Authenticated
+                      ? currentAuthState.savedCount
+                      : 0),
+              reviewsCount:
+                  (data['reviewsCount'] as num?)?.toInt() ??
+                  (currentAuthState is Authenticated
+                      ? currentAuthState.reviewsCount
+                      : 0),
+              postsCount:
+                  (data['postsCount'] as num?)?.toInt() ?? currentPostsCount,
             ),
           );
 

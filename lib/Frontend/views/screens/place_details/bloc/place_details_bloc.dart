@@ -125,10 +125,13 @@ class PlaceDetailsBloc extends Bloc<PlaceDetailsEvent, PlaceDetailsState> {
           distance: distanceKm,
         );
 
+        final isFavorite = await _placesService.checkIfFavorite(event.placeId);
+
         emit(
           state.copyWith(
             status: PlaceDetailsStatus.success,
             place: detailedPlace,
+            isFavorite: isFavorite,
           ),
         );
       } else {
@@ -149,10 +152,37 @@ class PlaceDetailsBloc extends Bloc<PlaceDetailsEvent, PlaceDetailsState> {
     }
   }
 
-  void _onFavoriteToggled(
+  Future<void> _onFavoriteToggled(
     PlaceDetailsFavoriteToggled event,
     Emitter<PlaceDetailsState> emit,
-  ) {
-    emit(state.copyWith(isFavorite: !state.isFavorite));
+  ) async {
+    final newStatus = !state.isFavorite;
+    emit(state.copyWith(isFavorite: newStatus));
+
+    if (state.place != null) {
+      try {
+        final result = await _placesService.toggleFavorite(
+          state.place!.id,
+          place: state.place,
+        );
+        final isNowFavorite = result['isFavorite'] ?? newStatus;
+        emit(
+          state.copyWith(
+            isFavorite: isNowFavorite,
+            toastMessage: isNowFavorite
+                ? "Added to Liked Places"
+                : "Removed from Liked Places",
+          ),
+        );
+      } catch (e) {
+        // Rollback on failure
+        emit(
+          state.copyWith(
+            isFavorite: !newStatus,
+            toastMessage: "Error updating favorites",
+          ),
+        );
+      }
+    }
   }
 }

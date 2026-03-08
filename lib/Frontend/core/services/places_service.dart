@@ -195,4 +195,65 @@ class PlacesService {
       rethrow;
     }
   }
+
+  Future<List<PlaceModel>> getFavoritePlaces() async {
+    try {
+      final token = await _authService.getToken();
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/places/favorites'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        return results.map((json) => PlaceModel.fromJson(json)).toList();
+      } else {
+        throw Exception("Failed to fetch favorites");
+      }
+    } catch (e) {
+      print('Error fetching favorites: $e');
+      return [];
+    }
+  }
+
+  Future<bool> checkIfFavorite(String placeId) async {
+    try {
+      final favorites = await getFavoritePlaces();
+      return favorites.any((p) => p.id == placeId);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> toggleFavorite(
+    String placeId, {
+    PlaceModel? place,
+  }) async {
+    try {
+      final token = await _authService.getToken();
+      final body = {
+        'placeId': placeId,
+        if (place != null) 'placeData': place.toJson(),
+      };
+
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/places/toggle-favorite'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception("Failed to toggle favorite");
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      rethrow;
+    }
+  }
 }

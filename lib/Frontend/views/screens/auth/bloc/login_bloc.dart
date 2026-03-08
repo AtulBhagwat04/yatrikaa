@@ -20,12 +20,14 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       final response = await _authService.login(event.email, event.password);
       emit(
         LoginSuccess(
+          id: response['id'] ?? '',
           role: response['role'] ?? 'user',
           name: response['name'] ?? 'Traveler',
           email: response['email'] ?? event.email,
-          tripsCount: response['tripsCount'] ?? 0,
-          savedCount: response['savedCount'] ?? 0,
-          reviewsCount: response['reviewsCount'] ?? 0,
+          tripsCount: (response['tripsCount'] as num?)?.toInt() ?? 0,
+          savedCount: (response['savedCount'] as num?)?.toInt() ?? 0,
+          reviewsCount: (response['reviewsCount'] as num?)?.toInt() ?? 0,
+          postsCount: (response['postsCount'] as num?)?.toInt() ?? 0,
         ),
       );
     } catch (e) {

@@ -6,27 +6,39 @@ import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/services/post_service.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
-import '../../../../core/widgets/custom_toast.dart';
+import 'package:bhatkanti_app/Frontend/core/models/post_model.dart';
+import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
 
-class CreatePostSheet extends StatefulWidget {
-  const CreatePostSheet({super.key});
+class EditPostSheet extends StatefulWidget {
+  final PostModel post;
+  const EditPostSheet({super.key, required this.post});
 
   @override
-  State<CreatePostSheet> createState() => _CreatePostSheetState();
+  State<EditPostSheet> createState() => _EditPostSheetState();
 }
 
-class _CreatePostSheetState extends State<CreatePostSheet> {
-  final _captionController = TextEditingController();
-  final _locationController = TextEditingController();
+class _EditPostSheetState extends State<EditPostSheet> {
+  late TextEditingController _captionController;
+  late TextEditingController _locationController;
   final _postService = PostService();
   final _picker = ImagePicker();
   XFile? _imageFile;
   bool _isLoading = false;
   bool _isPickerActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _captionController = TextEditingController(text: widget.post.caption);
+    _locationController = TextEditingController(text: widget.post.location);
+  }
+
+  @override
+  void dispose() {
+    _captionController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickImage() async {
     if (_isPickerActive) return;
@@ -49,20 +61,16 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
     }
   }
 
-  Future<void> _createPost() async {
+  Future<void> _updatePost() async {
     if (_captionController.text.isEmpty || _locationController.text.isEmpty) {
       CustomToast.warning(context, AppStrings.commFillFieldsError);
       return;
     }
 
-    if (_imageFile == null) {
-      CustomToast.warning(context, AppStrings.commUploadImageError);
-      return;
-    }
-
     setState(() => _isLoading = true);
 
-    final success = await _postService.createPost(
+    final updatedPost = await _postService.updatePost(
+      postId: widget.post.id,
       location: _locationController.text,
       caption: _captionController.text,
       imageFile: _imageFile,
@@ -70,20 +78,14 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
 
     setState(() => _isLoading = false);
 
-    if (success != null) {
+    if (updatedPost != null) {
       if (mounted) {
-        final authState = context.read<AuthBloc>().state;
-        if (authState is Authenticated) {
-          context.read<AuthBloc>().add(
-            UpdateAuthCounts(postsCount: authState.postsCount + 1),
-          );
-        }
-        CustomToast.success(context, "Post created successfully!");
-        Navigator.pop(context, true);
+        CustomToast.success(context, "Post updated successfully!");
+        Navigator.pop(context, updatedPost);
       }
     } else {
       if (mounted) {
-        CustomToast.error(context, AppStrings.commCreatePostFailed);
+        CustomToast.error(context, "Failed to update post");
       }
     }
   }
@@ -119,7 +121,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
             const SizedBox(height: 24),
             const Center(
               child: Text(
-                AppStrings.commCreateHeading,
+                "Edit Your Journey",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
@@ -158,23 +160,32 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                           image: FileImage(File(_imageFile!.path)),
                           fit: BoxFit.cover,
                         )
-                      : null,
+                      : DecorationImage(
+                          image: NetworkImage(widget.post.imageUrl),
+                          fit: BoxFit.cover,
+                        ),
                 ),
                 child: _imageFile == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.add_a_photo,
-                            size: 40,
-                            color: primaryBlue.withOpacity(0.5),
-                          ),
-                          const SizedBox(height: 8),
-                          AppText.caption(
-                            AppStrings.commPhotoUploadHint,
-                            color: primaryBlue,
-                          ),
-                        ],
+                    ? Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.edit_outlined,
+                              size: 30,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(height: 4),
+                            AppText.caption(
+                              "Tap to change photo",
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
                       )
                     : null,
               ),
@@ -190,7 +201,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: _isLoading ? null : _createPost,
+              onPressed: _isLoading ? null : _updatePost,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
                 foregroundColor: Colors.white,
@@ -210,7 +221,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                       ),
                     )
                   : const Text(
-                      AppStrings.commPostBtn,
+                      "Save Changes",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

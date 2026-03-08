@@ -12,6 +12,7 @@ class RouteNames {
 
   // Places
   static const String placeDetails = '/place-details';
+  static const String eventDetails = '/event-details';
   static const String map = '/map';
 
   // User
@@ -25,6 +26,7 @@ class RouteNames {
   static const String about = '/profile/about';
   static const String trips = '/profile/trips';
   static const String reviews = '/profile/reviews';
+  static const String myPosts = '/profile/my-posts';
 
   // Guide Panel
   static const String guideDashboard = '/guide/dashboard';
@@ -34,12 +36,14 @@ class RouteNames {
   // Admin Tools
   static const String managePlaces = '/admin/places';
   static const String reviewModeration = '/admin/reviews';
+  static const String manageEvents = '/admin/events';
 
   // System Authority (Super Admin)
   static const String userManagement = '/super-admin/users';
   static const String analytics = '/super-admin/analytics';
   static const String systemConfig = '/super-admin/config';
   static const String addPlace = '/admin/places/add';
+  static const String addEvent = '/admin/events/add';
 
   // Social (Phase 2+)
   static const String tripFeed = '/trip-feed';

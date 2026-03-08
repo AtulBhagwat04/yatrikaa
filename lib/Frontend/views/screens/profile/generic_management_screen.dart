@@ -10,6 +10,9 @@ class GenericManagementScreen extends StatelessWidget {
   final IconData icon;
   final Color themeColor;
 
+  final String? actionLabel;
+  final String? actionRoute;
+
   const GenericManagementScreen({
     super.key,
     required this.title,
@@ -17,6 +20,8 @@ class GenericManagementScreen extends StatelessWidget {
     required this.emptySubtitle,
     required this.icon,
     required this.themeColor,
+    this.actionLabel,
+    this.actionRoute,
   });
 
   @override
@@ -67,7 +72,13 @@ class GenericManagementScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (actionRoute != null) {
+                    Navigator.pushNamed(context, actionRoute!);
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: themeColor,
                   foregroundColor: Colors.white,
@@ -80,8 +91,19 @@ class GenericManagementScreen extends StatelessWidget {
                   ),
                   elevation: 0,
                 ),
-                child: const Text('Return to Profile'),
+                child: Text(actionLabel ?? 'Return to Profile'),
               ),
+              if (actionLabel != null && actionRoute != null) ...[
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: AppText.body(
+                    'Go Back',
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

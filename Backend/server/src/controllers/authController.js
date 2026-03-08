@@ -34,6 +34,7 @@ class AuthController {
         tripsCount: user.tripsCount,
         savedCount: user.savedCount,
         reviewsCount: user.reviewsCount,
+        postsCount: user.postsCount,
         token: generateToken(user)
       });
     } catch (error) {
@@ -54,6 +55,7 @@ class AuthController {
           tripsCount: user.tripsCount,
           savedCount: user.savedCount,
           reviewsCount: user.reviewsCount,
+          postsCount: user.postsCount,
           token: generateToken(user)
         });
       } else {
@@ -82,6 +84,7 @@ class AuthController {
           tripsCount: updatedUser.tripsCount,
           savedCount: updatedUser.savedCount,
           reviewsCount: updatedUser.reviewsCount,
+          postsCount: updatedUser.postsCount,
           token: generateToken(updatedUser)
         });
       } else {

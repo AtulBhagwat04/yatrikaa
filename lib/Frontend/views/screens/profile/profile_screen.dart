@@ -96,155 +96,155 @@ class ProfileScreen extends StatelessWidget {
               size: 20,
             ),
             centerTitle: true,
-            actions: [
-              IconButton(
-                icon: const Icon(
-                  Icons.edit_outlined,
-                  color: appBlack,
-                  size: 22,
-                ),
-                onPressed: () =>
-                    Navigator.pushNamed(context, RouteNames.editProfile),
-                tooltip: 'Edit Profile',
-              ),
-              const SizedBox(width: 8),
-            ],
+            actions: [const SizedBox(width: 8)],
           ),
           body: AppAnimations.fadeIn(
             child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── Profile Card ─────────────────────────
-              SliverToBoxAdapter(
-                child: _ProfileCard(state: authState, cfg: cfg),
-              ),
-
-              // ── Stats ────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.ms),
-                  child: _StatsRow(state: authState),
+                // ── Profile Card ─────────────────────────
+                SliverToBoxAdapter(
+                  child: _ProfileCard(state: authState, cfg: cfg),
                 ),
-              ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-              // ── Account Settings ─────────────────────
-              SliverToBoxAdapter(
-                child: _SectionGroup(
-                  heading: 'Account',
-                  items: [
-                    _SectionItem(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Edit Profile',
-                      color: primaryBlue,
-                      onTap: () =>
-                          Navigator.pushNamed(context, RouteNames.editProfile),
+                // ── Stats ────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.ms,
                     ),
-                    _SectionItem(
-                      icon: Icons.lock_outline_rounded,
-                      label: 'Change Password',
-                      color: primaryBlue,
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        RouteNames.changePassword,
+                    child: _StatsRow(state: authState),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                // ── Account Settings ─────────────────────
+                SliverToBoxAdapter(
+                  child: _SectionGroup(
+                    heading: 'Account',
+                    items: [
+                      _SectionItem(
+                        icon: Icons.person_outline_rounded,
+                        label: 'Edit Profile',
+                        color: primaryBlue,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          RouteNames.editProfile,
+                        ),
                       ),
-                    ),
-                    _SectionItem(
-                      icon: Icons.notifications_none_rounded,
-                      label: 'Notifications',
-                      color: primaryBlue,
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        RouteNames.notifications,
+                      _SectionItem(
+                        icon: Icons.lock_outline_rounded,
+                        label: 'Change Password',
+                        color: primaryBlue,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          RouteNames.changePassword,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-              // ── Travel ───────────────────────────────
-              SliverToBoxAdapter(
-                child: _SectionGroup(
-                  heading: 'Travel',
-                  items: [
-                    _SectionItem(
-                      icon: Icons.map_outlined,
-                      label: 'My Trips',
-                      color: const Color(0xFF059669),
-                      onTap: () =>
-                          Navigator.pushNamed(context, RouteNames.trips),
-                    ),
-                    _SectionItem(
-                      icon: Icons.favorite_border_rounded,
-                      label: 'Saved Places',
-                      color: const Color(0xFF059669),
-                      onTap: () =>
-                          Navigator.pushNamed(context, RouteNames.favorites),
-                    ),
-                    _SectionItem(
-                      icon: Icons.star_border_rounded,
-                      label: 'My Reviews',
-                      color: const Color(0xFF059669),
-                      onTap: () =>
-                          Navigator.pushNamed(context, RouteNames.reviews),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ── Role-based sections ───────────────────
-              ..._roleSections(authState.role, context),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-              // ── Support ──────────────────────────────
-              SliverToBoxAdapter(
-                child: _SectionGroup(
-                  heading: 'Support',
-                  items: [
-                    _SectionItem(
-                      icon: Icons.help_outline_rounded,
-                      label: 'Help Center',
-                      color: const Color(0xFF7C3AED),
-                      onTap: () =>
-                          Navigator.pushNamed(context, RouteNames.helpCenter),
-                    ),
-                    _SectionItem(
-                      icon: Icons.privacy_tip_outlined,
-                      label: 'Privacy Policy',
-                      color: const Color(0xFF7C3AED),
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        RouteNames.privacyPolicy,
+                      _SectionItem(
+                        icon: Icons.notifications_none_rounded,
+                        label: 'Notifications',
+                        color: primaryBlue,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          RouteNames.notifications,
+                        ),
                       ),
-                    ),
-                    _SectionItem(
-                      icon: Icons.info_outline_rounded,
-                      label: 'About Bhatkanti',
-                      color: const Color(0xFF7C3AED),
-                      onTap: () =>
-                          Navigator.pushNamed(context, RouteNames.about),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-              // ── Logout ───────────────────────────────
-              SliverToBoxAdapter(
-                child: _LogoutTile(onTap: () => _showLogoutDialog(context)),
-              ),
+                // ── Travel ───────────────────────────────
+                SliverToBoxAdapter(
+                  child: _SectionGroup(
+                    heading: 'Travel',
+                    items: [
+                      _SectionItem(
+                        icon: Icons.grid_view_rounded,
+                        label: 'My Posts',
+                        color: const Color(0xFF059669),
+                        onTap: () =>
+                            Navigator.pushNamed(context, RouteNames.myPosts),
+                      ),
+                      _SectionItem(
+                        icon: Icons.map_outlined,
+                        label: 'My Trips',
+                        color: const Color(0xFF059669),
+                        onTap: () =>
+                            Navigator.pushNamed(context, RouteNames.trips),
+                      ),
+                      _SectionItem(
+                        icon: Icons.favorite_border_rounded,
+                        label: 'Liked Places',
+                        color: const Color(0xFF059669),
+                        onTap: () =>
+                            Navigator.pushNamed(context, RouteNames.favorites),
+                      ),
+                      _SectionItem(
+                        icon: Icons.star_border_rounded,
+                        label: 'My Reviews',
+                        color: const Color(0xFF059669),
+                        onTap: () =>
+                            Navigator.pushNamed(context, RouteNames.reviews),
+                      ),
+                    ],
+                  ),
+                ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 30)),
-            ],
+                // ── Role-based sections ───────────────────
+                ..._roleSections(authState.role, context),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                // ── Support ──────────────────────────────
+                SliverToBoxAdapter(
+                  child: _SectionGroup(
+                    heading: 'Support',
+                    items: [
+                      _SectionItem(
+                        icon: Icons.help_outline_rounded,
+                        label: 'Help Center',
+                        color: const Color(0xFF7C3AED),
+                        onTap: () =>
+                            Navigator.pushNamed(context, RouteNames.helpCenter),
+                      ),
+                      _SectionItem(
+                        icon: Icons.privacy_tip_outlined,
+                        label: 'Privacy Policy',
+                        color: const Color(0xFF7C3AED),
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          RouteNames.privacyPolicy,
+                        ),
+                      ),
+                      _SectionItem(
+                        icon: Icons.info_outline_rounded,
+                        label: 'About Bhatkanti',
+                        color: const Color(0xFF7C3AED),
+                        onTap: () =>
+                            Navigator.pushNamed(context, RouteNames.about),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                // ── Logout ───────────────────────────────
+                SliverToBoxAdapter(
+                  child: _LogoutTile(onTap: () => _showLogoutDialog(context)),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 30)),
+              ],
+            ),
           ),
-        ));
+        );
       },
     );
   }
@@ -300,6 +300,13 @@ class ProfileScreen extends StatelessWidget {
                 color: const Color(0xFFDC2626),
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.managePlaces),
+              ),
+              _SectionItem(
+                icon: Icons.calendar_month_outlined,
+                label: 'Manage Events',
+                color: const Color(0xFFDC2626),
+                onTap: () =>
+                    Navigator.pushNamed(context, RouteNames.manageEvents),
               ),
               _SectionItem(
                 icon: Icons.rate_review_outlined,
@@ -570,17 +577,19 @@ class _StatsRow extends StatelessWidget {
       child: Row(
         children: [
           _StatCell(
-            icon: Icons.map_outlined,
-            value: '${state.tripsCount}',
-            label: 'Trips',
+            icon: Icons.grid_view_rounded,
+            value: '${state.postsCount}',
+            label: 'Posts',
             color: primaryBlue,
+            onTap: () => Navigator.pushNamed(context, RouteNames.myPosts),
           ),
           _verticalDivider(),
           _StatCell(
             icon: Icons.favorite_border_rounded,
             value: '${state.savedCount}',
-            label: 'Saved',
+            label: 'Likes',
             color: const Color(0xFF059669),
+            onTap: () => Navigator.pushNamed(context, RouteNames.favorites),
           ),
           _verticalDivider(),
           _StatCell(
@@ -588,6 +597,7 @@ class _StatsRow extends StatelessWidget {
             value: '${state.reviewsCount}',
             label: 'Reviews',
             color: const Color(0xFFFBBF24),
+            onTap: () => Navigator.pushNamed(context, RouteNames.reviews),
           ),
         ],
       ),
@@ -603,35 +613,40 @@ class _StatCell extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
+  final VoidCallback? onTap;
 
   const _StatCell({
     required this.icon,
     required this.value,
     required this.label,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Column(
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(height: 4),
-            AppText.body(
-              value,
-              fontWeight: FontWeight.w800,
-              color: color,
-              size: 16,
-            ),
-            AppText.small(
-              label,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ],
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Column(
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(height: 4),
+              AppText.body(
+                value,
+                fontWeight: FontWeight.w800,
+                color: color,
+                size: 16,
+              ),
+              AppText.small(
+                label,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ],
+          ),
         ),
       ),
     );

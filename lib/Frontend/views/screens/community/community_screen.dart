@@ -163,6 +163,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             });
                           }
                         },
+                        onDelete: () {
+                          if (mounted) {
+                            setState(() {
+                              _posts.removeAt(index);
+                            });
+                          }
+                        },
                       );
                     }, childCount: _posts.length),
                   ),

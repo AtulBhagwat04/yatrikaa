@@ -16,6 +16,7 @@ const placeSchema = new mongoose.Schema({
     width: Number,
     height: Number
   }],
+  images: [String],
   rating: Number,
   user_ratings_total: Number,
   types: [String],
@@ -37,8 +38,10 @@ const placeSchema = new mongoose.Schema({
   facilities: [String]
 }, { 
   timestamps: true,
-  collection: 'places' // Explicitly set the collection name from screenshot
+  collection: 'places'
 });
+
+placeSchema.index({ "geometry.location": "2dsphere" });
 
 const Place = mongoose.model('Place', placeSchema);
 

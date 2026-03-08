@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
 import 'package:bhatkanti_app/Frontend/core/services/places_service.dart';
+import 'package:bhatkanti_app/Frontend/core/services/events_service.dart';
+import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -12,6 +15,7 @@ import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final PlacesService _placesService = PlacesService();
+  final EventsService _eventsService = EventsService();
   StreamSubscription<Position>? _positionStreamSubscription;
   Position? _currentPosition;
 
@@ -21,14 +25,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeLocationUpdated>(_onLocationUpdated);
     on<HomeCategoryChanged>(_onCategoryChanged);
     on<HomeTabChanged>(_onTabChanged);
+    on<HomeEventUpdateEvent>(_onEventUpdated);
   }
 
   Future<void> _onHomeStarted(
     HomeStarted event,
     Emitter<HomeState> emit,
   ) async {
-    // Always load popular places first (no location needed)
-    await _fetchPopularPlaces(emit);
+    // Always load popular places and events (no location needed)
+    await Future.wait([_fetchPopularPlaces(emit), _fetchPopularEvents(emit)]);
     if (isClosed) return;
 
     bool permissionGranted = await _handlePermission(emit);
@@ -75,19 +80,26 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         category: normalizedCat,
       );
 
-      // 2. If DB has no/few results, fallback to premium Google search
-      // We now fallback even for 'All' if DB is thin
-      if (places.length < 3) {
+      // 2. Supplement with premium Google search if DB results are few
+      if (places.length < 5) {
         final searchQuery = (event.category == AppStrings.catAll)
             ? AppStrings.pdDiscoveryQuery
             : (ApiConstants.categoryQueries[event.category] ??
                   "${event.category} in Maharashtra");
 
-        places = await _placesService.searchPlaces(
+        final googlePlaces = await _placesService.searchPlaces(
           searchQuery,
-          null, // No location bias for global "Popular" category results
+          null,
           null,
         );
+        
+        // Combine results, ensuring DB places are at the top
+        final existingIds = places.map((p) => p.id).toSet();
+        for (var p in googlePlaces) {
+          if (!existingIds.contains(p.id)) {
+            places.add(p);
+          }
+        }
       }
 
       if (!isClosed) {
@@ -246,6 +258,26 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 
+  Future<void> _fetchPopularEvents(Emitter<HomeState> emit) async {
+    if (isClosed) return;
+    emit(state.copyWith(isLoadingEvents: true));
+    try {
+      // Fetch all upcoming events to ensure they show up on home even if not marked popular
+      List<EventModel> events = await _eventsService.getEvents();
+      
+      // If we have many, we could prioritize popular ones or just show all
+      // For now, sorting by date is best
+      events.sort((a, b) => a.date.compareTo(b.date));
+
+      if (!isClosed) {
+        emit(state.copyWith(popularEvents: events, isLoadingEvents: false));
+      }
+    } catch (e) {
+      debugPrint('Error in _fetchPopularEvents: $e');
+      if (!isClosed) emit(state.copyWith(isLoadingEvents: false));
+    }
+  }
+
   Future<void> _fetchPopularPlaces(Emitter<HomeState> emit) async {
     if (isClosed) return;
     emit(state.copyWith(isLoadingRecommended: true));
@@ -256,14 +288,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         category: normalizedCat,
       );
 
-      // 2. Fallback to Search if DB is empty for category (even for 'All')
-      if (places.length < 3) {
+      // 2. Supplement with Search if DB is empty/low for category
+      if (places.length < 5) {
         final searchQuery = (state.selectedCategory == AppStrings.catAll)
             ? AppStrings.pdDiscoveryQuery
             : (ApiConstants.categoryQueries[state.selectedCategory] ??
                   "${state.selectedCategory} in Maharashtra");
 
-        places = await _placesService.searchPlaces(searchQuery, null, null);
+        final googlePlaces = await _placesService.searchPlaces(searchQuery, null, null);
+        
+        // Combine results, ensuring DB places are at the top
+        final existingIds = places.map((p) => p.id).toSet();
+        for (var p in googlePlaces) {
+          if (!existingIds.contains(p.id)) {
+            places.add(p);
+          }
+        }
       }
       if (!isClosed) {
         emit(
@@ -304,6 +344,16 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         );
       }
     }
+  }
+
+  void _onEventUpdated(HomeEventUpdateEvent event, Emitter<HomeState> emit) {
+    if (isClosed) return;
+
+    final updatedEvents = state.popularEvents.map((e) {
+      return e.id == event.event.id ? event.event : e;
+    }).toList();
+
+    emit(state.copyWith(popularEvents: updatedEvents));
   }
 
   @override

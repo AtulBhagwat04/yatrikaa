@@ -11,6 +11,7 @@ class AuthService {
   static const String _tripsCountKey = 'user_trips_count';
   static const String _savedCountKey = 'user_saved_count';
   static const String _reviewsCountKey = 'user_reviews_count';
+  static const String _postsCountKey = 'user_posts_count';
   static const String _idKey = 'user_id';
 
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -31,6 +32,7 @@ class AuthService {
         tripsCount: (data['tripsCount'] as num?)?.toInt() ?? 0,
         savedCount: (data['savedCount'] as num?)?.toInt() ?? 0,
         reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
+        postsCount: (data['postsCount'] as num?)?.toInt() ?? 0,
       );
       return data;
     } else {
@@ -67,6 +69,7 @@ class AuthService {
         tripsCount: (data['tripsCount'] as num?)?.toInt() ?? 0,
         savedCount: (data['savedCount'] as num?)?.toInt() ?? 0,
         reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
+        postsCount: (data['postsCount'] as num?)?.toInt() ?? 0,
       );
       return data;
     } else {
@@ -100,6 +103,7 @@ class AuthService {
         tripsCount: (data['tripsCount'] as num?)?.toInt() ?? 0,
         savedCount: (data['savedCount'] as num?)?.toInt() ?? 0,
         reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
+        postsCount: (data['postsCount'] as num?)?.toInt() ?? 0,
       );
       return data;
     } else {
@@ -131,6 +135,26 @@ class AuthService {
     }
   }
 
+  Future<void> updateTripsCount(int count) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_tripsCountKey, count);
+  }
+
+  Future<void> updateSavedCount(int count) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_savedCountKey, count);
+  }
+
+  Future<void> updateReviewsCount(int count) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_reviewsCountKey, count);
+  }
+
+  Future<void> updatePostsCount(int count) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_postsCountKey, count);
+  }
+
   Future<void> _saveAuthData({
     required String token,
     required String id,
@@ -140,6 +164,7 @@ class AuthService {
     required int tripsCount,
     required int savedCount,
     required int reviewsCount,
+    required int postsCount,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
@@ -150,6 +175,7 @@ class AuthService {
     await prefs.setInt(_tripsCountKey, tripsCount);
     await prefs.setInt(_savedCountKey, savedCount);
     await prefs.setInt(_reviewsCountKey, reviewsCount);
+    await prefs.setInt(_postsCountKey, postsCount);
   }
 
   Future<String?> getToken() async {
@@ -187,6 +213,11 @@ class AuthService {
     return prefs.getInt(_reviewsCountKey) ?? 0;
   }
 
+  Future<int> getPostsCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_postsCountKey) ?? 0;
+  }
+
   Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_idKey);
@@ -201,6 +232,7 @@ class AuthService {
     await prefs.remove(_tripsCountKey);
     await prefs.remove(_savedCountKey);
     await prefs.remove(_reviewsCountKey);
+    await prefs.remove(_postsCountKey);
   }
 
   Future<bool> isLoggedIn() async {

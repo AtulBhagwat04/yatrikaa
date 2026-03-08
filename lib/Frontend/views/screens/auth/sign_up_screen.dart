@@ -284,12 +284,14 @@ class _SignUpScreenState extends State<SignUpScreen>
                               );
                               context.read<AuthBloc>().add(
                                 LoggedIn(
+                                  id: state.id,
                                   role: state.role,
                                   name: state.name,
                                   email: state.email,
                                   tripsCount: state.tripsCount,
                                   savedCount: state.savedCount,
                                   reviewsCount: state.reviewsCount,
+                                  postsCount: state.postsCount,
                                 ),
                               );
                               Navigator.pushNamedAndRemoveUntil(
