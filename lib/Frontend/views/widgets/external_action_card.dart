@@ -24,11 +24,11 @@ class ExternalActionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: appWhite,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: primaryBlue.withAlpha(25),
-          ), // Replaced withOpacity(0.1)
+          ),
         ),
         child: Row(
           children: [
@@ -39,11 +39,11 @@ class ExternalActionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppText.body(title, fontWeight: FontWeight.w800),
-                  AppText.small(subtitle, color: Colors.grey),
+                  AppText.small(subtitle, color: appGrey),
                 ],
               ),
             ),
-            const Icon(Icons.open_in_new, size: 16, color: Colors.grey),
+            Icon(Icons.open_in_new, size: 16, color: appGreyLight),
           ],
         ),
       ),

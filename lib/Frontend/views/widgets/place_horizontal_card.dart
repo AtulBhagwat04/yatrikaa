@@ -21,7 +21,7 @@ class PlaceHorizontalCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(25),
+            color: shadowColorDark,
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -39,10 +39,10 @@ class PlaceHorizontalCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => const ShimmerBox(),
                 errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[200],
+                  color: appGreyVeryLight,
                   child: const Icon(
                     Icons.image_not_supported_rounded,
-                    color: Colors.grey,
+                    color: appGrey,
                   ),
                 ),
               ),
@@ -53,8 +53,8 @@ class PlaceHorizontalCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.1),
-                      Colors.black.withOpacity(0.8),
+                      appBlack.withAlpha(25),
+                      appBlack.withAlpha(200),
                     ],
                     stops: const [0.5, 0.7, 1.0],
                   ),
@@ -71,7 +71,7 @@ class PlaceHorizontalCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: appWhite.withAlpha(230),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -79,7 +79,7 @@ class PlaceHorizontalCard extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.star_rounded,
-                        color: Colors.orange,
+                        color: ratingColor,
                         size: 14,
                       ),
                       const SizedBox(width: 2),
@@ -88,7 +88,7 @@ class PlaceHorizontalCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: Colors.black87,
+                          color: appBlack,
                         ),
                       ),
                     ],
@@ -114,14 +114,14 @@ class PlaceHorizontalCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.location_on_rounded,
-                            color: Colors.white.withOpacity(0.8),
+                            color: appWhite.withAlpha(204),
                             size: 12,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: AppText.caption(
                               place.city!,
-                              color: Colors.white.withOpacity(0.9),
+                              color: appWhite.withAlpha(230),
                               fontWeight: FontWeight.w500,
                             ),
                           ),

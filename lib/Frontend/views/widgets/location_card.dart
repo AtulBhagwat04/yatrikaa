@@ -23,11 +23,11 @@ class LocationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: primaryWhite,
+        color: appWhite,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(8),
+            color: shadowColorLight,
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -54,46 +54,20 @@ class LocationCard extends StatelessWidget {
                   AppText.caption(
                     AppStrings.currentLocation,
                     align: TextAlign.left,
-                    color: Colors.grey[600],
+                    color: appGrey,
                   ),
                   const SizedBox(height: 2),
                   AppText.body(
                     isLoading ? AppStrings.detectingLocation : location,
                     align: TextAlign.left,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: appBlack,
                   ),
                 ],
               ),
             ),
           ),
-          SizedBox(
-            width: 40,
-            height: 40,
-            child: isLoading
-                ? const Center(
-                    child: SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
-                      ),
-                    ),
-                  )
-                : IconButton(
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      onRefresh();
-                    },
-                    icon: Icon(
-                      Icons.refresh_rounded,
-                      color: Colors.grey[400],
-                      size: 22,
-                    ),
-                    padding: EdgeInsets.zero,
-                  ),
-          ),
+          const SizedBox(width: 40),
         ],
       ),
     );

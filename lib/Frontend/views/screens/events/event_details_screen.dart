@@ -173,13 +173,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         final event = snapshot.data;
         if (event == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text("Error")),
+            appBar: AppBar(automaticallyImplyLeading: false, title: const Text("Error")),
             body: const Center(child: Text("Event not found")),
           );
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF9F9F7),
+          backgroundColor: onboardingBlueVeryLight,
           body: Stack(
             children: [
               CustomScrollView(
@@ -189,7 +189,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   _buildHeroSection(_currentEvent ?? event),
                   SliverToBoxAdapter(
                     child: Container(
-                      decoration: const BoxDecoration(color: primaryWhite),
+                      decoration: const BoxDecoration(color: appWhite),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -322,11 +322,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         height: 93,
         padding: const EdgeInsets.only(top: 30, left: 20, right: 20),
         decoration: BoxDecoration(
-          color: _showAppBarTitle ? Colors.white : Colors.transparent,
+          color: _showAppBarTitle ? appWhite : Colors.transparent,
           boxShadow: _showAppBarTitle
               ? [
                   BoxShadow(
-                    color: Colors.black.withAlpha(20),
+                    color: shadowColor,
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -335,11 +335,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         ),
         child: Row(
           children: [
-            _circularHeaderButton(
-              icon: Icons.arrow_back_ios_new_rounded,
-              onPressed: () => Navigator.pop(context, _currentEvent),
-              isLight: !_showAppBarTitle,
-            ),
             if (_showAppBarTitle)
               Expanded(
                 child: Padding(
@@ -377,12 +372,12 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return IconButton(
       icon: Icon(
         icon,
-        color: isLight ? Colors.white : iconColor,
+        color: isLight ? appWhite : iconColor,
         size: 24,
         shadows: isLight
             ? [
                 const BoxShadow(
-                  color: Colors.black26,
+                  color: shadowColor,
                   blurRadius: 4,
                   offset: Offset(0, 2),
                 ),
@@ -401,7 +396,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return SliverAppBar(
       automaticallyImplyLeading: false,
       expandedHeight: 400,
-      backgroundColor: Colors.black,
+      backgroundColor: appBlack,
       pinned: true,
       stretch: true,
       flexibleSpace: FlexibleSpaceBar(
@@ -422,7 +417,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   fit: BoxFit.cover,
                   placeholder: (context, url) => const ShimmerBox(),
                   errorWidget: (context, url, error) => Container(
-                    color: Colors.grey[200],
+                    color: appGreyVeryLight,
                     child: const Icon(Icons.image_not_supported),
                   ),
                 );
@@ -435,9 +430,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withAlpha(120),
+                      appBlack.withAlpha(120),
                       Colors.transparent,
-                      Colors.black.withAlpha(200),
+                      appBlack.withAlpha(200),
                     ],
                     stops: const [0.0, 0.4, 1.0],
                   ),
@@ -475,7 +470,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                             ),
                             child: AppText.caption(
                               event.category.toUpperCase(),
-                              color: Colors.white,
+                              color: appWhite,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1.2,
                             ),
@@ -483,7 +478,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                           const SizedBox(height: 12),
                           AppText.heading(
                             event.title,
-                            color: Colors.white,
+                            color: appWhite,
                             fontWeight: FontWeight.w900,
                             size: 28,
                             maxLines: 2,
@@ -509,8 +504,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                         margin: const EdgeInsets.symmetric(horizontal: 2),
                         decoration: BoxDecoration(
                           color: index == _currentPage
-                              ? Colors.white
-                              : Colors.white.withAlpha(80),
+                              ? appWhite
+                              : appWhite.withAlpha(80),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -549,7 +544,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             Expanded(
               child: AppText.body(
                 event.venue,
-                color: Colors.grey[600],
+                color: appGrey,
                 fontWeight: FontWeight.w600,
                 size: 14,
               ),
@@ -569,15 +564,15 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     Color textColor;
 
     if (isLive) {
-      badgeColor = Colors.red.withAlpha(20);
-      textColor = Colors.red[700]!;
+      badgeColor = errorColor.withAlpha(20);
+      textColor = errorColor;
     } else if (isEnded) {
-      badgeColor = Colors.grey.withAlpha(20);
-      textColor = Colors.grey[700]!;
+      badgeColor = appGrey.withAlpha(20);
+      textColor = appGrey;
     } else {
       // Upcoming
-      badgeColor = Colors.green.withAlpha(20);
-      textColor = Colors.green[700]!;
+      badgeColor = successColor.withAlpha(20);
+      textColor = successColor;
     }
 
     return IntrinsicWidth(
@@ -642,11 +637,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: shadowColorLight,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -664,7 +659,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(1.5),
                     decoration: const BoxDecoration(
-                      color: Colors.white,
+                      color: appWhite,
                       shape: BoxShape.circle,
                     ),
                     child: CircleAvatar(
@@ -681,7 +676,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           const SizedBox(width: 4),
           AppText.small(
             "${event.interestedCount}+ people are interested",
-            color: Colors.grey[600],
+            color: appGrey,
             fontWeight: FontWeight.w700,
           ),
         ],
@@ -750,7 +745,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           children: [
             AppText.body(
               event.description,
-              color: Colors.grey[800],
+              color: appGreyDark,
               align: TextAlign.justify,
               size: 14,
               height: 1.6,

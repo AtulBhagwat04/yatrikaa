@@ -103,7 +103,7 @@ class _PostCardState extends State<PostCard> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: errorColor),
             child: const Text("Delete"),
           ),
         ],
@@ -144,7 +144,7 @@ class _PostCardState extends State<PostCard> {
       builder: (context) => Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: appWhite,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(
@@ -155,7 +155,7 @@ class _PostCardState extends State<PostCard> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: appGreyVeryLight,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -186,12 +186,12 @@ class _PostCardState extends State<PostCard> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: errorColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.delete_outline_rounded,
-                  color: Colors.red,
+                  color: errorColor,
                   size: 20,
                 ),
               ),
@@ -200,7 +200,7 @@ class _PostCardState extends State<PostCard> {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
-                  color: Colors.red,
+                  color: errorColor,
                 ),
               ),
               onTap: () {
@@ -280,11 +280,11 @@ class _PostCardState extends State<PostCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appWhite,
         borderRadius: BorderRadius.circular(13),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: shadowColorLight,
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -310,13 +310,13 @@ class _PostCardState extends State<PostCard> {
                           width: double.infinity,
                           fit: BoxFit.cover,
                           placeholder: (context, url) =>
-                              Container(color: Colors.grey[100], height: 260),
+                              Container(color: appGreyVeryLight, height: 260),
                           errorWidget: (context, url, error) => Container(
-                            color: Colors.grey[200],
+                            color: appGreyVeryLight,
                             height: 260,
                             child: const Icon(
                               Icons.image_not_supported_outlined,
-                              color: Colors.grey,
+                              color: appGrey,
                             ),
                           ),
                         ),
@@ -329,21 +329,21 @@ class _PostCardState extends State<PostCard> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.5),
+                              color: overlayColor,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
                                 const Icon(
                                   Icons.location_on_rounded,
-                                  color: Colors.white,
+                                  color: appWhite,
                                   size: 12,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   p.location,
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: appWhite,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -389,7 +389,7 @@ class _PostCardState extends State<PostCard> {
                       AppText.body(
                         p.caption,
                         size: 13,
-                        color: Colors.grey.shade800,
+                        color: appGreyDark,
                         height: 1.5,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -443,7 +443,7 @@ class _PostCardState extends State<PostCard> {
                     icon: Icon(
                       Icons.more_vert_rounded,
                       size: 22,
-                      color: Colors.grey.shade600,
+                      color: appGrey,
                     ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -475,13 +475,13 @@ class _PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? (activeColor ?? primaryBlue) : Colors.grey.shade600;
+    final color = active ? (activeColor ?? primaryBlue) : appGrey;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: active ? color.withOpacity(0.08) : Colors.grey.shade100,
+          color: active ? color.withOpacity(0.08) : appGreyVeryLight,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(

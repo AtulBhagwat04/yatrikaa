@@ -122,10 +122,10 @@ class _SignUpScreenState extends State<SignUpScreen>
                   decoration: BoxDecoration(
                     color: isSelected
                         ? primaryBlue
-                        : primaryWhite.withOpacity(0.4),
+                        : appWhite.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected ? primaryBlue : Colors.white,
+                      color: isSelected ? primaryBlue : appWhite,
                       width: 1.5,
                     ),
                   ),
@@ -134,7 +134,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                     children: [
                       Icon(
                         role['icon'] as IconData,
-                        color: isSelected ? Colors.white : primaryBlue,
+                        color: isSelected ? appWhite : primaryBlue,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -142,7 +142,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                         role['label'] as String,
                         size: 12,
                         fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.white : primaryBlue,
+                        color: isSelected ? appWhite : primaryBlue,
                       ),
                     ],
                   ),

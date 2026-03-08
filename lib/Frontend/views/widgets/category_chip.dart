@@ -28,10 +28,10 @@ class CategoryChip extends StatelessWidget {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? primaryBlue : primaryWhite,
+          color: isSelected ? primaryBlue : appWhite,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? primaryBlue : Colors.grey[200]!,
+            color: isSelected ? primaryBlue : appGreyVeryLight,
             width: 1,
           ),
           boxShadow: isSelected
@@ -50,12 +50,12 @@ class CategoryChip extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: isSelected ? primaryWhite : Colors.grey[600],
+              color: isSelected ? appWhite : appGrey,
             ),
             const SizedBox(width: 8),
             AppText.caption(
               label,
-              color: isSelected ? primaryWhite : Colors.grey[700],
+              color: isSelected ? appWhite : appGreyDark,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
           ],

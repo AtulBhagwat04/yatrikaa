@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
+import 'package:bhatkanti_app/Frontend/core/utils/error_handler.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -303,16 +306,12 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       }, imageFile: _imageFile);
 
       if (success && mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text(AppStrings.apSuccessMsg)));
+        CustomToast.success(context, AppStrings.apSuccessMsg);
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -327,21 +326,13 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         physics: const BouncingScrollPhysics(),
         slivers: [
           // --- HEADER ---
-          SliverAppBar(
+          SliverAppBar(automaticallyImplyLeading: false, 
             floating: true,
             pinned: true,
             backgroundColor: onboardingBlueVeryLight,
             elevation: 0,
             scrolledUnderElevation: 2,
             surfaceTintColor: Colors.white,
-            leading: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: appBlack,
-                size: 20,
-              ),
-            ),
             title: AppText.heading(
               AppStrings.apTitle,
               size: 22,
@@ -678,7 +669,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                                   flex: 4,
                                   child: TextFormField(
                                     controller: _customFacilityController,
-                                    style: const TextStyle(fontSize: 13),
+                                     style: GoogleFonts.montserrat(fontSize: 13),
                                     decoration: InputDecoration(
                                       hintText: "Add facility",
                                       fillColor: onboardingBlueVeryLight
@@ -891,14 +882,14 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
             keyboardType: isNumber
                 ? const TextInputType.numberWithOptions(decimal: true)
                 : TextInputType.text,
-            style: const TextStyle(
+            style: GoogleFonts.montserrat(
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: Colors.black,
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(
+              hintStyle: GoogleFonts.montserrat(
                 color: Colors.grey.shade400,
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
@@ -956,7 +947,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
           hint: hint != null
               ? Text(
                   hint,
-                  style: TextStyle(
+                  style: GoogleFonts.montserrat(
                     color: Colors.grey.shade600,
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
@@ -968,7 +959,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
             color: primaryBlue,
             size: 18,
           ),
-          style: const TextStyle(
+          style: GoogleFonts.montserrat(
             fontSize: 14,
             fontWeight: FontWeight.w400,
             color: Colors.black,

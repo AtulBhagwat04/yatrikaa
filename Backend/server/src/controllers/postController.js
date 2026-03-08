@@ -1,6 +1,6 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
-const { uploadImage } = require('../services/cloudinaryService');
+const { uploadImage, deleteImage } = require('../services/cloudinaryService');
 
 class PostController {
   async createPost(req, res, next) {

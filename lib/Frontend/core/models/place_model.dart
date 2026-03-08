@@ -109,9 +109,14 @@ class PlaceModel {
           .toList();
     }
 
-    // Fallback to 'images' if 'photos' is empty or null
-    if (imagesList.isEmpty && json['images'] != null && json['images'] is List) {
-      imagesList = List<String>.from(json['images']);
+    // Merge Cloudinary images into imagesList if present
+    if (json['images'] != null && json['images'] is List) {
+      final List<String> customImages = List<String>.from(json['images']);
+      for (var img in customImages) {
+        if (!imagesList.contains(img)) {
+          imagesList.add(img);
+        }
+      }
     }
 
     // Extract City and State from address_components

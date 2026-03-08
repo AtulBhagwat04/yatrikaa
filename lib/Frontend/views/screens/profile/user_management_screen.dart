@@ -57,18 +57,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
+      backgroundColor: onboardingBlueVeryLight,
+      appBar: AppBar(automaticallyImplyLeading: false, 
+        backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: appBlack,
-            size: 20,
-          ),
-        ),
         title: AppText.subHeading(
           'User Management',
           color: appBlack,
@@ -87,7 +79,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppText.body('Error: $_error', color: Colors.red),
+            AppText.body('Error: $_error', color: errorColor),
             TextButton(onPressed: _fetchUsers, child: const Text('Retry')),
           ],
         ),
@@ -160,7 +152,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   value: 'delete',
                   child: Text(
                     'Delete User',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(color: errorColor),
                   ),
                 ),
               ],
@@ -179,11 +171,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Color _getRoleColor(String role) {
     switch (role.toLowerCase()) {
       case 'super-admin':
-        return const Color(0xFF7C3AED);
+        return superAdminColor;
       case 'admin':
-        return const Color(0xFFDC2626);
+        return adminColor;
       case 'guide':
-        return const Color(0xFF059669);
+        return guideColor;
       default:
         return primaryBlue;
     }
@@ -212,7 +204,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
         );
       }
       setState(() => _isLoading = false);

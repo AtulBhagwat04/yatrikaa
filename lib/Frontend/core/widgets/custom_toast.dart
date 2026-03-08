@@ -20,98 +20,134 @@ class CustomToast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color backgroundColor;
-    IconData iconData;
-    Color iconColor = Colors.white;
+    late Color backgroundColor;
+    late IconData iconData;
+    late Color iconColor;
 
     switch (type) {
       case ToastType.success:
-        backgroundColor = successColor;
-        iconData = Icons.check_circle_outline;
+        backgroundColor = successColorLight;
+        iconData = Icons.check_circle_rounded;
+        iconColor = successColorDark;
         break;
       case ToastType.error:
-        backgroundColor = errorColor;
-        iconData = Icons.error_outline;
+        backgroundColor = errorColorLight;
+        iconData = Icons.error_rounded;
+        iconColor = errorColorDark;
         break;
       case ToastType.warning:
-        backgroundColor = warningColor;
-        iconData = Icons.warning_amber_outlined;
+        backgroundColor = warningColorLight;
+        iconData = Icons.warning_rounded;
+        iconColor = warningColorDark;
         break;
       case ToastType.info:
-        backgroundColor = infoColor;
-        iconData = Icons.info_outline;
+        backgroundColor = onboardingBlueVeryLight;
+        iconData = Icons.info_rounded;
+        iconColor = primaryBlue;
         break;
       case ToastType.progress:
-        backgroundColor = primaryBlue;
-        iconData = Icons.sync;
+        backgroundColor = onboardingBlueVeryLight;
+        iconData = Icons.sync_rounded;
+        iconColor = primaryBlue;
         break;
     }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: appWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: iconColor.withOpacity(0.12),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(color: iconColor.withOpacity(0.1), width: 1),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: type == ToastType.progress
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Accent Bar
+              Container(
+                width: 6,
+                color: iconColor,
+              ),
+              const SizedBox(width: 16),
+              // Icon Container
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  shape: BoxShape.circle,
+                ),
+                child: type == ToastType.progress
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(iconColor),
+                        ),
+                      )
+                    : Icon(iconData, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 16),
+              // Text Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTextStyles.body.copyWith(
+                          color: appBlack.withOpacity(0.87),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        message,
+                        style: AppTextStyles.caption.copyWith(
+                          color: appBlack.withOpacity(0.54),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Close Button
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    onClose?.call();
+                  },
+                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Center(
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: appGrey,
+                        size: 20,
+                      ),
                     ),
-                  )
-                : Icon(iconData, color: iconColor, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTextStyles.body.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  message,
-                  style: AppTextStyles.caption.copyWith(
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              onClose?.call();
-            },
-            icon: const Icon(Icons.close, color: Colors.white, size: 20),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
+        ),
       ),
     );
   }

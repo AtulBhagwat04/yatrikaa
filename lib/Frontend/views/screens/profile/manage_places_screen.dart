@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:bhatkanti_app/Frontend/core/utils/error_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
 import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
+import 'package:bhatkanti_app/Frontend/core/services/places_service.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
 
 class ManagePlacesScreen extends StatefulWidget {
   const ManagePlacesScreen({super.key});
@@ -21,6 +29,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   String? _error;
   final TextEditingController _searchController = TextEditingController();
   final AuthService _authService = AuthService();
+  final PlacesService _placesService = PlacesService();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -79,14 +89,19 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildAppBar(),
-          _buildSearchBox(),
-          _buildList(),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _fetchPlaces,
+        displacement: 80, // Moves the pull-to-refresh spinner below the AppBar
+        color: primaryBlue,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          slivers: [
+            _buildAppBar(),
+            _buildSearchBox(),
+            _buildList(),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -111,33 +126,29 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
 
   Widget _buildAppBar() {
     return SliverAppBar(
+      automaticallyImplyLeading: false,
       floating: true,
       pinned: true,
       backgroundColor: onboardingBlueVeryLight,
       elevation: 0,
       scrolledUnderElevation: 2,
       surfaceTintColor: Colors.white,
-      leading: IconButton(
-        onPressed: () => Navigator.pop(context),
-        icon: const Icon(
-          Icons.arrow_back_ios_new_rounded,
-          color: appBlack,
-          size: 20,
-        ),
-      ),
       title: AppText.heading(
         "Manage Places",
         size: 22,
         fontWeight: FontWeight.w900,
       ),
       centerTitle: true,
-      actions: [
-        IconButton(
-          onPressed: _fetchPlaces,
-          icon: const Icon(Icons.refresh_rounded, color: primaryBlue),
-        ),
-        const SizedBox(width: 8),
-      ],
+      bottom: _isLoading
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(2),
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                backgroundColor: onboardingBlueVeryLight,
+                valueColor: const AlwaysStoppedAnimation<Color>(primaryBlue),
+              ),
+            )
+          : null,
     );
   }
 
@@ -162,7 +173,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
             onChanged: _filterPlaces,
             decoration: InputDecoration(
               hintText: "Search your places...",
-              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+              hintStyle: GoogleFonts.montserrat(color: Colors.grey.shade400, fontSize: 14),
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: primaryBlue,
@@ -178,7 +189,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   }
 
   Widget _buildList() {
-    if (_isLoading) {
+    // Only show full-screen loader if list is absolutely empty and we are loading
+    if (_isLoading && _allPlaces.isEmpty) {
       return const SliverFillRemaining(
         child: Center(child: CircularProgressIndicator(color: primaryBlue)),
       );
@@ -295,34 +307,23 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.65),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          color: Colors.amber,
-                          size: 14,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          "${place['rating'] ?? '4.5'}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: Row(
+                    children: [
+                      _buildCircularButton(
+                        icon: Icons.edit,
+                        color: Colors.white,
+                        onTap: () => _editPlace(place),
+                        tooltip: 'Edit Place',
+                      ),
+                      const SizedBox(width: 8),
+                      _buildCircularButton(
+                        icon: Icons.delete_outline_rounded,
+                        color: Colors.redAccent,
+                        isDestructive: true,
+                        onTap: () => _confirmDelete(place),
+                        tooltip: 'Delete Place',
+                      ),
+                    ],
                   ),
                 ),
                 Positioned(
@@ -388,8 +389,6 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  _buildActionMenu(place),
                 ],
               ),
             ),
@@ -399,53 +398,330 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     );
   }
 
-  Widget _buildActionMenu(dynamic place) {
-    return PopupMenuButton(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      icon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: onboardingBlueVeryLight,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.more_vert_rounded,
-          color: primaryBlue,
-          size: 20,
-        ),
-      ),
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: 'edit',
-          child: Row(
-            children: [
-              const Icon(Icons.edit_note_rounded, size: 20, color: primaryBlue),
-              const SizedBox(width: 10),
-              AppText.body("Edit Details"),
+  Widget _buildCircularButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    String? tooltip,
+    bool isDestructive = false,
+  }) {
+    return Tooltip(
+      message: tooltip ?? '',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDestructive ? Colors.white : Colors.black.withOpacity(0.6),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
+          child: Icon(
+            icon,
+            color: isDestructive ? Colors.redAccent : color,
+            size: 18,
+          ),
         ),
-        PopupMenuItem(
-          value: 'delete',
-          child: Row(
-            children: [
-              const Icon(
-                Icons.delete_outline_rounded,
-                size: 20,
-                color: Colors.redAccent,
-              ),
-              const SizedBox(width: 10),
-              AppText.body("Delete Place", color: Colors.redAccent),
-            ],
+      ),
+    );
+  }
+
+  void _editPlace(dynamic place) {
+    final nameController = TextEditingController(text: place['name']);
+    final addressController = TextEditingController(text: place['formatted_address']);
+    final descriptionController = TextEditingController(
+      text: place['editorial_summary']?['overview'] ?? place['description'] ?? '',
+    );
+
+    // Manage list of existing photos/images
+    List<dynamic> existingPhotos = List.from(place['photos'] ?? []);
+    List<String> existingImages = List.from((place['images'] as List?)?.map((e) => e.toString()) ?? []);
+
+    // Tracking locally
+    XFile? pickedFile;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          // Correctly combine ALL available images for a unified gallery experience
+          List<Map<String, dynamic>> combinedItems = [
+            ...existingPhotos.map((p) => {
+                  'url': _getPhotoUrl(p['photo_reference'] ?? ''),
+                  'type': 'photo',
+                  'data': p,
+                }),
+            ...existingImages.map((url) => {
+                  'url': url,
+                  'type': 'image',
+                  'data': url,
+                }),
+          ];
+          List<String> displayUrls = combinedItems.map((item) => item['url'] as String).toList();
+
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      AppText.heading("Edit Gallery", size: 20, fontWeight: FontWeight.w900),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppText.subHeading("MANAGE GALLERY", size: 12, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 150,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              ...displayUrls.asMap().entries.map((entry) {
+                                int idx = entry.key;
+                                String url = entry.value;
+                                return Container(
+                                  width: 130,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: CachedNetworkImage(
+                                          imageUrl: url,
+                                          height: 150,
+                                          width: 130,
+                                          fit: BoxFit.cover,
+                                          placeholder: (_, __) => const ShimmerBox(),
+                                          errorWidget: (_, __, ___) => Container(
+                                            color: Colors.grey.shade200,
+                                            child: const Icon(Icons.broken_image),
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 5,
+                                        right: 5,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            if (combinedItems.length == 1 && pickedFile == null) {
+                                              CustomToast.warning(context, "At least one image is required", title: "Wait!");
+                                              return;
+                                            }
+                                            setSheetState(() {
+                                              var item = combinedItems[idx];
+                                              if (item['type'] == 'photo') {
+                                                existingPhotos.remove(item['data']);
+                                              } else {
+                                                existingImages.remove(item['data']);
+                                              }
+                                              // Re-sync local variables for UI rebuild
+                                              combinedItems = [
+                                                ...existingPhotos.map((p) => {
+                                                      'url': _getPhotoUrl(p['photo_reference'] ?? ''),
+                                                      'type': 'photo',
+                                                      'data': p,
+                                                    }),
+                                                ...existingImages.map((url) => {
+                                                      'url': url,
+                                                      'type': 'image',
+                                                      'data': url,
+                                                    }),
+                                              ];
+                                              displayUrls = combinedItems.map((item) => item['url'] as String).toList();
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration:
+                                                const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
+                                            child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                              if (pickedFile != null)
+                                Container(
+                                  width: 130,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.file(
+                                          File(pickedFile!.path),
+                                          height: 150,
+                                          width: 130,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 5,
+                                        right: 5,
+                                        child: GestureDetector(
+                                          onTap: () => setSheetState(() => pickedFile = null),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration:
+                                                const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                            child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              GestureDetector(
+                                onTap: () async {
+                                  final img = await _picker.pickImage(source: ImageSource.gallery);
+                                  if (img != null) {
+                                    setSheetState(() => pickedFile = img);
+                                  }
+                                },
+                                child: Container(
+                                  width: 130,
+                                  decoration: BoxDecoration(
+                                    color: onboardingBlueVeryLight,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: primaryBlue.withOpacity(0.3), style: BorderStyle.solid),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add_photo_alternate_rounded,
+                                          color: primaryBlue.withOpacity(0.6), size: 32),
+                                      const SizedBox(height: 8),
+                                      AppText.caption("Add Photo", color: primaryBlue),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        _buildSheetField("Place Name", nameController, Icons.place_rounded),
+                        const SizedBox(height: 16),
+                        _buildSheetField("Address", addressController, Icons.map_rounded),
+                        const SizedBox(height: 16),
+                        _buildSheetField("Description", descriptionController, Icons.notes_rounded, maxLines: 4),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (existingImages.isEmpty && existingPhotos.isEmpty && pickedFile == null) {
+                                CustomToast.warning(context, "At least one image is required", title: "Wait!");
+                                return;
+                              }
+                              Navigator.pop(ctx);
+                              _handleUpdate(
+                                place['place_id'],
+                                {
+                                  'name': nameController.text.trim(),
+                                  'description': descriptionController.text.trim(),
+                                  'formatted_address': addressController.text.trim(),
+                                  'photos': existingPhotos,
+                                  'images': existingImages,
+                                },
+                                pickedFile,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryBlue,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              elevation: 0,
+                            ),
+                            child: AppText.body("Update Place Info", color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSheetField(String label, TextEditingController controller, IconData icon, {int? maxLines = 1}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText.subHeading(label.toUpperCase(), size: 12, color: Colors.grey),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: primaryBlue, size: 20),
+            filled: true,
+            fillColor: onboardingBlueVeryLight.withOpacity(0.5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ],
-      onSelected: (val) {
-        if (val == 'delete') {
-          _confirmDelete(place);
-        }
-      },
     );
+  }
+
+  Future<void> _handleUpdate(String id, Map<String, dynamic> body, XFile? image) async {
+    setState(() => _isLoading = true);
+    try {
+      final success = await _placesService.updatePlace(id, body, imageFile: image);
+      if (success && mounted) {
+        CustomToast.success(context, "Place updated successfully!");
+        _fetchPlaces();
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
+      }
+      setState(() => _isLoading = false);
+    }
   }
 
   void _confirmDelete(dynamic place) {
@@ -484,12 +760,17 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         place['photos'].isNotEmpty) {
       return place['photos'][0]['photo_reference'] ?? '';
     }
+    if (place['images'] != null &&
+        place['images'] is List &&
+        place['images'].isNotEmpty) {
+      return place['images'][0] ?? '';
+    }
     return '';
   }
 
   String _getPhotoUrl(String photoReference) {
     if (photoReference.isEmpty) return '';
-    return '${ApiConstants.baseUrl}/places/photo/$photoReference';
+    return ApiConstants.getPhotoUrl(photoReference);
   }
 
   Future<void> _deletePlace(String placeId) async {
@@ -503,9 +784,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
 
       if (response.statusCode == 200) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Place deleted successfully')),
-          );
+          CustomToast.success(context, 'Place deleted successfully');
         }
         _fetchPlaces();
       } else {
@@ -513,9 +792,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
       }
       setState(() => _isLoading = false);
     }

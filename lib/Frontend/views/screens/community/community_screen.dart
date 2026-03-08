@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
@@ -87,21 +88,24 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             AppStrings.commJourneys,
-                            style: const TextStyle(
+                            style: GoogleFonts.montserrat(
                               fontSize: 30,
                               fontWeight: FontWeight.w900,
                               letterSpacing: -1,
-                              color: Colors.black,
+                              color: appBlack,
                             ),
                           ),
-                          const Text(
+                          Text(
                             AppStrings.commSubtitle,
-                            style: TextStyle(fontSize: 14, color: primaryBlue),
+                            style: GoogleFonts.montserrat(
+                              fontSize: 14,
+                              color: primaryBlue,
+                            ),
                           ),
                         ],
                       ),
@@ -129,12 +133,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         Icon(
                           Icons.auto_stories_outlined,
                           size: 64,
-                          color: Colors.grey.shade400,
+                          color: appGreyLight,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           AppStrings.commNoJourneys,
-                          style: TextStyle(color: Colors.grey.shade600),
+                          style: GoogleFonts.montserrat(color: appGrey),
                         ),
                         const SizedBox(height: 8),
                         TextButton(
@@ -200,11 +204,11 @@ class _HeaderAction extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isPrimary ? primaryBlue : Colors.white,
+          color: isPrimary ? primaryBlue : appWhite,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: (isPrimary ? primaryBlue : Colors.black).withOpacity(0.12),
+              color: (isPrimary ? primaryBlue : appBlack).withOpacity(0.12),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -212,7 +216,7 @@ class _HeaderAction extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          color: isPrimary ? Colors.white : primaryBlue,
+          color: isPrimary ? appWhite : primaryBlue,
           size: 24,
         ),
       ),

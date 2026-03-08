@@ -18,7 +18,10 @@ class HomeHeader extends StatelessWidget {
     required this.onNotificationTap,
     required this.onProfileTap,
     this.userInitial,
+    this.hasNewNotifications = false,
   });
+
+  final bool hasNewNotifications;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +33,7 @@ class HomeHeader extends StatelessWidget {
             children: [
               AppText.body(
                 greeting,
-                color: Colors.grey[600],
+                color: appGrey,
                 fontWeight: FontWeight.w500,
                 align: TextAlign.left,
               ),
@@ -45,51 +48,12 @@ class HomeHeader extends StatelessWidget {
         ),
         _notificationButton(),
         const SizedBox(width: 12),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            _profileButton(),
-            Positioned(bottom: -4, right: -4, child: _roleBadge()),
-          ],
-        ),
+        _profileButton(),
       ],
     );
   }
 
-  Widget _roleBadge() {
-    Color badgeColor = primaryBlue;
-    if (role.toLowerCase() == 'admin' || role.toLowerCase() == 'super-admin') {
-      badgeColor = Colors.redAccent;
-    }
-    if (role.toLowerCase() == 'guide') badgeColor = Colors.orangeAccent;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: badgeColor,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        role.toUpperCase(),
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 8,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
   Widget _notificationButton() {
-    bool hasNotification = true;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -113,16 +77,17 @@ class HomeHeader extends StatelessWidget {
                 size: 22,
               ),
             ),
-            if (hasNotification)
+            if (hasNewNotifications)
               Positioned(
-                right: 6,
-                top: 6,
+                right: 9,
+                top: 9,
                 child: Container(
-                  height: 8,
-                  width: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
+                  height: 7,
+                  width: 7,
+                  decoration: BoxDecoration(
+                    color: primaryBlue,
                     shape: BoxShape.circle,
+                    border: Border.all(color: appWhite, width: 1.5),
                   ),
                 ),
               ),
@@ -154,12 +119,12 @@ class HomeHeader extends StatelessWidget {
                 ? Text(
                     userInitial!.toUpperCase(),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: appWhite,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   )
-                : const Icon(Icons.person, color: Colors.white, size: 20),
+                : const Icon(Icons.person, color: appWhite, size: 20),
           ),
         ),
       ),

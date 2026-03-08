@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/event_model.dart';
 import '../constants/api_constants.dart';
 import '../services/auth_service.dart';
@@ -125,6 +126,56 @@ class EventsService {
     } catch (e) {
       print('Error toggling interest: $e');
       return null;
+    }
+  }
+
+  Future<bool> updateEvent(
+    String id,
+    Map<String, dynamic> body, {
+    XFile? imageFile,
+  }) async {
+    try {
+      final token = await _authService.getToken();
+      final uri = Uri.parse('${ApiConstants.baseUrl}/events/$id');
+      var request = http.MultipartRequest('PUT', uri);
+
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      body.forEach((key, value) {
+        if (value is List || value is Map) {
+          // Use a different key for existing images to avoid collision with the file field name
+          final fieldKey = key == 'images' ? 'existing_images' : key;
+          request.fields[fieldKey] = json.encode(value);
+        } else {
+          request.fields[key] = value.toString();
+        }
+      });
+
+      if (imageFile != null) {
+        final String path = imageFile.path;
+        final String ext = path.split('.').last.toLowerCase();
+        MediaType contentType = MediaType('image', ext == 'png' ? 'png' : 'jpeg');
+
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'images', // Field name matches backend upload.array('images', 3)
+            path,
+            contentType: contentType,
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      if (streamedResponse.statusCode == 200) return true;
+
+      final response = await http.Response.fromStream(streamedResponse);
+      final data = json.decode(response.body);
+      throw Exception(data['error'] ?? 'Failed to update event');
+    } catch (e) {
+      print('Error updating event: $e');
+      rethrow;
     }
   }
 }

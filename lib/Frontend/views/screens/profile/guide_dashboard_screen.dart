@@ -9,18 +9,10 @@ class GuideDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
+      backgroundColor: onboardingBlueVeryLight,
+      appBar: AppBar(automaticallyImplyLeading: false, 
+        backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: appBlack,
-            size: 20,
-          ),
-        ),
         title: AppText.subHeading(
           'Guide Dashboard',
           color: appBlack,
@@ -61,10 +53,10 @@ class GuideDashboardScreen extends StatelessWidget {
           'Total Earnings',
           '₹0',
           Icons.account_balance_wallet_outlined,
-          const Color(0xFFEA580C),
+          guidePanelColor,
         ),
         const SizedBox(width: 12),
-        _statItem('Rating', '5.0', Icons.star_outline_rounded, Colors.orange),
+        _statItem('Rating', '5.0', Icons.star_outline_rounded, ratingColor),
       ],
     );
   }
@@ -74,10 +66,10 @@ class GuideDashboardScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: appWhite,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10),
+            BoxShadow(color: shadowColorLight, blurRadius: 10),
           ],
         ),
         child: Column(
@@ -86,7 +78,7 @@ class GuideDashboardScreen extends StatelessWidget {
             Icon(icon, color: color, size: 20),
             const SizedBox(height: 12),
             AppText.heading(value, size: 20),
-            AppText.caption(label, color: Colors.grey),
+            AppText.caption(label, color: appGrey),
           ],
         ),
       ),
@@ -98,20 +90,20 @@ class GuideDashboardScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: appWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: appGrey.withOpacity(0.1)),
       ),
       child: Column(
         children: [
-          Icon(Icons.inbox_outlined, color: Colors.grey.shade300, size: 40),
+          Icon(Icons.inbox_outlined, color: appGreyLight, size: 40),
           const SizedBox(height: 12),
           AppText.body(title, fontWeight: FontWeight.bold),
           const SizedBox(height: 4),
           AppText.caption(
             subtitle,
             align: TextAlign.center,
-            color: Colors.grey,
+            color: appGrey,
           ),
         ],
       ),

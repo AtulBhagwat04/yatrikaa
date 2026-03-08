@@ -78,16 +78,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         scrolledUnderElevation: 2,
-        leading: widget.showBackButton
-            ? IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: appBlack,
-                  size: 20,
-                ),
-              )
-            : null,
         automaticallyImplyLeading: false,
         title: AppText.heading(
           'Liked Places',
@@ -95,13 +85,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           size: 20,
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: _fetchLikedPlaces,
-            icon: const Icon(Icons.refresh_rounded, color: primaryBlue),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: BlocListener<AuthBloc, AuthState>(
         listenWhen: (prev, curr) {
@@ -124,40 +107,65 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: Colors.redAccent,
+      return RefreshIndicator(
+        onRefresh: _fetchLikedPlaces,
+        color: primaryBlue,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: Colors.redAccent,
+                ),
+                const SizedBox(height: 16),
+                AppText.body(
+                  "Error loading favorites",
+                  fontWeight: FontWeight.bold,
+                ),
+                TextButton(
+                  onPressed: _fetchLikedPlaces,
+                  child: const Text("Retry"),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            AppText.body(
-              "Error loading favorites",
-              fontWeight: FontWeight.bold,
-            ),
-            TextButton(
-              onPressed: _fetchLikedPlaces,
-              child: const Text("Retry"),
-            ),
-          ],
+          ),
         ),
       );
     }
 
     if (_likedPlaces.isEmpty) {
-      return Center(child: _buildEmptyUI());
+      return RefreshIndicator(
+        onRefresh: _fetchLikedPlaces,
+        color: primaryBlue,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            alignment: Alignment.center,
+            child: _buildEmptyUI(),
+          ),
+        ),
+      );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _likedPlaces.length,
-      itemBuilder: (context, index) {
-        final place = _likedPlaces[index];
-        return _buildPlaceCard(place);
-      },
+    return RefreshIndicator(
+      onRefresh: _fetchLikedPlaces,
+      color: primaryBlue,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: _likedPlaces.length,
+        itemBuilder: (context, index) {
+          final place = _likedPlaces[index];
+          return _buildPlaceCard(place);
+        },
+      ),
     );
   }
 
