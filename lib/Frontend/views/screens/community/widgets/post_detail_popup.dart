@@ -9,6 +9,7 @@ import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 class PostDetailPopUp extends StatefulWidget {
   final PostModel post;
   final String? currentUserId;
+  final String? currentUserRole;
   final VoidCallback onLike;
   final VoidCallback onShare;
   final Function(BuildContext) onComment;
@@ -17,6 +18,7 @@ class PostDetailPopUp extends StatefulWidget {
     super.key,
     required this.post,
     required this.currentUserId,
+    this.currentUserRole,
     required this.onLike,
     required this.onShare,
     required this.onComment,

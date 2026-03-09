@@ -22,6 +22,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   List<PostModel> _posts = [];
   bool _isLoading = true;
   String? _currentUserId;
+  String? _currentUserRole;
 
   @override
   void initState() {
@@ -31,6 +32,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   Future<void> _fetchInitialData() async {
     _currentUserId = await _authService.getUserId();
+    _currentUserRole = await _authService.getRole();
     await _fetchPosts();
   }
 
@@ -160,6 +162,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         key: ValueKey(_posts[index].id),
                         post: _posts[index],
                         currentUserId: _currentUserId,
+                        currentUserRole: _currentUserRole,
                         onUpdate: (updatedPost) {
                           if (mounted) {
                             setState(() {

@@ -99,8 +99,9 @@ class PostController {
       const comment = post.comments.id(commentId);
       if (!comment) return res.status(404).json({ error: 'Comment not found' });
 
-      // Only allowing owner of comment or owner of post to delete
-      if (comment.user.toString() !== req.user._id.toString() && post.author.toString() !== req.user._id.toString()) {
+      const isAdmin = req.user.role === 'admin' || req.user.role === 'super-admin';
+      // Only allowing owner of comment or owner of post to delete, or admin
+      if (!isAdmin && comment.user.toString() !== req.user._id.toString() && post.author.toString() !== req.user._id.toString()) {
         return res.status(403).json({ error: 'Unauthorized to delete this comment' });
       }
 
@@ -123,8 +124,9 @@ class PostController {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      // Check if user is the author
-      if (post.author.toString() !== req.user._id.toString()) {
+      const isAdmin = req.user.role === 'admin' || req.user.role === 'super-admin';
+      // Check if user is the author or admin
+      if (!isAdmin && post.author.toString() !== req.user._id.toString()) {
         return res.status(403).json({ error: 'Unauthorized to delete this post' });
       }
 
@@ -164,7 +166,8 @@ class PostController {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      if (post.author.toString() !== req.user._id.toString()) {
+      const isAdmin = req.user.role === 'admin' || req.user.role === 'super-admin';
+      if (!isAdmin && post.author.toString() !== req.user._id.toString()) {
         return res.status(403).json({ error: 'Unauthorized to edit this post' });
       }
 

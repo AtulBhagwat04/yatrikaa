@@ -1,7 +1,6 @@
 class ApiConstants {
-  // Use your computer's IP address instead of localhost for physical devices
-  // Current IP: 10.15.157.64
-  static const String baseUrl = 'http://10.15.157.64:3000/api';
+  // Render Deployed Backend URL
+  static const String baseUrl = 'https://bhatkanti-backend-8msl.onrender.com/api';
 
   static String getNearbyPlacesUrl(
     double lat,

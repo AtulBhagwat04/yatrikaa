@@ -10,12 +10,14 @@ class CommentsSheet extends StatefulWidget {
   final PostModel post;
   final Function(PostModel) onUpdate;
   final String? currentUserId;
+  final String? currentUserRole;
 
   const CommentsSheet({
     super.key,
     required this.post,
     required this.onUpdate,
     this.currentUserId,
+    this.currentUserRole,
   });
 
   @override
@@ -105,6 +107,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
                           widget.currentUserId == comment.user.id;
                       final isPostOwner =
                           widget.currentUserId == widget.post.author.id;
+                      final isAdmin = widget.currentUserRole == 'admin' || widget.currentUserRole == 'super-admin';
+                      final canDelete = isCommentOwner || isPostOwner || isAdmin;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
@@ -144,7 +148,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                                 ],
                               ),
                             ),
-                            if (isCommentOwner || isPostOwner)
+                            if (canDelete)
                               IconButton(
                                 icon: const Icon(
                                   Icons.delete_outline,

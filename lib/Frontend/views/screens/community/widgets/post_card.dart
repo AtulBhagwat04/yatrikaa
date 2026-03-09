@@ -16,6 +16,7 @@ import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
 class PostCard extends StatefulWidget {
   final PostModel post;
   final String? currentUserId;
+  final String? currentUserRole;
   final Function(PostModel) onUpdate;
   final VoidCallback onDelete;
 
@@ -23,6 +24,7 @@ class PostCard extends StatefulWidget {
     super.key,
     required this.post,
     required this.currentUserId,
+    this.currentUserRole,
     required this.onUpdate,
     required this.onDelete,
   });
@@ -227,6 +229,7 @@ class _PostCardState extends State<PostCard> {
             return PostDetailPopUp(
               post: widget.post,
               currentUserId: widget.currentUserId,
+              currentUserRole: widget.currentUserRole,
               onLike: () {
                 _handleLike();
                 setDialogState(() {});
@@ -240,6 +243,7 @@ class _PostCardState extends State<PostCard> {
                   builder: (context) => CommentsSheet(
                     post: widget.post,
                     currentUserId: widget.currentUserId,
+                    currentUserRole: widget.currentUserRole,
                     onUpdate: (updatedPost) {
                       widget.onUpdate(updatedPost);
                       setDialogState(() {});
@@ -426,6 +430,7 @@ class _PostCardState extends State<PostCard> {
                         post: widget.post,
                         onUpdate: widget.onUpdate,
                         currentUserId: widget.currentUserId,
+                        currentUserRole: widget.currentUserRole,
                       ),
                     );
                   },
@@ -436,7 +441,7 @@ class _PostCardState extends State<PostCard> {
                   label: AppStrings.commShare,
                   onTap: _handleShare,
                 ),
-                if (widget.currentUserId == p.author.id) ...[
+                if (widget.currentUserId == p.author.id || widget.currentUserRole == 'admin' || widget.currentUserRole == 'super-admin') ...[
                   const Spacer(),
                   IconButton(
                     onPressed: _showPostOptions,
