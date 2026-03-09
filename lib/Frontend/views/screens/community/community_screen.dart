@@ -166,14 +166,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         onUpdate: (updatedPost) {
                           if (mounted) {
                             setState(() {
-                              _posts[index] = updatedPost;
+                              final updateIndex = _posts.indexWhere((p) => p.id == updatedPost.id);
+                              if (updateIndex != -1) {
+                                _posts[updateIndex] = updatedPost;
+                              }
                             });
                           }
                         },
                         onDelete: () {
                           if (mounted) {
                             setState(() {
-                              _posts.removeAt(index);
+                              _posts.removeWhere((p) => p.id == _posts[index].id);
                             });
                           }
                         },

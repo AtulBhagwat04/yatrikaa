@@ -79,14 +79,17 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                     onUpdate: (updatedPost) {
                       if (mounted) {
                         setState(() {
-                          _myPosts[index] = updatedPost;
+                          final updateIndex = _myPosts.indexWhere((p) => p.id == updatedPost.id);
+                          if (updateIndex != -1) {
+                            _myPosts[updateIndex] = updatedPost;
+                          }
                         });
                       }
                     },
                     onDelete: () {
                       if (mounted) {
                         setState(() {
-                          _myPosts.removeAt(index);
+                          _myPosts.removeWhere((p) => p.id == post.id);
                         });
                       }
                     },

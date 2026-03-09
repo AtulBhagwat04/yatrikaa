@@ -170,6 +170,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                             ),
                             if (canEdit || canDelete)
                               Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   if (canEdit)
                                     IconButton(
