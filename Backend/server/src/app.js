@@ -30,7 +30,11 @@ app.use('/api/events', eventRoutes);
 
 // Base route for health check
 app.get('/', (req, res) => {
-  res.send('Bhatkanti API is running...');
+  res.status(200).json({ status: 'UP', message: 'Bhatkanti API is running...' });
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', uptime: process.uptime() });
 });
 
 // Error handling middleware
