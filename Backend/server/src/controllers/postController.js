@@ -117,6 +117,36 @@ class PostController {
     }
   }
 
+  async editComment(req, res, next) {
+    const { text } = req.body;
+    try {
+      const { postId, commentId } = req.params;
+      const post = await Post.findById(postId);
+      if (!post) return res.status(404).json({ error: 'Post not found' });
+
+      const comment = post.comments.id(commentId);
+      if (!comment) return res.status(404).json({ error: 'Comment not found' });
+
+      const isAdmin = req.user.role === 'admin' || req.user.role === 'super-admin';
+      // Only author of comment or admin can edit
+      if (!isAdmin && comment.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: 'Unauthorized to edit this comment' });
+      }
+
+      if (text) {
+        comment.text = text;
+        await post.save();
+      }
+
+      const populatedPost = await Post.findById(postId)
+        .populate('author', 'name')
+        .populate('comments.user', 'name');
+      res.json(populatedPost);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async deletePost(req, res, next) {
     try {
       const post = await Post.findById(req.params.id);
@@ -150,7 +180,7 @@ class PostController {
       await Post.findByIdAndDelete(req.params.id);
 
       // Decrement user postsCount
-      await User.findByIdAndUpdate(req.user._id, { $inc: { postsCount: -1 } });
+      await User.findByIdAndUpdate(post.author, { $inc: { postsCount: -1 } });
 
       res.json({ message: 'Post deleted successfully' });
     } catch (error) {

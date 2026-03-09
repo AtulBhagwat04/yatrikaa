@@ -28,6 +28,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
   final _commentController = TextEditingController();
   bool _isSending = false;
   late PostModel _currentPost;
+  String? _editingCommentId;
 
   @override
   void initState() {
@@ -39,21 +40,39 @@ class _CommentsSheetState extends State<CommentsSheet> {
     if (_commentController.text.trim().isEmpty) return;
     setState(() => _isSending = true);
 
-    final updatedPost = await PostService().commentOnPost(
-      _currentPost.id,
-      _commentController.text.trim(),
-    );
+    PostModel? updatedPost;
+    
+    if (_editingCommentId != null) {
+      updatedPost = await PostService().editComment(
+        _currentPost.id,
+        _editingCommentId!,
+        _commentController.text.trim(),
+      );
+    } else {
+      updatedPost = await PostService().commentOnPost(
+        _currentPost.id,
+        _commentController.text.trim(),
+      );
+    }
 
     if (mounted) {
       setState(() => _isSending = false);
       if (updatedPost != null) {
         setState(() {
-          _currentPost = updatedPost;
+          _currentPost = updatedPost!;
           _commentController.clear();
+          _editingCommentId = null;
         });
         widget.onUpdate(updatedPost);
       }
     }
+  }
+
+  void _startEditing(PostComment comment) {
+    setState(() {
+      _editingCommentId = comment.id;
+      _commentController.text = comment.text;
+    });
   }
 
   void _deleteComment(String commentId) async {
@@ -109,6 +128,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                           widget.currentUserId == widget.post.author.id;
                       final isAdmin = widget.currentUserRole == 'admin' || widget.currentUserRole == 'super-admin';
                       final canDelete = isCommentOwner || isPostOwner || isAdmin;
+                      final canEdit = isCommentOwner || isAdmin;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
@@ -148,14 +168,26 @@ class _CommentsSheetState extends State<CommentsSheet> {
                                 ],
                               ),
                             ),
-                            if (canDelete)
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  size: 18,
-                                  color: Colors.grey,
-                                ),
-                                onPressed: () => _deleteComment(comment.id),
+                            if (canEdit || canDelete)
+                              Row(
+                                children: [
+                                  if (canEdit)
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+                                      onPressed: () => _startEditing(comment),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                  if (canEdit && canDelete) 
+                                    const SizedBox(width: 8),
+                                  if (canDelete)
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
+                                      onPressed: () => _deleteComment(comment.id),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                ],
                               ),
                           ],
                         ),
@@ -180,33 +212,58 @@ class _CommentsSheetState extends State<CommentsSheet> {
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _commentController,
-                    decoration: const InputDecoration(
-                      hintText: AppStrings.commAddComment,
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(fontSize: 14),
+                if (_editingCommentId != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        AppText.caption('Editing comment...', color: primaryBlue),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _editingCommentId = null;
+                              _commentController.clear();
+                            });
+                          },
+                          child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                TextButton(
-                  onPressed: _isSending ? null : _submitComment,
-                  child: _isSending
-                      ? const SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text(
-                          AppStrings.commPost,
-                          style: TextStyle(
-                            color: primaryBlue,
-                            fontWeight: FontWeight.bold,
-                          ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _commentController,
+                        decoration: InputDecoration(
+                          hintText: _editingCommentId != null ? 'Edit your comment...' : AppStrings.commAddComment,
+                          border: InputBorder.none,
+                          hintStyle: const TextStyle(fontSize: 14),
                         ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _isSending ? null : _submitComment,
+                      child: _isSending
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              _editingCommentId != null ? 'Update' : AppStrings.commPost,
+                              style: const TextStyle(
+                                color: primaryBlue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
               ],
             ),

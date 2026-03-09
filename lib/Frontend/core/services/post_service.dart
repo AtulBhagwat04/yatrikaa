@@ -138,6 +138,28 @@ class PostService {
     }
   }
 
+  Future<PostModel?> editComment(String postId, String commentId, String text) async {
+    try {
+      final token = await _authService.getToken();
+      final response = await http.put(
+        Uri.parse('${ApiConstants.baseUrl}/posts/$postId/comments/$commentId'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token'
+        },
+        body: json.encode({'text': text}),
+      );
+
+      if (response.statusCode == 200) {
+        return PostModel.fromJson(json.decode(response.body));
+      }
+      return null;
+    } catch (e) {
+      print('Error editing comment: \$e');
+      return null;
+    }
+  }
+
   Future<bool> deletePost(String postId) async {
     try {
       final token = await _authService.getToken();

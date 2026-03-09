@@ -8,6 +8,7 @@ router.post('/', protect, upload.single('image'), postController.createPost);
 router.get('/', postController.getAllPosts);
 router.post('/:id/like', protect, postController.likePost);
 router.post('/:id/comment', protect, postController.addComment);
+router.put('/:postId/comments/:commentId', protect, postController.editComment);
 router.delete('/:postId/comments/:commentId', protect, postController.deleteComment);
 router.delete('/:id', protect, postController.deletePost);
 router.put('/:id', protect, upload.single('image'), postController.updatePost);
