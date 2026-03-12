@@ -444,7 +444,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     List<String> existingImages = List.from((place['images'] as List?)?.map((e) => e.toString()) ?? []);
 
     // Tracking locally
-    XFile? pickedFile;
+    // Tracking locally
+    List<XFile> pickedFiles = [];
 
     showModalBottomSheet(
       context: context,
@@ -535,7 +536,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                         right: 5,
                                         child: GestureDetector(
                                           onTap: () {
-                                            if (combinedItems.length == 1 && pickedFile == null) {
+                                            if (combinedItems.length == 1 && pickedFiles.isEmpty) {
                                               CustomToast.warning(context, "At least one image is required", title: "Wait!");
                                               return;
                                             }
@@ -574,7 +575,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                   ),
                                 );
                               }),
-                              if (pickedFile != null)
+                              for (var i = 0; i < pickedFiles.length; i++)
                                 Container(
                                   width: 130,
                                   margin: const EdgeInsets.only(right: 12),
@@ -583,7 +584,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
                                         child: Image.file(
-                                          File(pickedFile!.path),
+                                          File(pickedFiles[i].path),
                                           height: 150,
                                           width: 130,
                                           fit: BoxFit.cover,
@@ -593,7 +594,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                         top: 5,
                                         right: 5,
                                         child: GestureDetector(
-                                          onTap: () => setSheetState(() => pickedFile = null),
+                                          onTap: () => setSheetState(() => pickedFiles.removeAt(i)),
                                           child: Container(
                                             padding: const EdgeInsets.all(4),
                                             decoration:
@@ -607,9 +608,9 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                 ),
                               GestureDetector(
                                 onTap: () async {
-                                  final img = await _picker.pickImage(source: ImageSource.gallery);
-                                  if (img != null) {
-                                    setSheetState(() => pickedFile = img);
+                                  final imgs = await _picker.pickMultiImage();
+                                  if (imgs.isNotEmpty) {
+                                    setSheetState(() => pickedFiles.addAll(imgs));
                                   }
                                 },
                                 child: Container(
@@ -645,7 +646,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                           height: 55,
                           child: ElevatedButton(
                             onPressed: () async {
-                              if (existingImages.isEmpty && existingPhotos.isEmpty && pickedFile == null) {
+                              if (existingImages.isEmpty && existingPhotos.isEmpty && pickedFiles.isEmpty) {
                                 CustomToast.warning(context, "At least one image is required", title: "Wait!");
                                 return;
                               }
@@ -659,7 +660,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                   'photos': existingPhotos,
                                   'images': existingImages,
                                 },
-                                pickedFile,
+                                pickedFiles,
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -708,10 +709,10 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     );
   }
 
-  Future<void> _handleUpdate(String id, Map<String, dynamic> body, XFile? image) async {
+  Future<void> _handleUpdate(String id, Map<String, dynamic> body, List<XFile> images) async {
     setState(() => _isLoading = true);
     try {
-      final success = await _placesService.updatePlace(id, body, imageFile: image);
+      final success = await _placesService.updatePlace(id, body, imageFiles: images);
       if (success && mounted) {
         CustomToast.success(context, "Place updated successfully!");
         _fetchPlaces();

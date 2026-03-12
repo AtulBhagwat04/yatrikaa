@@ -190,15 +190,18 @@ class PlacesController {
       if (body.photography_allowed === 'true') body.photography_allowed = true;
       if (body.photography_allowed === 'false') body.photography_allowed = false;
 
-      // If a file is uploaded, upload to Cloudinary and set as photo
-      if (req.file) {
+      // If files are uploaded, upload each to Cloudinary and set as photos
+      if (req.files && req.files.length > 0) {
         const folderName = `Bhatkanti/Places/${(body.name || 'unnamed').replace(/\s+/g, '_')}`;
-        const result = await uploadImage(req.file, folderName);
-        body.photos = [{
+        const uploadPromises = req.files.map(file => uploadImage(file, folderName));
+        const results = await Promise.all(uploadPromises);
+        
+        body.photos = results.map(result => ({
           photo_reference: result.secure_url,
           width: result.width,
           height: result.height
-        }];
+        }));
+        body.images = results.map(result => result.secure_url);
       }
 
       const place = await Place.create(body);
@@ -236,18 +239,21 @@ class PlacesController {
       if (body.photography_allowed === 'true') body.photography_allowed = true;
       if (body.photography_allowed === 'false') body.photography_allowed = false;
 
-      // If a file is uploaded, upload to Cloudinary and append to photos/images
-      if (req.file) {
+      // If files are uploaded, upload each to Cloudinary and append to photos/images
+      if (req.files && req.files.length > 0) {
         const folderName = `Bhatkanti/Places/${(body.name || 'unnamed').replace(/\s+/g, '_')}`;
-        const result = await uploadImage(req.file, folderName);
-        const newPhoto = {
+        const uploadPromises = req.files.map(file => uploadImage(file, folderName));
+        const results = await Promise.all(uploadPromises);
+        
+        const newPhotos = results.map(result => ({
           photo_reference: result.secure_url,
           width: result.width,
           height: result.height
-        };
+        }));
+        const newImages = results.map(result => result.secure_url);
         
-        body.photos = Array.isArray(body.photos) ? [...body.photos, newPhoto] : [newPhoto];
-        body.images = Array.isArray(body.images) ? [...body.images, result.secure_url] : [result.secure_url];
+        body.photos = Array.isArray(body.photos) ? [...body.photos, ...newPhotos] : newPhotos;
+        body.images = Array.isArray(body.images) ? [...body.images, ...newImages] : newImages;
       }
 
       const place = await Place.findOneAndUpdate({ place_id: req.params.id }, body, { new: true });
