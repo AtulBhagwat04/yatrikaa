@@ -34,7 +34,7 @@ class AppBottomNav extends StatelessWidget {
             _navItem(0, Icons.home_rounded, AppStrings.navHome),
             _navItem(1, Icons.near_me_rounded, AppStrings.navNearby),
             _navItem(2, Icons.groups_rounded, AppStrings.navCommunity),
-            _navItem(3, Icons.favorite_rounded, AppStrings.navSaved),
+            _navItem(3, Icons.luggage_rounded, AppStrings.navPackages),
             _navItem(4, Icons.person_rounded, AppStrings.navProfile),
           ],
         ),

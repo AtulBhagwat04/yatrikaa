@@ -177,10 +177,20 @@ class PlaceModel {
     if (json['opening_hours'] != null) {
       if (json['opening_hours']['weekday_text'] != null &&
           json['opening_hours']['weekday_text'] is List) {
-        final weekdayText = json['opening_hours']['weekday_text'] as List;
-        timings = weekdayText.isNotEmpty
-            ? weekdayText.first
-            : AppStrings.pdOpenNowAlt;
+        final List weekdayText = json['opening_hours']['weekday_text'];
+        if (weekdayText.isNotEmpty) {
+          // Google's weekday_text usually leads with Monday (index 0).
+          // DateTime.weekday is 1 (Mon) to 7 (Sun).
+          int todayIndex = DateTime.now().weekday - 1; // 0 for Mon, 6 for Sun
+          
+          if (todayIndex >= 0 && todayIndex < weekdayText.length) {
+            timings = weekdayText[todayIndex];
+          } else {
+            timings = weekdayText.first;
+          }
+        } else {
+          timings = AppStrings.pdOpenNowAlt;
+        }
       } else {
         timings = json['opening_hours']['open_now'] == true
             ? AppStrings.pdOpenNow

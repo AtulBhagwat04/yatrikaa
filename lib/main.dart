@@ -6,8 +6,18 @@ import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
 import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/app_routes.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 
-void main() {
+import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
+
+void main() async {
+  // Required for experimental initialization before runApp
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Smartly check if a local backend is running (3000)
+  // If not found in 2 seconds, it defaults to the Live Render URL
+  await ApiConstants.checkServerAvailability();
+  
   runApp(const MyApp());
 }
 
@@ -16,8 +26,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthBloc()..add(AppStarted()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => AuthBloc()..add(AppStarted())),
+        BlocProvider(create: (_) => TravelBloc()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
@@ -25,7 +38,7 @@ class MyApp extends StatelessWidget {
           textTheme: GoogleFonts.montserratTextTheme(
             Theme.of(context).textTheme,
           ),
-          colorSchemeSeed: primaryBlue, // primaryBlue
+          colorSchemeSeed: primaryBlue,
         ),
         initialRoute: RouteNames.splash,
         onGenerateRoute: AppRoutes.generateRoute,

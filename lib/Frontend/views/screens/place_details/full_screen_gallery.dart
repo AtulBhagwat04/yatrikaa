@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
+import 'package:bhatkanti_app/Frontend/core/utils/place_utils.dart';
 
 class FullScreenGallery extends StatefulWidget {
   final List<String> imageUrls;
@@ -262,32 +263,45 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                           ),
 
                         // Open Status
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: (widget.place.isOpen ?? false)
-                                ? successColor.withAlpha(20)
-                                : errorColor.withAlpha(20),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: (widget.place.isOpen ?? false)
-                                  ? successColor.withAlpha(50)
-                                  : errorColor.withAlpha(50),
-                            ),
-                          ),
-                          child: AppText.caption(
-                            (widget.place.isOpen ?? false)
-                                ? "Open Now"
-                                : "Closed",
-                            color: (widget.place.isOpen ?? false)
-                                ? successColor
-                                : errorColor,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
+                        Builder(
+                          builder: (context) {
+                            bool isOpen = PlaceUtils.checkIfOpenNow(
+                                widget.place.timings, widget.place.isOpen);
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isOpen ? successColor.withAlpha(20) : errorColor.withAlpha(20),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isOpen ? successColor.withAlpha(60) : errorColor.withAlpha(60),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: isOpen ? successColor : errorColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isOpen ? "Open Now" : "Closed",
+                                    style: TextStyle(
+                                      color: isOpen ? successColor : errorColor,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

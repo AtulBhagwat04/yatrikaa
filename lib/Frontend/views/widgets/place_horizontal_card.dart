@@ -138,3 +138,4 @@ class PlaceHorizontalCard extends StatelessWidget {
     );
   }
 }
+
