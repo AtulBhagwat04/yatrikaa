@@ -6,6 +6,7 @@ const placesRoutes = require('./routes/placesRoutes');
 const authRoutes = require('./routes/authRoutes');
 const postRoutes = require('./routes/postRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const packageRoutes = require('./routes/packageRoutes');
 const seedAdmins = require('./data/seedAdmin');
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/places', placesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/packages', packageRoutes);
 
 // Base route for health check
 app.get('/', (req, res) => {
@@ -39,8 +41,26 @@ app.get('/health', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('[error]', err.message);
+
+  // Mongoose validation error — show which fields failed
+  if (err.name === 'ValidationError') {
+    const messages = Object.values(err.errors).map(e => e.message);
+    return res.status(400).json({ error: messages.join(', ') });
+  }
+
+  // Mongoose cast error (invalid ObjectId)
+  if (err.name === 'CastError') {
+    return res.status(400).json({ error: `Invalid ${err.path}: ${err.value}` });
+  }
+
+  // Mongoose duplicate key
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyValue)[0];
+    return res.status(400).json({ error: `Duplicate value for field: ${field}` });
+  }
+
+  res.status(err.statusCode || 500).json({ error: err.message || 'Something went wrong!' });
 });
 
 module.exports = app;

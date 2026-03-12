@@ -1,6 +1,40 @@
+import 'dart:async';
+import 'package:http/http.dart' as http;
+
 class ApiConstants {
+  // Local Backend URL (Replace with your computer's IP if testing on a physical device)
+  static const String localUrl = 'http://10.15.157.64:3000/api';
+  
   // Render Deployed Backend URL
-  static const String baseUrl = 'https://bhatkanti-backend-8msl.onrender.com/api';
+  static const String liveUrl = 'https://bhatkanti-backend-8msl.onrender.com/api';
+
+  // Changed to non-const for automatic fallback
+  // Defaults to liveUrl, will switch to localUrl if available
+  static String baseUrl = liveUrl;
+
+  // Automatic Fallback Logic
+  static Future<void> checkServerAvailability() async {
+    // Health check hits /health directly, NOT /api/health
+    // localUrl is 'http://10.15.157.64:3000/api', so we remove '/api' for the health check
+    final localHealthUrl = localUrl.replaceAll('/api', '') + '/health';
+    try {
+      print('Checking local backend at $localHealthUrl...');
+      final response = await http.get(Uri.parse(localHealthUrl)).timeout(
+        const Duration(milliseconds: 1500), // 1.5s timeout for fast fallback
+      );
+      
+      if (response.statusCode == 200) {
+        baseUrl = localUrl;
+        print('✅ Local backend is running. Using: $baseUrl');
+      } else {
+        baseUrl = liveUrl;
+        print('⚠️ Local backend returned error. Falling back to Render: $baseUrl');
+      }
+    } catch (e) {
+      baseUrl = liveUrl;
+      print('❌ Local backend not reachable. Falling back to Render: $baseUrl');
+    }
+  }
 
   static String getNearbyPlacesUrl(
     double lat,
@@ -59,4 +93,27 @@ class ApiConstants {
     'Spiritual':
         'Shirdi Sai Baba Temple Shani Shingnapur Pandharpur Vithal Temple',
   };
+
+  // ── Travel Packages ────────────────────────────────────────────────────────
+  static String getPackagesUrl({String? category, String? search}) {
+    String url = '$baseUrl/packages';
+    final List<String> params = [];
+    if (category != null && category != 'All') {
+      params.add('category=${Uri.encodeComponent(category)}');
+    }
+    if (search != null && search.isNotEmpty) {
+      params.add('search=${Uri.encodeComponent(search)}');
+    }
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    return url;
+  }
+
+  static String getPackageDetailUrl(String id) => '$baseUrl/packages/$id';
+  static String getMyPackagesUrl() => '$baseUrl/packages/my';
+  static String getJoinPackageUrl(String id) => '$baseUrl/packages/$id/join';
+  static String getMyBookingsUrl() => '$baseUrl/packages/bookings/mine';
+  static String getCancelBookingUrl(String bookingId) =>
+      '$baseUrl/packages/bookings/$bookingId/cancel';
+  static String getPackageParticipantsUrl(String id) =>
+      '$baseUrl/packages/$id/participants';
 }

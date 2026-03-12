@@ -201,7 +201,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _buildCategoryRow() {
     return SizedBox(
-      height: 48,
+      height: 45,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.ms),
@@ -336,7 +336,7 @@ class _PlaceCard extends StatelessWidget {
                 ),
               ),
 
-              // Information (Bottom)
+              // Information Overlay
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
@@ -394,4 +394,4 @@ class _PlaceCard extends StatelessWidget {
       ),
     );
   }
-}
+}

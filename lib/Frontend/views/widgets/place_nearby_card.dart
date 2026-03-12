@@ -173,3 +173,4 @@ class PlaceNearbyCard extends StatelessWidget {
     );
   }
 }
+

@@ -52,7 +52,8 @@ class AppStrings {
   static const String navHome = "Home";
   static const String navNearby = "Explore";
   static const String navCommunity = "Community";
-  static const String navSaved = "Favorites";
+  static const String navPackages = "Packages";
+  static const String navSaved = "Favorites";   // kept for FavoritesScreen internal use
   static const String navProfile = "Profile";
 
   // ================= ONBOARDING =================

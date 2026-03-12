@@ -48,6 +48,13 @@ class RouteNames {
   // Social (Phase 2+)
   static const String tripFeed = '/trip-feed';
 
+  // Travel Packages
+  static const String packages = '/packages';
+  static const String packageDetails = '/packages/details';
+  static const String createPackage = '/packages/create';
+  static const String myPackages = '/packages/mine';
+  static const String userBookings = '/bookings';
+
   // Chat (Phase 3+)
   static const String chat = '/chat';
 }

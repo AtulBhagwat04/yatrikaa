@@ -12,9 +12,12 @@ import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_bloc.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_event.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_state.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_state.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/explore/explore_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/community/community_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/favorites_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/packages_discovery_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/profile_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/home_header.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/location_card.dart';
@@ -99,13 +102,13 @@ class _HomeScreenState extends State<HomeScreen> {
           body: IndexedStack(
             index: _selectedIndex,
             children: [
-              _HomeTab(onGoExplore: () => _onTabTap(1)),
+              _HomeTab(
+                onGoExplore: () => _onTabTap(1),
+                onGoPackages: () => _onTabTap(3),
+              ),
               const ExploreScreen(),
               const CommunityScreen(),
-              FavoritesScreen(
-                showBackButton: false,
-                onGoExplore: () => _onTabTap(1),
-              ),
+              const PackagesDiscoveryScreen(),
               const ProfileScreen(showBackButton: false),
             ],
           ),
@@ -124,7 +127,9 @@ class _HomeScreenState extends State<HomeScreen> {
 // ─── Home Tab ─────────────────────────────────────────────────────────────────
 class _HomeTab extends StatefulWidget {
   final VoidCallback onGoExplore;
-  const _HomeTab({required this.onGoExplore});
+  // Callback to jump to index 3 (Packages tab) from the home tab
+  final VoidCallback onGoPackages;
+  const _HomeTab({required this.onGoExplore, required this.onGoPackages});
 
   @override
   State<_HomeTab> createState() => _HomeTabState();
@@ -138,6 +143,8 @@ class _HomeTabState extends State<_HomeTab> {
   void initState() {
     super.initState();
     _checkNotifications();
+    // Pre-load a few packages for the home preview
+    context.read<TravelBloc>().add(const TravelPackagesRequested());
   }
 
   Future<void> _checkNotifications() async {
@@ -251,6 +258,17 @@ class _HomeTabState extends State<_HomeTab> {
 
                       const SizedBox(height: AppSpacing.ms),
                       _buildEventsHorizontalCards(context, state),
+
+                      const SizedBox(height: AppSpacing.ms),
+
+                      // ── Travel Packages Preview ──────────────────────────
+                      SectionTitle(
+                        title: 'Travel Packages',
+                        actionLabel: 'See all',
+                        onTap: widget.onGoPackages,
+                      ),
+                      const SizedBox(height: AppSpacing.ms),
+                      _buildPackagesPreview(context),
 
                       const SizedBox(height: AppSpacing.ms),
 
@@ -478,5 +496,212 @@ class _HomeTabState extends State<_HomeTab> {
           )
           .toList(),
     );
+  }
+
+  // ── Travel Packages preview (home feed) — compact rows, not image cards ──
+  Widget _buildPackagesPreview(BuildContext context) {
+    return BlocBuilder<TravelBloc, TravelState>(
+      buildWhen: (p, c) =>
+          p.packagesStatus != c.packagesStatus || p.packages != c.packages,
+      builder: (ctx, state) {
+        // Loading — slim shimmer strips matching row height
+        if (state.packagesStatus == TravelStatus.loading ||
+            state.packagesStatus == TravelStatus.initial) {
+          return Column(
+            children: List.generate(
+              3,
+              (i) => Container(
+                margin: EdgeInsets.only(bottom: i < 2 ? 8 : 0),
+                height: 62,
+                child: const ShimmerBox(radius: 14),
+              ),
+            ),
+          );
+        }
+
+        final preview = state.packages.take(4).toList();
+
+        // Empty — small, quiet nudge
+        if (preview.isEmpty) {
+          return GestureDetector(
+            onTap: widget.onGoPackages,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: appWhite,
+                borderRadius: BorderRadius.circular(14),
+                border:
+                    Border.all(color: primaryBlue.withOpacity(0.18)),
+              ),
+              child: Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: primaryBlue.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.luggage_rounded,
+                      color: primaryBlue, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppText.subHeading('Browse travel packages',
+                          size: 13, fontWeight: FontWeight.w700),
+                      AppText.body('Curated trips across Maharashtra',
+                          color: appGrey, size: 11),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded,
+                    color: primaryBlue, size: 20),
+              ]),
+            ),
+          );
+        }
+
+        // Compact list rows inside one rounded card container
+        return Container(
+          decoration: BoxDecoration(
+            color: appWhite,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                  color: shadowColorLight,
+                  blurRadius: 6,
+                  offset: const Offset(0, 2)),
+            ],
+          ),
+          child: Column(
+            children: [
+              ...preview.asMap().entries.map((entry) {
+                final i = entry.key;
+                final pkg = entry.value;
+                final isLast = i == preview.length - 1;
+                final accent = _packageAccent(pkg.category);
+
+                return Column(children: [
+                  InkWell(
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.packageDetails,
+                      arguments: pkg.id,
+                    ),
+                    borderRadius: BorderRadius.vertical(
+                      top: i == 0
+                          ? const Radius.circular(18)
+                          : Radius.zero,
+                      bottom: isLast
+                          ? const Radius.circular(18)
+                          : Radius.zero,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 11),
+                      child: Row(children: [
+                        // Coloured accent bar (category indicator)
+                        Container(
+                          width: 5,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: accent,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Title + meta
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                pkg.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: Color(0xFF1A1A2E),
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Row(children: [
+                                const Icon(Icons.place_outlined,
+                                    size: 10, color: appGrey),
+                                const SizedBox(width: 2),
+                                Flexible(
+                                  child: Text(
+                                    pkg.destinationName,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 10, color: appGrey),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.schedule_outlined,
+                                    size: 10, color: appGrey),
+                                const SizedBox(width: 2),
+                                Text('${pkg.days}D',
+                                    style: const TextStyle(
+                                        fontSize: 10, color: appGrey)),
+                              ]),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Price chip
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: accent.withOpacity(0.10),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '₹${pkg.price.toInt()}',
+                            style: TextStyle(
+                              color: accent,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.chevron_right_rounded,
+                            color: appGreyLight, size: 16),
+                      ]),
+                    ),
+                  ),
+                  if (!isLast)
+                    Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: appGreyLight.withOpacity(0.4),
+                        indent: 31,
+                        endIndent: 14),
+                ]);
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Color _packageAccent(String category) {
+    switch (category) {
+      case 'Fort Trek':     return const Color(0xFF6C63FF);
+      case 'Adventure':    return const Color(0xFFFF6B35);
+      case 'Beach':        return const Color(0xFF00B4D8);
+      case 'Spiritual':    return const Color(0xFFE9A21B);
+      case 'Wildlife':     return const Color(0xFF2DC653);
+      case 'Road Trip':    return const Color(0xFFFF4C6A);
+      case 'Weekend Trip': return const Color(0xFF9B5DE5);
+      case 'Cultural':     return const Color(0xFFE91E8C);
+      default:             return primaryBlue;
+    }
   }
 }

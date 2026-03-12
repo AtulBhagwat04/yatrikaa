@@ -27,6 +27,7 @@ import 'bloc/place_details_state.dart';
 import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
 import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
 import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
+import 'package:bhatkanti_app/Frontend/core/utils/place_utils.dart';
 
 class PlaceDetailsScreen extends StatelessWidget {
   final String placeId;
@@ -616,21 +617,44 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: (place.isOpen ?? false)
-                    ? successColor.withAlpha(20)
-                    : errorColor.withAlpha(20),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: AppText.caption(
-                (place.isOpen ?? false) ? "Open Now" : "Closed",
-                color: (place.isOpen ?? false)
-                    ? successColor
-                    : errorColor,
-                fontWeight: FontWeight.w700,
-              ),
+            Builder(
+              builder: (context) {
+                bool isOpen = PlaceUtils.checkIfOpenNow(place.timings, place.isOpen);
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isOpen ? successColor.withAlpha(20) : errorColor.withAlpha(20),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isOpen ? successColor.withAlpha(60) : errorColor.withAlpha(60),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: isOpen ? successColor : errorColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        isOpen ? "Open Now" : "Closed",
+                        style: TextStyle(
+                          color: isOpen ? successColor : errorColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
             ),
           ],
         ),

@@ -13,7 +13,6 @@ import 'package:bhatkanti_app/Frontend/views/screens/profile/help_center_screen.
 import 'package:bhatkanti_app/Frontend/views/screens/profile/privacy_policy_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/about_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/favorites_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/trips_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/reviews_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/manage_places_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/review_moderation_screen.dart';
@@ -30,6 +29,11 @@ import 'package:bhatkanti_app/Frontend/views/screens/profile/manage_events_scree
 import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_bloc.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/place_details/place_details_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/packages_discovery_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/package_details_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/create_package_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/my_packages_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/user_bookings_screen.dart';
 
 class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -92,7 +96,24 @@ class AppRoutes {
         return _fadeRoute(const FavoritesScreen());
 
       case RouteNames.trips:
-        return _fadeRoute(const TripsScreen());
+        return _fadeRoute(const UserBookingsScreen());
+
+      // ── Travel Packages ──────────────────────────────────────────────────────
+      case RouteNames.packages:
+        return _fadeRoute(const PackagesDiscoveryScreen());
+
+      case RouteNames.packageDetails:
+        final packageId = settings.arguments as String?;
+        return _fadeRoute(PackageDetailsScreen(packageId: packageId ?? ''));
+
+      case RouteNames.createPackage:
+        return _fadeRoute(const CreatePackageScreen());
+
+      case RouteNames.myPackages:
+        return _fadeRoute(const MyPackagesScreen());
+
+      case RouteNames.userBookings:
+        return _fadeRoute(const UserBookingsScreen());
 
       case RouteNames.reviews:
         return _fadeRoute(const ReviewsScreen());
@@ -103,16 +124,7 @@ class AppRoutes {
       case RouteNames.guideDashboard:
         return _fadeRoute(const GuideDashboardScreen());
       case RouteNames.manageTours:
-        return _fadeRoute(
-          const GenericManagementScreen(
-            title: 'Manage Tours',
-            emptyTitle: 'No Tours Found',
-            emptySubtitle:
-                'Start creating amazing tour packages for travelers to browse and book!',
-            icon: Icons.tour_rounded,
-            themeColor: Color(0xFFEA580C),
-          ),
-        );
+        return _fadeRoute(const MyPackagesScreen());
       case RouteNames.bookingRequests:
         return _fadeRoute(
           const GenericManagementScreen(
