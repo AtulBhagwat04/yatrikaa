@@ -28,6 +28,9 @@ class AppStrings {
   static const String noPlacesFound = "No places found";
   static const String noEventsFound = "No events found";
 
+  static const String letExploreText = "Let's Explore the World with ";
+  static const String searchHint = "Search destinations...";
+
   static const String badgeFamous = "FAMOUS";
   static const String nearbyAttraction = "Nearby Attraction";
   static const String nearby = "Nearby";

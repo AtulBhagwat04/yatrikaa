@@ -39,7 +39,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   final _customCategoryController = TextEditingController();
 
   final _picker = ImagePicker();
-  XFile? _imageFile;
+  List<XFile> _imageFiles = [];
 
   String _selectedCategory = AppStrings.catForts;
   String _selectedDifficulty = AppStrings.pdEasy;
@@ -133,13 +133,12 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
 
     setState(() => _isPickerActive = true);
     try {
-      final pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
+      final pickedFiles = await _picker.pickMultiImage(
         imageQuality: 70,
       );
-      if (pickedFile != null) {
+      if (pickedFiles.isNotEmpty) {
         setState(() {
-          _imageFile = pickedFile;
+          _imageFiles.addAll(pickedFiles);
         });
       }
     } catch (e) {
@@ -149,9 +148,9 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
     }
   }
 
-  void _removeImage() {
+  void _removeImage(int index) {
     setState(() {
-      _imageFile = null;
+      _imageFiles.removeAt(index);
     });
   }
 
@@ -303,7 +302,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                   : _selectedCategory)
               .toLowerCase(),
         ],
-      }, imageFile: _imageFile);
+      }, imageFiles: _imageFiles);
 
       if (success && mounted) {
         CustomToast.success(context, AppStrings.apSuccessMsg);
@@ -790,66 +789,90 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       decoration: BoxDecoration(
         color: onboardingBlueVeryLight,
         borderRadius: BorderRadius.circular(10),
-        image: _imageFile != null
-            ? DecorationImage(
-                image: FileImage(File(_imageFile!.path)),
-                fit: BoxFit.cover,
-              )
-            : null,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: _imageFile == null
-            ? GestureDetector(
-                onTap: _pickImage,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.add_photo_alternate_rounded,
-                      size: 30,
-                      color: primaryBlue,
-                    ),
-                    const SizedBox(height: 4),
-                    AppText.caption(
-                      "Upload Photo",
-                      fontWeight: FontWeight.w600,
-                      color: primaryBlue,
-                    ),
-                  ],
-                ),
-              )
-            : Stack(
+      child: _imageFiles.isEmpty
+          ? InkWell(
+              onTap: _pickImage,
+              borderRadius: BorderRadius.circular(10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: _pickImage,
-                          child: const Icon(
-                            Icons.add_photo_alternate_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: _removeImage,
-                          child: const Icon(
-                            Icons.close_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                        ),
-                      ],
-                    ),
+                  Icon(
+                    Icons.add_photo_alternate_rounded,
+                    size: 40,
+                    color: primaryBlue.withOpacity(0.5),
                   ),
+                  const SizedBox(height: 8),
+                  AppText.small("Click to select multiple images",
+                      color: primaryBlue),
                 ],
               ),
-      ),
+            )
+          : ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.all(8),
+              itemCount: _imageFiles.length + 1,
+              itemBuilder: (context, index) {
+                if (index == _imageFiles.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: InkWell(
+                      onTap: _pickImage,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 140,
+                        decoration: BoxDecoration(
+                          color: primaryBlue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: primaryBlue.withOpacity(0.3),
+                            style: BorderStyle.solid,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.add_a_photo_rounded,
+                          color: primaryBlue.withOpacity(0.5),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return Stack(
+                  children: [
+                    Container(
+                      width: 140,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        image: DecorationImage(
+                          image: FileImage(File(_imageFiles[index].path)),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 12,
+                      child: GestureDetector(
+                        onTap: () => _removeImage(index),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
     );
   }
 

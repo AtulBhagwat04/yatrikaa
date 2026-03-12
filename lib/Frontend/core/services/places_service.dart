@@ -142,7 +142,7 @@ class PlacesService {
     );
   }
 
-  Future<bool> addPlace(Map<String, dynamic> body, {dynamic imageFile}) async {
+  Future<bool> addPlace(Map<String, dynamic> body, {List? imageFiles}) async {
     try {
       final token = await _authService.getToken();
       final uri = Uri.parse('${ApiConstants.baseUrl}/places');
@@ -161,26 +161,29 @@ class PlacesService {
         }
       });
 
-      if (imageFile != null) {
-        final String path = imageFile.path;
-        final String ext = path.split('.').last.toLowerCase();
+      if (imageFiles != null && imageFiles.isNotEmpty) {
+        for (var i = 0; i < imageFiles.length; i++) {
+          final dynamic imageFile = imageFiles[i];
+          final String path = imageFile.path;
+          final String ext = path.split('.').last.toLowerCase();
 
-        MediaType contentType;
-        if (ext == 'png') {
-          contentType = MediaType('image', 'png');
-        } else if (ext == 'webp') {
-          contentType = MediaType('image', 'webp');
-        } else {
-          contentType = MediaType('image', 'jpeg');
+          MediaType contentType;
+          if (ext == 'png') {
+            contentType = MediaType('image', 'png');
+          } else if (ext == 'webp') {
+            contentType = MediaType('image', 'webp');
+          } else {
+            contentType = MediaType('image', 'jpeg');
+          }
+
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'image',
+              path,
+              contentType: contentType,
+            ),
+          );
         }
-
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            path,
-            contentType: contentType,
-          ),
-        );
       }
 
       final streamedResponse = await request.send();
@@ -196,7 +199,7 @@ class PlacesService {
     }
   }
 
-  Future<bool> updatePlace(String id, Map<String, dynamic> body, {dynamic imageFile}) async {
+  Future<bool> updatePlace(String id, Map<String, dynamic> body, {List? imageFiles}) async {
     try {
       final token = await _authService.getToken();
       final uri = Uri.parse('${ApiConstants.baseUrl}/places/$id');
@@ -215,26 +218,29 @@ class PlacesService {
         }
       });
 
-      if (imageFile != null) {
-        final String path = imageFile.path;
-        final String ext = path.split('.').last.toLowerCase();
+      if (imageFiles != null && imageFiles.isNotEmpty) {
+        for (var i = 0; i < imageFiles.length; i++) {
+          final dynamic imageFile = imageFiles[i];
+          final String path = imageFile.path;
+          final String ext = path.split('.').last.toLowerCase();
 
-        MediaType contentType;
-        if (ext == 'png') {
-          contentType = MediaType('image', 'png');
-        } else if (ext == 'webp') {
-          contentType = MediaType('image', 'webp');
-        } else {
-          contentType = MediaType('image', 'jpeg');
+          MediaType contentType;
+          if (ext == 'png') {
+            contentType = MediaType('image', 'png');
+          } else if (ext == 'webp') {
+            contentType = MediaType('image', 'webp');
+          } else {
+            contentType = MediaType('image', 'jpeg');
+          }
+
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'image',
+              path,
+              contentType: contentType,
+            ),
+          );
         }
-
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            path,
-            contentType: contentType,
-          ),
-        );
       }
 
       final streamedResponse = await request.send();
