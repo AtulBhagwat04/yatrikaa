@@ -29,13 +29,13 @@ router.patch('/bookings/:id/cancel', protect, cancelBooking);           // User:
 router.get(
   '/admin/all',
   protect,
-  authorize('admin', 'super-admin'),
+  authorize('admin'),
   getAllPackagesAdmin,
 );
 router.patch(
   '/admin/:id/publish',
   protect,
-  authorize('admin', 'super-admin'),
+  authorize('admin'),
   publishPackage,
 );
 
@@ -43,7 +43,7 @@ router.patch(
 router.post(
   '/',
   protect,
-  authorize('guide', 'admin', 'super-admin'),
+  authorize('guide', 'admin'),
   upload.array('images', 5),
   createPackage,
 );
@@ -54,12 +54,12 @@ router.get('/:id', getPackageDetails);
 router.put(
   '/:id',
   protect,
-  authorize('guide', 'admin', 'super-admin'),
+  authorize('guide', 'admin'),
   upload.array('images', 5),
   updatePackage,
 );
 
-router.delete('/:id', protect, authorize('admin', 'super-admin'), deletePackage);
+router.delete('/:id', protect, authorize('admin'), deletePackage);
 
 router.post('/:id/join', protect, joinPackage);                         // User: join a package
 router.get('/:id/participants', protect, getPackageParticipants);       // Guide/Admin: participants

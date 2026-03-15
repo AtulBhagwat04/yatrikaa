@@ -9,17 +9,19 @@ import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
 class ModernPlaceCard extends StatelessWidget {
   final PlaceModel place;
   final VoidCallback onTap;
-  final double width;
-  final double height;
+  final double? width;
+  final double? height;
   final double radius;
+  final EdgeInsetsGeometry? margin;
 
   const ModernPlaceCard({
     super.key,
     required this.place,
     required this.onTap,
-    this.width = 240,
-    this.height = 300,
+    this.width,
+    this.height,
     this.radius = 12,
+    this.margin,
   });
 
   @override
@@ -27,7 +29,7 @@ class ModernPlaceCard extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      margin: const EdgeInsets.only(right: AppSpacing.m, bottom: 8),
+      margin: margin ?? const EdgeInsets.only(right: AppSpacing.m, bottom: 8),
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(radius)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),

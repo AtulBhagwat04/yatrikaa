@@ -24,22 +24,27 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
   final _locationController = TextEditingController();
   final _postService = PostService();
   final _picker = ImagePicker();
-  XFile? _imageFile;
+  List<XFile> _imageFiles = [];
   bool _isLoading = false;
   bool _isPickerActive = false;
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     if (_isPickerActive) return;
+
+    if (_imageFiles.length >= 10) {
+      CustomToast.warning(context, "Maximum 10 images allowed");
+      return;
+    }
 
     setState(() => _isPickerActive = true);
     try {
-      final pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
+      final List<XFile> pickedFiles = await _picker.pickMultiImage(
         imageQuality: 70,
       );
-      if (pickedFile != null) {
+      if (pickedFiles.isNotEmpty) {
         setState(() {
-          _imageFile = pickedFile;
+          int remaining = 10 - _imageFiles.length;
+          _imageFiles.addAll(pickedFiles.take(remaining));
         });
       }
     } catch (e) {
@@ -49,13 +54,19 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
     }
   }
 
+  void _removeImage(int index) {
+    setState(() {
+      _imageFiles.removeAt(index);
+    });
+  }
+
   Future<void> _createPost() async {
     if (_captionController.text.isEmpty || _locationController.text.isEmpty) {
       CustomToast.warning(context, AppStrings.commFillFieldsError);
       return;
     }
 
-    if (_imageFile == null) {
+    if (_imageFiles.isEmpty) {
       CustomToast.warning(context, AppStrings.commUploadImageError);
       return;
     }
@@ -65,7 +76,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
     final success = await _postService.createPost(
       location: _locationController.text,
       caption: _captionController.text,
-      imageFile: _imageFile,
+      imageFiles: _imageFiles,
     );
 
     setState(() => _isLoading = false);
@@ -142,41 +153,66 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
               fontWeight: FontWeight.bold,
             ),
             const SizedBox(height: 10),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.grey.shade300,
-                    style: BorderStyle.solid,
-                  ),
-                  image: _imageFile != null
-                      ? DecorationImage(
-                          image: FileImage(File(_imageFile!.path)),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: _imageFile == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.add_a_photo,
-                            size: 40,
-                            color: primaryBlue.withOpacity(0.5),
+            SizedBox(
+              height: 120,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _imageFiles.length + (_imageFiles.length < 10 ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == _imageFiles.length) {
+                    return GestureDetector(
+                      onTap: _pickImages,
+                      child: Container(
+                        width: 120,
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo, color: primaryBlue.withOpacity(0.5)),
+                            const SizedBox(height: 4),
+                            AppText.caption("Add Photo", color: primaryBlue),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Stack(
+                    children: [
+                      Container(
+                        width: 120,
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          image: DecorationImage(
+                            image: FileImage(File(_imageFiles[index].path)),
+                            fit: BoxFit.cover,
                           ),
-                          const SizedBox(height: 8),
-                          AppText.caption(
-                            AppStrings.commPhotoUploadHint,
-                            color: primaryBlue,
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 16,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, size: 12, color: Colors.white),
                           ),
-                        ],
-                      )
-                    : null,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 20),

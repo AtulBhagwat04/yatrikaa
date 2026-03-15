@@ -103,7 +103,7 @@ const getPackageDetails = async (req, res, next) => {
 
 // @desc  Create a travel package
 // @route POST /api/packages
-// @access Private (Guide, Admin, Super-Admin)
+// @access Private (Guide, Admin)
 const createPackage = async (req, res, next) => {
   try {
     const body = _parsePackageBody(req.body);
@@ -113,9 +113,8 @@ const createPackage = async (req, res, next) => {
     if (imageUrls.length > 0) body.images = imageUrls;
 
     // Guides start as Draft pending admin review; admins publish immediately
-    const status = ['admin', 'super-admin'].includes(req.user.role)
-      ? 'Published'
-      : 'Draft';
+    const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
+    const status = userRole === 'admin' ? 'Published' : 'Draft';
 
     const pkg = await TravelPackage.create({
       ...body,
@@ -136,14 +135,15 @@ const createPackage = async (req, res, next) => {
 
 // @desc  Update a travel package
 // @route PUT /api/packages/:id
-// @access Private (Owner Guide, Admin, Super-Admin)
+// @access Private (Owner Guide, Admin)
 const updatePackage = async (req, res, next) => {
   try {
     const pkg = await TravelPackage.findById(req.params.id);
     if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
 
     const isOwner = pkg.organizer.toString() === req.user._id.toString();
-    const isAdmin = ['admin', 'super-admin'].includes(req.user.role);
+    const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
+    const isAdmin = userRole === 'admin';
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, error: 'Not authorised to edit this package' });
     }
@@ -171,7 +171,7 @@ const updatePackage = async (req, res, next) => {
 
 // @desc  Admin: publish / approve a Draft package
 // @route PATCH /api/packages/:id/publish
-// @access Private (Admin, Super-Admin)
+// @access Private (Admin)
 const publishPackage = async (req, res, next) => {
   try {
     const pkg = await TravelPackage.findByIdAndUpdate(
@@ -189,7 +189,7 @@ const publishPackage = async (req, res, next) => {
 
 // @desc  Delete / cancel a travel package
 // @route DELETE /api/packages/:id
-// @access Private (Admin, Super-Admin only)
+// @access Private (Admin only)
 const deletePackage = async (req, res, next) => {
   try {
     const pkg = await TravelPackage.findByIdAndDelete(req.params.id);
@@ -209,7 +209,7 @@ const deletePackage = async (req, res, next) => {
 
 // @desc  Get packages created by the logged-in guide
 // @route GET /api/packages/my
-// @access Private (Guide, Admin, Super-Admin)
+// @access Private (Guide, Admin)
 const getMyPackages = async (req, res, next) => {
   try {
     const packages = await TravelPackage.find({ organizer: req.user._id })
@@ -335,14 +335,15 @@ const cancelBooking = async (req, res, next) => {
 
 // @desc  Get participants list for a package (organiser/admin only)
 // @route GET /api/packages/:id/participants
-// @access Private (Owner Guide, Admin, Super-Admin)
+// @access Private (Owner Guide, Admin)
 const getPackageParticipants = async (req, res, next) => {
   try {
     const pkg = await TravelPackage.findById(req.params.id);
     if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
 
     const isOwner = pkg.organizer.toString() === req.user._id.toString();
-    const isAdmin = ['admin', 'super-admin'].includes(req.user.role);
+    const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
+    const isAdmin = userRole === 'admin';
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, error: 'Not authorised' });
     }
@@ -358,7 +359,7 @@ const getPackageParticipants = async (req, res, next) => {
 
 // @desc  Admin: get all packages (including Draft)
 // @route GET /api/packages/admin/all
-// @access Private (Admin, Super-Admin)
+// @access Private (Admin)
 const getAllPackagesAdmin = async (req, res, next) => {
   try {
     const { status } = req.query;

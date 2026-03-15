@@ -169,16 +169,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Color _getRoleColor(String role) {
-    switch (role.toLowerCase()) {
-      case 'super-admin':
-        return superAdminColor;
-      case 'admin':
-        return adminColor;
-      case 'guide':
-        return guideColor;
-      default:
-        return primaryBlue;
-    }
+    String r = role.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    if (r == 'admin') return adminColor;
+    if (r == 'guide') return guideColor;
+    return primaryBlue;
   }
 
   Future<void> _deleteUser(String userId) async {

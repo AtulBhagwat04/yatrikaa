@@ -7,6 +7,8 @@ import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
 import 'package:bhatkanti_app/Frontend/core/models/booking_model.dart';
 import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
 
+import 'package:bhatkanti_app/Frontend/core/utils/app_cache.dart';
+
 class PackagesService {
   final AuthService _authService = AuthService();
 
@@ -26,16 +28,34 @@ class PackagesService {
     String? search,
   }) async {
     try {
-      final url = ApiConstants.getPackagesUrl(category: category, search: search);
+      final url =
+          ApiConstants.getPackagesUrl(category: category, search: search);
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List results = data['results'] ?? [];
+
+        // Save to cache for offline support if it's a general request
+        if (category == null && search == null) {
+          await AppCache.saveRawData(AppCache.keyPackages, results);
+        }
+
         return results.map((j) => TravelPackageModel.fromJson(j)).toList();
       }
       throw Exception('Failed to fetch packages');
     } catch (e) {
       print('PackagesService.getPackages: $e');
+
+      // Try falling back to cache
+      if (category == null && search == null) {
+        final cachedData = await AppCache.getRawData(AppCache.keyPackages);
+        if (cachedData.isNotEmpty) {
+          return cachedData
+              .map((j) => TravelPackageModel.fromJson(j))
+              .toList();
+        }
+      }
+
       return [];
     }
   }

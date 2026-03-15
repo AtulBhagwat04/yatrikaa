@@ -4,11 +4,13 @@ import 'package:bhatkanti_app/Frontend/core/constants/app_assets.dart';
 class ItineraryStep {
   final int day;
   final String title;
+  final DateTime? date;
   final List<String> activities;
 
   ItineraryStep({
     required this.day,
     required this.title,
+    this.date,
     this.activities = const [],
   });
 
@@ -16,6 +18,7 @@ class ItineraryStep {
     return ItineraryStep(
       day: json['day'] ?? 1,
       title: json['title'] ?? '',
+      date: json['date'] != null ? DateTime.parse(json['date']) : null,
       activities: List<String>.from(json['activities'] ?? []),
     );
   }
@@ -74,6 +77,8 @@ class TravelPackageModel {
   final bool isPopular;
   final double averageRating;
   final int reviewCount;
+  final DateTime? startDate;
+  final DateTime? endDate;
 
   TravelPackageModel({
     required this.id,
@@ -99,6 +104,8 @@ class TravelPackageModel {
     this.isPopular = false,
     this.averageRating = 0.0,
     this.reviewCount = 0,
+    this.startDate,
+    this.endDate,
   });
 
   factory TravelPackageModel.fromJson(Map<String, dynamic> json) {
@@ -133,6 +140,10 @@ class TravelPackageModel {
       isPopular: json['isPopular'] ?? false,
       averageRating: (ratings['average'] ?? 0.0).toDouble(),
       reviewCount: ratings['count'] ?? 0,
+      startDate:
+          json['startDate'] != null ? DateTime.parse(json['startDate']) : null,
+      endDate:
+          json['endDate'] != null ? DateTime.parse(json['endDate']) : null,
     );
   }
 
@@ -148,5 +159,58 @@ class TravelPackageModel {
       if (img.startsWith('http')) return img;
       return ApiConstants.getPhotoUrl(img);
     }).toList();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'title': title,
+      'description': description,
+      'images': images,
+      'destination': {
+        'name': destinationName,
+        'location': {'lat': lat, 'lng': lng}
+      },
+      'duration': {'days': days, 'nights': nights},
+      'price': price,
+      'maxGroupSize': maxGroupSize,
+      'currentParticipants': currentParticipants,
+      'difficulty': difficulty,
+      'category': category,
+      'itinerary': itinerary.map((i) => i.toJson()).toList(),
+      'inclusions': inclusions,
+      'exclusions': exclusions,
+      'bestSeason': bestSeason,
+      'organizer': organizer.toJson(),
+      'status': status,
+      'isPopular': isPopular,
+      'ratings': {'average': averageRating, 'count': reviewCount},
+      'startDate': startDate?.toIso8601String(),
+      'endDate': endDate?.toIso8601String(),
+    };
+  }
+}
+
+extension ItineraryStepJson on ItineraryStep {
+  Map<String, dynamic> toJson() {
+    return {
+      'day': day,
+      'title': title,
+      'date': date?.toIso8601String(),
+      'activities': activities,
+    };
+  }
+}
+
+extension OrganizerModelJson on OrganizerModel {
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+      'profileImage': profileImage,
+      'role': role,
+      'rating': rating,
+      'tripsHosted': tripsHosted,
+    };
   }
 }

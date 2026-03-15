@@ -17,6 +17,8 @@ class TravelPackagesRequested extends TravelEvent {
   List<Object?> get props => [category, search];
 }
 
+class TravelLoadCache extends TravelEvent {}
+
 /// Filter by category (chip tap).
 class TravelCategoryChanged extends TravelEvent {
   final String category;

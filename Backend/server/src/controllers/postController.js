@@ -4,20 +4,21 @@ const { uploadImage, deleteImage } = require('../services/cloudinaryService');
 
 class PostController {
   async createPost(req, res, next) {
-    const { location, imageUrl, caption } = req.body;
+    const { location, caption } = req.body;
     try {
-      let finalImageUrl = imageUrl;
+      let finalImages = [];
 
-      if (req.file) {
+      if (req.files && req.files.length > 0) {
         const folderName = `Bhatkanti/Posts/${req.user._id}`;
-        const result = await uploadImage(req.file, folderName);
-        finalImageUrl = result.secure_url;
+        const uploadPromises = req.files.map(file => uploadImage(file, folderName));
+        const results = await Promise.all(uploadPromises);
+        finalImages = results.map(r => r.secure_url);
       }
 
       const post = await Post.create({
         author: req.user._id,
         location,
-        imageUrl: finalImageUrl,
+        images: finalImages,
         caption
       });
 
@@ -99,7 +100,8 @@ class PostController {
       const comment = post.comments.id(commentId);
       if (!comment) return res.status(404).json({ error: 'Comment not found' });
 
-      const isAdmin = req.user.role === 'admin' || req.user.role === 'super-admin';
+      const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
+      const isAdmin = userRole === 'admin';
       // Only allowing owner of comment or owner of post to delete, or admin
       if (!isAdmin && comment.user.toString() !== req.user._id.toString() && post.author.toString() !== req.user._id.toString()) {
         return res.status(403).json({ error: 'Unauthorized to delete this comment' });
@@ -127,7 +129,8 @@ class PostController {
       const comment = post.comments.id(commentId);
       if (!comment) return res.status(404).json({ error: 'Comment not found' });
 
-      const isAdmin = req.user.role === 'admin' || req.user.role === 'super-admin';
+      const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
+      const isAdmin = userRole === 'admin';
       // Only author of comment or admin can edit
       if (!isAdmin && comment.user.toString() !== req.user._id.toString()) {
         return res.status(403).json({ error: 'Unauthorized to edit this comment' });
@@ -154,26 +157,30 @@ class PostController {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      const isAdmin = req.user.role === 'admin' || req.user.role === 'super-admin';
+      const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
+      const isAdmin = userRole === 'admin';
       // Check if user is the author or admin
       if (!isAdmin && post.author.toString() !== req.user._id.toString()) {
         return res.status(403).json({ error: 'Unauthorized to delete this post' });
       }
 
-      // Extract publicId from imageUrl if it's a Cloudinary URL
-      // Example: https://res.cloudinary.com/cloud_name/image/upload/v1/Bhatkanti/Posts/userId/filename.jpg
-      if (post.imageUrl && post.imageUrl.includes('cloudinary.com')) {
-        try {
-          const urlParts = post.imageUrl.split('/');
-          const uploadIndex = urlParts.indexOf('upload');
-          if (uploadIndex !== -1) {
-            // Get everything after the version (v1234567)
-            const publicIdWithExt = urlParts.slice(uploadIndex + 2).join('/');
-            const publicId = publicIdWithExt.split('.')[0];
-            await deleteImage(publicId);
+      // Extract publicId from images if they are Cloudinary URLs
+      if (post.images && post.images.length > 0) {
+        for (const imageUrl of post.images) {
+          if (imageUrl.includes('cloudinary.com')) {
+            try {
+              const urlParts = imageUrl.split('/');
+              const uploadIndex = urlParts.indexOf('upload');
+              if (uploadIndex !== -1) {
+                // Get everything after the version (v1234567)
+                const publicIdWithExt = urlParts.slice(uploadIndex + 2).join('/');
+                const publicId = publicIdWithExt.split('.')[0];
+                await deleteImage(publicId);
+              }
+            } catch (cloudinaryError) {
+              console.error('Error deleting image from Cloudinary:', cloudinaryError.message);
+            }
           }
-        } catch (cloudinaryError) {
-          console.error('Error deleting image from Cloudinary:', cloudinaryError.message);
         }
       }
 
@@ -196,7 +203,8 @@ class PostController {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      const isAdmin = req.user.role === 'admin' || req.user.role === 'super-admin';
+      const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
+      const isAdmin = userRole === 'admin';
       if (!isAdmin && post.author.toString() !== req.user._id.toString()) {
         return res.status(403).json({ error: 'Unauthorized to edit this post' });
       }
@@ -204,27 +212,34 @@ class PostController {
       post.location = location || post.location;
       post.caption = caption || post.caption;
 
-      if (req.file) {
-        // Delete old image if exists
-        if (post.imageUrl && post.imageUrl.includes('cloudinary.com')) {
-          try {
-            const urlParts = post.imageUrl.split('/');
-            const uploadIndex = urlParts.indexOf('upload');
-            if (uploadIndex !== -1) {
-              const publicIdWithExt = urlParts.slice(uploadIndex + 2).join('/');
-              const publicId = publicIdWithExt.split('.')[0];
-              await deleteImage(publicId);
+      if (req.files && req.files.length > 0) {
+        // Delete old images if they exist
+        if (post.images && post.images.length > 0) {
+          for (const imageUrl of post.images) {
+            if (imageUrl.includes('cloudinary.com')) {
+              try {
+                const urlParts = imageUrl.split('/');
+                const uploadIndex = urlParts.indexOf('upload');
+                if (uploadIndex !== -1) {
+                  const publicIdWithExt = urlParts.slice(uploadIndex + 2).join('/');
+                  const publicId = publicIdWithExt.split('.')[0];
+                  await deleteImage(publicId);
+                }
+              } catch (e) {
+                console.error('Error deleting old image:', e.message);
+              }
             }
-          } catch (e) {
-            console.error('Error deleting old image:', e.message);
           }
         }
 
         const folderName = `Bhatkanti/Posts/${req.user._id}`;
-        const result = await uploadImage(req.file, folderName);
-        post.imageUrl = result.secure_url;
+        const uploadPromises = req.files.map(file => uploadImage(file, folderName));
+        const results = await Promise.all(uploadPromises);
+        post.images = results.map(r => r.secure_url);
       }
 
+      post.isEdited = true;
+      post.editedAt = Date.now();
       await post.save();
       const populatedPost = await Post.findById(post._id)
         .populate('author', 'name')

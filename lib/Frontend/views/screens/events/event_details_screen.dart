@@ -418,7 +418,29 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   placeholder: (context, url) => const ShimmerBox(),
                   errorWidget: (context, url, error) => Container(
                     color: appGreyVeryLight,
-                    child: const Icon(Icons.image_not_supported),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.image_not_supported_outlined,
+                          color: appGrey,
+                          size: 40,
+                        ),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: Text(
+                            "Image not available",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: appGrey,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

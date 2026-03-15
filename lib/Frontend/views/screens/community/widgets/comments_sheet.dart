@@ -126,7 +126,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
                           widget.currentUserId == comment.user.id;
                       final isPostOwner =
                           widget.currentUserId == widget.post.author.id;
-                      final isAdmin = widget.currentUserRole == 'admin' || widget.currentUserRole == 'super-admin';
+                      final userRole = widget.currentUserRole?.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+                      final isAdmin = userRole == 'admin';
                       final canDelete = isCommentOwner || isPostOwner || isAdmin;
                       final canEdit = isCommentOwner || isAdmin;
 

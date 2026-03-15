@@ -11,6 +11,22 @@ abstract class HomeEvent extends Equatable {
 
 class HomeStarted extends HomeEvent {}
 
+class HomeLoadCache extends HomeEvent {}
+
+class HomeConnectivityChanged extends HomeEvent {
+  final bool isOffline;
+  const HomeConnectivityChanged(this.isOffline);
+  @override
+  List<Object?> get props => [isOffline];
+}
+
+class HomeLocationServiceStatusChanged extends HomeEvent {
+  final bool isEnabled;
+  const HomeLocationServiceStatusChanged(this.isEnabled);
+  @override
+  List<Object?> get props => [isEnabled];
+}
+
 class HomeLocationRefreshRequested extends HomeEvent {}
 
 class HomeLocationUpdated extends HomeEvent {
@@ -37,10 +53,20 @@ class HomeTabChanged extends HomeEvent {
   List<Object?> get props => [index];
 }
 
+class HomeSearchRequested extends HomeEvent {
+  final String query;
+  const HomeSearchRequested(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}
+
+class HomeSearchCleared extends HomeEvent {}
+
 class HomeEventUpdateEvent extends HomeEvent {
   final EventModel event;
   const HomeEventUpdateEvent(this.event);
 
   @override
-  List<Object?> get props => [event];
+  List<Object> get props => [event];
 }

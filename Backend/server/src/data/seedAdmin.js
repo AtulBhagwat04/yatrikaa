@@ -17,19 +17,6 @@ const seedAdmins = async () => {
       console.log('ℹ️ Admin account already present');
     }
 
-    // Check if SuperAdmin exists
-    const superAdminExists = await User.findOne({ email: config.SUPERADMIN_EMAIL });
-    if (!superAdminExists) {
-      await User.create({
-        name: 'Master Super-Admin',
-        email: config.SUPERADMIN_EMAIL,
-        password: config.SUPERADMIN_PASSWORD,
-        role: 'super-admin'
-      });
-      console.log('✅ Default Super-Admin created');
-    } else {
-      console.log('ℹ️ Super-Admin account already present');
-    }
   } catch (error) {
     console.error('❌ Error seeding admins:', error.message);
   }

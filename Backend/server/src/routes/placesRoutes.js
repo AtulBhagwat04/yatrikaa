@@ -12,12 +12,12 @@ router.get('/details/:placeId', (req, res, next) => placesController.getPlaceDet
 router.get('/photo/:photoReference', (req, res, next) => placesController.getPhoto(req, res, next));
 
 // Admin only routes
-router.post('/', protect, authorize('admin', 'super-admin'), upload.array('image', 10), (req, res, next) => placesController.addPlace(req, res, next));
-router.put('/:id', protect, authorize('admin', 'super-admin'), upload.array('image', 10), (req, res, next) => placesController.editPlace(req, res, next));
-router.delete('/:id', protect, authorize('admin', 'super-admin'), (req, res, next) => placesController.deletePlace(req, res, next));
+router.post('/', protect, authorize('admin'), upload.array('images', 10), (req, res, next) => placesController.addPlace(req, res, next));
+router.put('/:id', protect, authorize('admin'), upload.array('images', 10), (req, res, next) => placesController.editPlace(req, res, next));
+router.delete('/:id', protect, authorize('admin'), (req, res, next) => placesController.deletePlace(req, res, next));
 
 // Moderation
-router.delete('/:placeId/reviews/:authorName/:time', protect, authorize('admin', 'super-admin'), (req, res, next) => placesController.deleteReview(req, res, next));
+router.delete('/:placeId/reviews/:authorName/:time', protect, authorize('admin'), (req, res, next) => placesController.deleteReview(req, res, next));
 
 // Favorites
 router.get('/favorites', protect, (req, res, next) => placesController.getFavoritePlaces(req, res, next));

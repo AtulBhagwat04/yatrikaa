@@ -38,7 +38,6 @@ const Color shadowColorLight = Color(0x08000000); // black with 0.03 opacity
 const Color shadowColorDark = Color(0x33000000); // black with 0.2 opacity (alpha 50 approx)
 const Color overlayColor = Color(0x96000000); // black with 0.6 opacity (alpha 150 approx)
 // --- Semantic Colors ---
-const Color superAdminColor = Color(0xFF7C3AED);
 const Color adminColor = Color(0xFFDC2626);
 const Color guideColor = Color(0xFF059669);
 

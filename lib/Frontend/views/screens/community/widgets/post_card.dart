@@ -309,7 +309,7 @@ class _PostCardState extends State<PostCard> {
                     child: Stack(
                       children: [
                         CachedNetworkImage(
-                          imageUrl: p.imageUrl,
+                          imageUrl: p.primaryImageUrl,
                           height: 260,
                           width: double.infinity,
                           fit: BoxFit.cover,
@@ -318,9 +318,28 @@ class _PostCardState extends State<PostCard> {
                           errorWidget: (context, url, error) => Container(
                             color: appGreyVeryLight,
                             height: 260,
-                            child: const Icon(
-                              Icons.image_not_supported_outlined,
-                              color: appGrey,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: appGrey,
+                                  size: 32,
+                                ),
+                                const SizedBox(height: 8),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  child: Text(
+                                    "Image Not Available",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: appGrey,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -386,7 +405,19 @@ class _PostCardState extends State<PostCard> {
                             size: 13,
                           ),
                           const Spacer(),
-                          AppText.caption(_timeAgo(p.createdAt), size: 10),
+                          Row(
+                            children: [
+                              if (p.isEdited) ...[
+                                AppText.caption("edited • ", size: 10, color: appGrey),
+                              ],
+                              AppText.caption(
+                                _timeAgo(p.isEdited && p.editedAt != null
+                                    ? p.editedAt!
+                                    : p.createdAt),
+                                size: 10,
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -441,7 +472,8 @@ class _PostCardState extends State<PostCard> {
                   label: AppStrings.commShare,
                   onTap: _handleShare,
                 ),
-                if (widget.currentUserId == p.author.id || widget.currentUserRole == 'admin' || widget.currentUserRole == 'super-admin') ...[
+                if (widget.currentUserId == p.author.id || 
+                    (widget.currentUserRole?.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '') == 'admin')) ...[
                   const Spacer(),
                   IconButton(
                     onPressed: _showPostOptions,

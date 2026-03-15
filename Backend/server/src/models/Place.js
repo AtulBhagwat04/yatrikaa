@@ -42,6 +42,7 @@ const placeSchema = new mongoose.Schema({
 });
 
 placeSchema.index({ "geometry.location": "2dsphere" });
+placeSchema.index({ rating: -1, user_ratings_total: -1 });
 
 const Place = mongoose.model('Place', placeSchema);
 

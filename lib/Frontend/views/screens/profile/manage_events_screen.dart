@@ -532,7 +532,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     }
 
     List<String> existingImages = List.from(event.images);
-    XFile? pickedFile;
+    List<XFile> pickedFiles = [];
 
     final categories = [
       'Cultural', 'Festival', 'Adventure', 'Spiritual', 'Exhibition',
@@ -610,7 +610,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                         right: 5,
                                         child: GestureDetector(
                                           onTap: () {
-                                            if (existingImages.length == 1 && pickedFile == null) {
+                                            if (existingImages.length == 1 && pickedFiles.isEmpty) {
                                               CustomToast.warning(context, "At least one image is required", title: "Wait!");
                                               return;
                                             }
@@ -627,21 +627,26 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                   ),
                                 );
                               }),
-                              if (pickedFile != null)
-                                Container(
+                              ...pickedFiles.asMap().entries.map((entry) {
+                                return Container(
                                   width: 130,
                                   margin: const EdgeInsets.only(right: 12),
                                   child: Stack(
                                     children: [
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(File(pickedFile!.path), height: 150, width: 130, fit: BoxFit.cover),
+                                        child: Image.file(
+                                          File(entry.value.path),
+                                          height: 150,
+                                          width: 130,
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
                                       Positioned(
                                         top: 5,
                                         right: 5,
                                         child: GestureDetector(
-                                          onTap: () => setSheetState(() => pickedFile = null),
+                                          onTap: () => setSheetState(() => pickedFiles.removeAt(entry.key)),
                                           child: Container(
                                             padding: const EdgeInsets.all(4),
                                             decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
@@ -651,29 +656,36 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                       ),
                                     ],
                                   ),
-                                ),
-                              GestureDetector(
-                                onTap: () async {
-                                  final img = await _picker.pickImage(source: ImageSource.gallery);
-                                  if (img != null) setSheetState(() => pickedFile = img);
-                                },
-                                child: Container(
-                                  width: 130,
-                                  decoration: BoxDecoration(
-                                    color: onboardingBlueVeryLight,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: primaryBlue.withOpacity(0.3)),
+                                );
+                              }),
+                              if (existingImages.length + pickedFiles.length < 3)
+                                GestureDetector(
+                                  onTap: () async {
+                                    final List<XFile> images = await _picker.pickMultiImage(imageQuality: 70);
+                                    if (images.isNotEmpty) {
+                                      setSheetState(() {
+                                        int remaining = 3 - (existingImages.length + pickedFiles.length);
+                                        pickedFiles.addAll(images.take(remaining));
+                                      });
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 130,
+                                    decoration: BoxDecoration(
+                                      color: onboardingBlueVeryLight,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: primaryBlue.withOpacity(0.3)),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.add_photo_alternate_rounded, color: primaryBlue.withOpacity(0.6), size: 32),
+                                        const SizedBox(height: 8),
+                                        AppText.caption("Add Photo", color: primaryBlue),
+                                      ],
+                                    ),
                                   ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.add_photo_alternate_rounded, color: primaryBlue.withOpacity(0.6), size: 32),
-                                      const SizedBox(height: 8),
-                                      AppText.caption("Add Photo", color: primaryBlue),
-                                    ],
-                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -731,7 +743,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                           height: 55,
                           child: ElevatedButton(
                             onPressed: () async {
-                              if (existingImages.isEmpty && pickedFile == null) {
+                              if (existingImages.isEmpty && pickedFiles.isEmpty) {
                                 CustomToast.warning(context, "At least one image is required", title: "Wait!");
                                 return;
                               }
@@ -755,7 +767,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                   },
                                   'images': existingImages,
                                 },
-                                pickedFile,
+                                pickedFiles.map((x) => File(x.path)).toList(),
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -869,10 +881,10 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     return DateFormat.jm().format(dt);
   }
 
-  Future<void> _handleUpdate(String id, Map<String, dynamic> body, XFile? image) async {
+  Future<void> _handleUpdate(String id, Map<String, dynamic> body, List<File> images) async {
     setState(() => _isLoading = true);
     try {
-      final success = await _eventsService.updateEvent(id, body, imageFile: image);
+      final success = await _eventsService.updateEvent(id, body, imageFiles: images);
       if (success && mounted) {
         CustomToast.success(context, "Event details updated successfully!");
         _fetchEvents();
