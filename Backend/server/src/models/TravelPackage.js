@@ -49,6 +49,7 @@ const travelPackageSchema = new mongoose.Schema({
   itinerary: [{
     day: { type: Number, required: true },
     title: { type: String, required: true },
+    date: { type: Date },
     activities: [{ type: String }],
   }],
   inclusions: [{
@@ -77,6 +78,12 @@ const travelPackageSchema = new mongoose.Schema({
   ratings: {
     average: { type: Number, default: 0 },
     count: { type: Number, default: 0 },
+  },
+  startDate: {
+    type: Date,
+  },
+  endDate: {
+    type: Date,
   }
 }, {
   timestamps: true,

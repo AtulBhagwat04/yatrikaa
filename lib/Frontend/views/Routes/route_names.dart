@@ -3,6 +3,7 @@ class RouteNames {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String home = '/home';
+  static const String search = '/search';
 
   // Auth
   static const String auth = '/auth';
@@ -38,10 +39,10 @@ class RouteNames {
   static const String reviewModeration = '/admin/reviews';
   static const String manageEvents = '/admin/events';
 
-  // System Authority (Super Admin)
-  static const String userManagement = '/super-admin/users';
-  static const String analytics = '/super-admin/analytics';
-  static const String systemConfig = '/super-admin/config';
+  // Admin Authority
+  static const String userManagement = '/admin/users';
+  static const String analytics = '/admin/analytics';
+  static const String systemConfig = '/admin/config';
   static const String addPlace = '/admin/places/add';
   static const String addEvent = '/admin/events/add';
 

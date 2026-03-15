@@ -1,14 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bhatkanti_app/Frontend/core/services/packages_service.dart';
 import 'package:bhatkanti_app/Frontend/core/models/booking_model.dart';
+import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
 import 'travel_event.dart';
 import 'travel_state.dart';
+import 'package:bhatkanti_app/Frontend/core/utils/app_cache.dart';
 
 class TravelBloc extends Bloc<TravelEvent, TravelState> {
   final PackagesService _service = PackagesService();
 
   TravelBloc() : super(const TravelState()) {
     on<TravelPackagesRequested>(_onPackagesRequested);
+    on<TravelLoadCache>(_onLoadCache);
     on<TravelCategoryChanged>(_onCategoryChanged);
     on<TravelSearchChanged>(_onSearchChanged);
     on<TravelPackageDetailRequested>(_onDetailRequested);
@@ -17,6 +21,26 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     on<TravelJoinRequested>(_onJoinRequested);
     on<TravelCancelBookingRequested>(_onCancelBookingRequested);
     on<TravelStatusReset>(_onStatusReset);
+  }
+
+  Future<void> _onLoadCache(
+    TravelLoadCache event,
+    Emitter<TravelState> emit,
+  ) async {
+    try {
+      final cachedData = await AppCache.getCachedHomeData();
+      if (isClosed) return;
+
+      final packages = List<TravelPackageModel>.from(cachedData['packages'] ?? []);
+      if (packages.isNotEmpty) {
+        emit(state.copyWith(
+          packages: packages,
+          packagesStatus: TravelStatus.success,
+        ));
+      }
+    } catch (e) {
+      debugPrint('Error loading travel cache: $e');
+    }
   }
 
   // ── Package Discovery ──────────────────────────────────────────────────────
@@ -31,12 +55,22 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         category: event.category == 'All' ? null : event.category,
         search: event.search.isEmpty ? null : event.search,
       );
-      emit(state.copyWith(
-        packagesStatus: TravelStatus.success,
-        packages: packages,
-        selectedCategory: event.category,
-        searchQuery: event.search,
-      ));
+      if (!isClosed && packages.isNotEmpty) {
+        emit(state.copyWith(
+          packagesStatus: TravelStatus.success,
+          packages: packages,
+          selectedCategory: event.category,
+          searchQuery: event.search,
+        ));
+        // Only cache if it's the main "All" view (discovery)
+        if (event.category == 'All' && event.search.isEmpty) {
+          await AppCache.saveHomeData(packages: packages);
+        }
+      } else if (!isClosed) {
+        // If empty result (maybe offline), just stop the loading spinner
+        // This preserves the cached packages already in the state
+        emit(state.copyWith(packagesStatus: TravelStatus.success));
+      }
     } catch (e) {
       emit(state.copyWith(
         packagesStatus: TravelStatus.failure,

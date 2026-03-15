@@ -5,6 +5,7 @@ import '../models/place_model.dart';
 import '../constants/api_constants.dart';
 import '../constants/app_strings.dart';
 import 'auth_service.dart';
+import '../utils/app_cache.dart';
 
 class PlacesService {
   final AuthService _authService = AuthService();
@@ -23,9 +24,15 @@ class PlacesService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List results = data['results'] ?? [];
-        List<PlaceModel> places = results
-            .map((json) => PlaceModel.fromJson(json))
-            .toList();
+
+        // Save to cache for offline support
+        if (category == null || category == AppStrings.catAll) {
+          await AppCache.saveRawData(AppCache.keyExplore, results);
+          await AppCache.saveRawData(AppCache.keyRecommended, results);
+        }
+
+        List<PlaceModel> places =
+            results.map((json) => PlaceModel.fromJson(json)).toList();
 
         // SHUFFLE the results so the order is different on every refresh
         places.shuffle();
@@ -36,6 +43,18 @@ class PlacesService {
       }
     } catch (e) {
       print('Error fetching popular places from DB: $e');
+
+      // Try falling back to cache
+      if (category == null || category == AppStrings.catAll) {
+        final cachedData = await AppCache.getRawData(AppCache.keyExplore);
+        if (cachedData.isNotEmpty) {
+          final places =
+              cachedData.map((json) => PlaceModel.fromJson(json)).toList();
+          places.shuffle();
+          return places;
+        }
+      }
+
       return [];
     }
   }
@@ -178,7 +197,7 @@ class PlacesService {
 
           request.files.add(
             await http.MultipartFile.fromPath(
-              'image',
+              'images',
               path,
               contentType: contentType,
             ),
@@ -235,7 +254,7 @@ class PlacesService {
 
           request.files.add(
             await http.MultipartFile.fromPath(
-              'image',
+              'images',
               path,
               contentType: contentType,
             ),

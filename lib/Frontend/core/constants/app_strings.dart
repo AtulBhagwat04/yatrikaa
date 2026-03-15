@@ -30,6 +30,8 @@ class AppStrings {
 
   static const String letExploreText = "Let's Explore the World with ";
   static const String searchHint = "Search destinations...";
+  static const String searchResultsFor = "Results for";
+  static const String noMatchesFound = "No matches found for";
 
   static const String badgeFamous = "FAMOUS";
   static const String nearbyAttraction = "Nearby Attraction";

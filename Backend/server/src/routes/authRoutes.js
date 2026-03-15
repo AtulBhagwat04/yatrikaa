@@ -10,8 +10,8 @@ router.post('/login', (req, res, next) => authController.login(req, res, next));
 router.put('/profile', protect, (req, res, next) => authController.updateProfile(req, res, next));
 router.put('/change-password', protect, (req, res, next) => authController.changePassword(req, res, next));
 
-// SuperAdmin only routes
-router.get('/users', protect, authorize('super-admin'), (req, res, next) => authController.getAllUsers(req, res, next));
-router.delete('/users/:id', protect, authorize('super-admin'), (req, res, next) => authController.deleteUser(req, res, next));
+// Admin only routes
+router.get('/users', protect, authorize('admin'), (req, res, next) => authController.getAllUsers(req, res, next));
+router.delete('/users/:id', protect, authorize('admin'), (req, res, next) => authController.deleteUser(req, res, next));
 
 module.exports = router;

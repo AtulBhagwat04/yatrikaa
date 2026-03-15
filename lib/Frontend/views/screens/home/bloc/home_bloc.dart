@@ -9,40 +9,168 @@ import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:io';
 
 import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_event.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_state.dart';
+import 'package:bhatkanti_app/Frontend/core/utils/app_cache.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final PlacesService _placesService = PlacesService();
   final EventsService _eventsService = EventsService();
   StreamSubscription<Position>? _positionStreamSubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  StreamSubscription<ServiceStatus>? _serviceStatusSubscription;
   Position? _currentPosition;
 
   HomeBloc() : super(const HomeState()) {
     on<HomeStarted>(_onHomeStarted);
+    on<HomeLoadCache>(_onLoadCache);
+    on<HomeConnectivityChanged>(_onConnectivityChanged);
+    on<HomeLocationServiceStatusChanged>(_onLocationServiceStatusChanged);
     on<HomeLocationRefreshRequested>(_onLocationRefreshRequested);
     on<HomeLocationUpdated>(_onLocationUpdated);
     on<HomeCategoryChanged>(_onCategoryChanged);
     on<HomeTabChanged>(_onTabChanged);
     on<HomeEventUpdateEvent>(_onEventUpdated);
+    on<HomeSearchRequested>(_onSearchRequested);
+    on<HomeSearchCleared>(_onSearchCleared);
+  }
+
+  // ── Connectivity & Listeners ──────────────────────────────────────────────
+
+  void _setupListeners() {
+    // 1. Connectivity listener
+    _connectivitySubscription?.cancel();
+    
+    // Initial check (with slight delay to ensure plugin is ready)
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      final results = await Connectivity().checkConnectivity();
+      await _handleConnectivityChange(results);
+    });
+
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
+      _handleConnectivityChange(results);
+    });
+
+    // 2. Location Service status listener
+    _serviceStatusSubscription?.cancel();
+    
+    // Initial check for location
+    Geolocator.isLocationServiceEnabled().then((enabled) {
+      add(HomeLocationServiceStatusChanged(enabled));
+    });
+
+    _serviceStatusSubscription = Geolocator.getServiceStatusStream().listen((status) {
+      add(HomeLocationServiceStatusChanged(status == ServiceStatus.enabled));
+    });
+  }
+
+  Future<void> _handleConnectivityChange(List<ConnectivityResult> results) async {
+    final hasInterface = results.isNotEmpty && !results.every((r) => r == ConnectivityResult.none);
+    
+    if (!hasInterface) {
+      add(const HomeConnectivityChanged(true));
+      return;
+    }
+
+    // Even if interface is up, check if we can actually reach the internet
+    final hasInternet = await _checkRealInternet();
+    add(HomeConnectivityChanged(!hasInternet));
+  }
+
+  Future<bool> _checkRealInternet() async {
+    try {
+      final result = await InternetAddress.lookup('google.com').timeout(const Duration(seconds: 3));
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _onConnectivityChanged(HomeConnectivityChanged event, Emitter<HomeState> emit) async {
+    debugPrint('Connectivity Changed: isOffline = ${event.isOffline}');
+    
+    // Only update and fetch if the status actually changed
+    if (state.isOffline == event.isOffline) return;
+
+    emit(state.copyWith(isOffline: event.isOffline));
+    
+    if (!event.isOffline) {
+      // If we just came online, trigger a fresh load
+      // We await these so that the 'emit' object remains valid throughout the async calls
+      await Future.wait([
+        _fetchPopularPlaces(emit),
+        _fetchPopularEvents(emit),
+      ]);
+    }
+  }
+
+  void _onLocationServiceStatusChanged(HomeLocationServiceStatusChanged event, Emitter<HomeState> emit) {
+    emit(state.copyWith(isLocationEnabled: event.isEnabled));
+    if (event.isEnabled) {
+      add(HomeLocationRefreshRequested());
+    }
+  }
+
+  // ── Home Logic ─────────────────────────────────────────────────────────────
+
+  Future<void> _onLoadCache(
+    HomeLoadCache event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      final cachedData = await AppCache.getCachedHomeData();
+      
+      if (isClosed) return;
+
+      final recommended = List<PlaceModel>.from(cachedData['recommended'] ?? []);
+      final nearby = List<PlaceModel>.from(cachedData['nearby'] ?? []);
+      final events = List<EventModel>.from(cachedData['events'] ?? []);
+      final location = cachedData['location'] as String?;
+
+      if (recommended.isNotEmpty || nearby.isNotEmpty || events.isNotEmpty) {
+        emit(state.copyWith(
+          recommendedPlaces: recommended,
+          nearbyPlaces: nearby,
+          popularEvents: events,
+          currentLocation: location ?? state.currentLocation,
+          isLoadingRecommended: false,
+          isLoadingNearby: false,
+          isLoadingEvents: false,
+          isLoadingLocation: location == null,
+        ));
+      }
+    } catch (e) {
+      debugPrint('Error loading home cache: $e');
+    }
   }
 
   Future<void> _onHomeStarted(
     HomeStarted event,
     Emitter<HomeState> emit,
   ) async {
-    // Always load popular places and events (no location needed)
-    await Future.wait([_fetchPopularPlaces(emit), _fetchPopularEvents(emit)]);
+    // 1. Setup listeners for real-time monitoring
+    _setupListeners();
+
+    // 2. Load from cache immediately
+    add(HomeLoadCache());
+
+    // 3. Start fetching fresh data in parallel
+    final List<Future> initialTasks = [
+      _fetchPopularPlaces(emit),
+      _fetchPopularEvents(emit),
+    ];
+
+    await Future.wait(initialTasks);
     if (isClosed) return;
 
     bool permissionGranted = await _handlePermission(emit);
     if (isClosed) return;
 
     if (permissionGranted) {
-      await _getCurrentLocation(emit);
-      if (isClosed) return;
-      _startLocationTracking();
+      add(HomeLocationRefreshRequested());
     }
   }
 
@@ -72,28 +200,19 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     );
 
     try {
-      // 1. Try DB first for category-specific popular places
-      // Normalize category (e.g. "Forts" -> "Fort") for better DB regex matching
       final normalizedCat = _normalizeCategory(event.category);
-
       List<PlaceModel> places = await _placesService.getFamousMaharashtraPlaces(
         category: normalizedCat,
       );
 
-      // 2. Supplement with premium Google search if DB results are few
       if (places.length < 5) {
         final searchQuery = (event.category == AppStrings.catAll)
             ? AppStrings.pdDiscoveryQuery
             : (ApiConstants.categoryQueries[event.category] ??
                   "${event.category} in Maharashtra");
 
-        final googlePlaces = await _placesService.searchPlaces(
-          searchQuery,
-          null,
-          null,
-        );
+        final googlePlaces = await _placesService.searchPlaces(searchQuery, null, null);
         
-        // Combine results, ensuring DB places are at the top
         final existingIds = places.map((p) => p.id).toSet();
         for (var p in googlePlaces) {
           if (!existingIds.contains(p.id)) {
@@ -144,39 +263,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           state.copyWith(
             currentLocation: AppStrings.turnOnGps,
             isLoadingLocation: false,
+            isLocationEnabled: false,
           ),
         );
         return false;
       }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (isClosed) return false;
-
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (isClosed) return false;
-      }
-
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        emit(
-          state.copyWith(
-            currentLocation: AppStrings.permissionNeeded,
-            isLoadingLocation: false,
-          ),
-        );
-        return false;
-      }
+      
+      emit(state.copyWith(isLocationEnabled: true));
       return true;
     } catch (e) {
-      if (!isClosed) {
-        emit(
-          state.copyWith(
-            currentLocation: AppStrings.error,
-            isLoadingLocation: false,
-          ),
-        );
-      }
       return false;
     }
   }
@@ -184,6 +279,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   Future<void> _getCurrentLocation(Emitter<HomeState> emit) async {
     emit(state.copyWith(isLoadingLocation: true));
     try {
+      // Ensure we have permission first
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        emit(state.copyWith(isLoadingLocation: false, currentLocation: "Permission Denied"));
+        return;
+      }
+
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.medium,
@@ -191,6 +297,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       );
       if (!isClosed) {
         await _updateLocationState(position, emit);
+        _startLocationTracking();
       }
     } catch (e) {
       if (!isClosed) {
@@ -253,7 +360,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           status: HomeStatus.success,
         ),
       );
-
+      await AppCache.saveHomeData(location: locationText);
       await _fetchAllData(emit);
     }
   }
@@ -262,15 +369,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     if (isClosed) return;
     emit(state.copyWith(isLoadingEvents: true));
     try {
-      // Fetch all upcoming events to ensure they show up on home even if not marked popular
       List<EventModel> events = await _eventsService.getEvents();
-      
-      // If we have many, we could prioritize popular ones or just show all
-      // For now, sorting by date is best
       events.sort((a, b) => a.date.compareTo(b.date));
 
-      if (!isClosed) {
+      if (!isClosed && events.isNotEmpty) {
         emit(state.copyWith(popularEvents: events, isLoadingEvents: false));
+        await AppCache.saveHomeData(events: events);
+      } else if (!isClosed) {
+        emit(state.copyWith(isLoadingEvents: false));
       }
     } catch (e) {
       debugPrint('Error in _fetchPopularEvents: $e');
@@ -282,13 +388,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     if (isClosed) return;
     emit(state.copyWith(isLoadingRecommended: true));
     try {
-      // 1. Try DB first
       final normalizedCat = _normalizeCategory(state.selectedCategory);
       List<PlaceModel> places = await _placesService.getFamousMaharashtraPlaces(
         category: normalizedCat,
       );
 
-      // 2. Supplement with Search if DB is empty/low for category
       if (places.length < 5) {
         final searchQuery = (state.selectedCategory == AppStrings.catAll)
             ? AppStrings.pdDiscoveryQuery
@@ -297,7 +401,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
         final googlePlaces = await _placesService.searchPlaces(searchQuery, null, null);
         
-        // Combine results, ensuring DB places are at the top
         final existingIds = places.map((p) => p.id).toSet();
         for (var p in googlePlaces) {
           if (!existingIds.contains(p.id)) {
@@ -305,13 +408,16 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           }
         }
       }
-      if (!isClosed) {
+      if (!isClosed && places.isNotEmpty) {
         emit(
           state.copyWith(
             recommendedPlaces: places,
             isLoadingRecommended: false,
           ),
         );
+        await AppCache.saveHomeData(recommended: places);
+      } else if (!isClosed) {
+        emit(state.copyWith(isLoadingRecommended: false));
       }
     } catch (e) {
       if (!isClosed) emit(state.copyWith(isLoadingRecommended: false));
@@ -320,8 +426,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _fetchAllData(Emitter<HomeState> emit) async {
     if (isClosed) return;
-
-    // Nearby places require location
     if (_currentPosition == null) return;
 
     emit(state.copyWith(isLoadingNearby: true));
@@ -332,15 +436,18 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         _currentPosition!.longitude,
       );
 
-      if (!isClosed) {
+      if (!isClosed && nearbyPlaces.isNotEmpty) {
         emit(
           state.copyWith(nearbyPlaces: nearbyPlaces, isLoadingNearby: false),
         );
+        await AppCache.saveHomeData(nearby: nearbyPlaces);
+      } else if (!isClosed) {
+        emit(state.copyWith(isLoadingNearby: false));
       }
     } catch (e) {
       if (!isClosed) {
         emit(
-          state.copyWith(isLoadingNearby: false, errorMessage: e.toString()),
+          state.copyWith(isLoadingNearby: false),
         );
       }
     }
@@ -356,9 +463,58 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(popularEvents: updatedEvents));
   }
 
+  Future<void> _onSearchRequested(
+    HomeSearchRequested event,
+    Emitter<HomeState> emit,
+  ) async {
+    if (event.query.isEmpty) {
+      add(HomeSearchCleared());
+      return;
+    }
+
+    emit(state.copyWith(
+      isSearching: true,
+      searchQuery: event.query,
+      isLoadingSearch: true,
+    ));
+
+    try {
+      final results = await _placesService.searchPlaces(
+        event.query,
+        _currentPosition?.latitude,
+        _currentPosition?.longitude,
+      );
+
+      if (!isClosed) {
+        emit(state.copyWith(
+          searchResults: results,
+          isLoadingSearch: false,
+        ));
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(state.copyWith(
+          isLoadingSearch: false,
+          errorMessage: e.toString(),
+        ));
+      }
+    }
+  }
+
+  void _onSearchCleared(HomeSearchCleared event, Emitter<HomeState> emit) {
+    emit(state.copyWith(
+      isSearching: false,
+      searchQuery: "",
+      searchResults: const [],
+      isLoadingSearch: false,
+    ));
+  }
+
   @override
   Future<void> close() {
     _positionStreamSubscription?.cancel();
+    _connectivitySubscription?.cancel();
+    _serviceStatusSubscription?.cancel();
     return super.close();
   }
 }

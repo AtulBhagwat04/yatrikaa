@@ -33,4 +33,20 @@ class AppCategories {
     AppStrings.catUnesco: Icons.auto_awesome_rounded,
     AppStrings.catSpiritual: Icons.self_improvement_rounded,
   };
+
+  static final Map<String, Color> categoryColors = {
+    AppStrings.catAll: const Color(0xFF1E88E5),
+    AppStrings.catForts: const Color(0xFF6C63FF),
+    AppStrings.catBeaches: const Color(0xFF00B4D8),
+    AppStrings.catTemples: const Color(0xFFE9A21B),
+    AppStrings.catHillStations: const Color(0xFF2DC653),
+    AppStrings.catCaves: const Color(0xFF8D6E63),
+    AppStrings.catWaterfalls: const Color(0xFF448AFF),
+    AppStrings.catMuseums: const Color(0xFF607D8B),
+    AppStrings.catWildlife: const Color(0xFF388E3C),
+    AppStrings.catLakes: const Color(0xFF0091EA),
+    AppStrings.catTrekking: const Color(0xFFF4511E),
+    AppStrings.catUnesco: const Color(0xFFD4AF37),
+    AppStrings.catSpiritual: const Color(0xFF9C27B0),
+  };
 }

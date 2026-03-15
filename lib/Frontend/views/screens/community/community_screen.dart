@@ -5,7 +5,9 @@ import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/models/post_model.dart';
 import 'package:bhatkanti_app/Frontend/core/services/post_service.dart';
-import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/community/widgets/create_post_sheet.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/community/widgets/post_card.dart';
 
@@ -18,11 +20,10 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen> {
   final _postService = PostService();
-  final _authService = AuthService();
   List<PostModel> _posts = [];
   bool _isLoading = true;
-  String? _currentUserId;
-  String? _currentUserRole;
+  // Removed local variables, will fetch from AuthBloc state in build
+
 
   @override
   void initState() {
@@ -31,8 +32,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   Future<void> _fetchInitialData() async {
-    _currentUserId = await _authService.getUserId();
-    _currentUserRole = await _authService.getRole();
+    // Relying on AuthBloc for user info, so we just fetch posts
     await _fetchPosts();
   }
 
@@ -68,6 +68,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    final currentUserId = authState is Authenticated ? authState.id : null;
+    final currentUserRole = authState is Authenticated ? authState.role : null;
+
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
       body: SafeArea(
@@ -161,8 +165,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       return PostCard(
                         key: ValueKey(_posts[index].id),
                         post: _posts[index],
-                        currentUserId: _currentUserId,
-                        currentUserRole: _currentUserRole,
+                        currentUserId: currentUserId,
+                        currentUserRole: currentUserRole,
                         onUpdate: (updatedPost) {
                           if (mounted) {
                             setState(() {
@@ -174,9 +178,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           }
                         },
                         onDelete: () {
+                          final postId = _posts[index].id;
                           if (mounted) {
                             setState(() {
-                              _posts.removeWhere((p) => p.id == _posts[index].id);
+                              _posts.removeWhere((p) => p.id == postId);
                             });
                           }
                         },

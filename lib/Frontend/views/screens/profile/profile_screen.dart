@@ -24,18 +24,12 @@ class _RoleConfig {
 }
 
 _RoleConfig _roleConfig(String role) {
-  final r = role.toLowerCase();
+  final r = role.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
   switch (r) {
-    case 'super-admin':
-      return const _RoleConfig(
-        label: 'Super Admin',
-        icon: Icons.admin_panel_settings_rounded,
-        color: superAdminColor,
-      );
     case 'admin':
       return const _RoleConfig(
         label: 'Admin',
-        icon: Icons.verified_user_rounded,
+        icon: Icons.admin_panel_settings_rounded,
         color: adminColor,
       );
     case 'guide':
@@ -231,10 +225,10 @@ class ProfileScreen extends StatelessWidget {
   }
 
   List<SliverToBoxAdapter> _roleSections(String role, BuildContext context) {
-    final r = role.toLowerCase();
+    final r = role.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
     List<SliverToBoxAdapter> out = [];
 
-    if (r == 'guide' || r == 'admin' || r == 'super-admin') {
+    if (r == 'guide' || r == 'admin' || r == 'superadmin') {
       out.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
       out.add(
         SliverToBoxAdapter(
@@ -268,13 +262,20 @@ class ProfileScreen extends StatelessWidget {
       );
     }
 
-    if (r == 'admin' || r == 'super-admin') {
+    if (r == 'admin') {
       out.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
       out.add(
         SliverToBoxAdapter(
           child: _SectionGroup(
-            heading: 'Admin Tools',
+            heading: 'Admin Control',
             items: [
+              _SectionItem(
+                icon: Icons.people_alt_outlined,
+                label: 'User Management',
+                color: adminColor,
+                onTap: () =>
+                    Navigator.pushNamed(context, RouteNames.userManagement),
+              ),
               _SectionItem(
                 icon: Icons.add_location_alt_outlined,
                 label: 'Manage Places',
@@ -302,38 +303,7 @@ class ProfileScreen extends StatelessWidget {
       );
     }
 
-    if (r == 'super-admin') {
-      out.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
-      out.add(
-        SliverToBoxAdapter(
-          child: _SectionGroup(
-            heading: 'System Authority',
-            items: [
-              _SectionItem(
-                icon: Icons.people_alt_outlined,
-                label: 'User Management',
-                color: superAdminColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.userManagement),
-              ),
-              _SectionItem(
-                icon: Icons.analytics_outlined,
-                label: 'Analytics',
-                color: superAdminColor,
-                onTap: () => Navigator.pushNamed(context, RouteNames.analytics),
-              ),
-              _SectionItem(
-                icon: Icons.tune_rounded,
-                label: 'System Config',
-                color: superAdminColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.systemConfig),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+
 
     return out;
   }

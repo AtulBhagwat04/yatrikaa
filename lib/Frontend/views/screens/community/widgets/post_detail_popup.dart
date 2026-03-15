@@ -98,10 +98,41 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
                 child: Stack(
                   children: [
                     CachedNetworkImage(
-                      imageUrl: widget.post.imageUrl,
+                      imageUrl: widget.post.primaryImageUrl,
                       width: double.infinity,
                       height: 350,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: appGreyVeryLight,
+                        height: 350,
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: appGreyVeryLight,
+                        height: 350,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.image_not_supported_outlined,
+                              color: appGrey,
+                              size: 48,
+                            ),
+                            const SizedBox(height: 12),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 30),
+                              child: Text(
+                                "Image not available",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: appGrey,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     Positioned(
                       top: 15,

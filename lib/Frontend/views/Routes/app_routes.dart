@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 
 import 'package:bhatkanti_app/Frontend/views/screens/onboarding/onboarding_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/auth/login_screen.dart';
@@ -34,6 +35,7 @@ import 'package:bhatkanti_app/Frontend/views/screens/travel/package_details_scre
 import 'package:bhatkanti_app/Frontend/views/screens/travel/create_package_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/travel/my_packages_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/travel/user_bookings_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/search/search_screen.dart';
 
 class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -54,6 +56,9 @@ class AppRoutes {
 
       case RouteNames.home:
         return _fadeRoute(const HomeScreen());
+
+      case RouteNames.search:
+        return _fadeRoute(const SearchScreen());
 
       case RouteNames.placeDetails:
         final placeId = settings.arguments as String?;
@@ -149,7 +154,7 @@ class AppRoutes {
       case RouteNames.addEvent:
         return _fadeRoute(const AddEventScreen());
 
-      // Super Admin
+      // Admin Management
       case RouteNames.userManagement:
         return _fadeRoute(const UserManagementScreen());
       case RouteNames.analytics:
@@ -160,7 +165,7 @@ class AppRoutes {
             emptySubtitle:
                 'Deep analytics and system performance metrics are being processed. Check back shortly!',
             icon: Icons.analytics_outlined,
-            themeColor: Color(0xFF7C3AED),
+            themeColor: adminColor,
           ),
         );
       case RouteNames.systemConfig:
@@ -171,7 +176,7 @@ class AppRoutes {
             emptySubtitle:
                 'The system is running on optimized default parameters. You can modify core variables here.',
             icon: Icons.tune_rounded,
-            themeColor: Color(0xFF7C3AED),
+            themeColor: adminColor,
           ),
         );
 

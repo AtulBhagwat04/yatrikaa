@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
@@ -36,6 +37,8 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
   final TextEditingController _latController = TextEditingController();
   final TextEditingController _lngController = TextEditingController();
   final TextEditingController _bestSeasonController = TextEditingController();
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   // ── Dropdowns ─────────────────────────────────────────────────────────────
   String _selectedDifficulty = 'Moderate';
@@ -84,24 +87,42 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
     }
   }
 
-  void _addItineraryDay() {
-    setState(() => _itinerary.add(_ItineraryDay(day: _itinerary.length + 1)));
-  }
-
-  void _removeItineraryDay(int index) {
-    if (_itinerary.length <= 1) return;
-    setState(() {
-      _itinerary[index].dispose();
-      _itinerary.removeAt(index);
-      // Re-number days
-      for (var i = 0; i < _itinerary.length; i++) {
-        _itinerary[i].day = i + 1;
-      }
-    });
-  }
-
   void _addActivity(int dayIndex) {
     setState(() => _itinerary[dayIndex].activities.add(TextEditingController()));
+  }
+
+  void _updateDurationFromDates() {
+    if (_startDate != null && _endDate != null) {
+      final difference = _endDate!.difference(_startDate!).inDays;
+      if (difference >= 0) {
+        final totalDays = difference + 1;
+        setState(() {
+          _daysController.text = totalDays.toString();
+          _nightsController.text = difference.toString();
+
+          // Sync itinerary steps count
+          if (_itinerary.length < totalDays) {
+            // Add missing days
+            for (var i = _itinerary.length; i < totalDays; i++) {
+              final date = _startDate!.add(Duration(days: i));
+              _itinerary.add(_ItineraryDay(day: i + 1, date: date));
+            }
+          } else if (_itinerary.length > totalDays) {
+            // Remove extra days
+            for (var i = _itinerary.length - 1; i >= totalDays; i--) {
+              _itinerary[i].dispose();
+              _itinerary.removeAt(i);
+            }
+          }
+
+          // Force update all dates and sequence numbers
+          for (var i = 0; i < _itinerary.length; i++) {
+            _itinerary[i].day = i + 1;
+            _itinerary[i].date = _startDate!.add(Duration(days: i));
+          }
+        });
+      }
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -146,6 +167,8 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
             .where((t) => t.isNotEmpty)
             .toList(),
         'itinerary': _itinerary.map((d) => d.toJson()).toList(),
+        'startDate': _startDate?.toIso8601String(),
+        'endDate': _endDate?.toIso8601String(),
       };
 
       final created = await _service.createPackage(
@@ -230,15 +253,34 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
                         inputType: TextInputType.number,
                         validator: _requiredNum)),
               ]),
+              Row(
+                children: [
+                  Expanded(
+                    child: _datePicker('Start Date', _startDate, (d) {
+                      setState(() => _startDate = d);
+                      _updateDurationFromDates();
+                    }),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _datePicker('End Date', _endDate, (d) {
+                      setState(() => _endDate = d);
+                      _updateDurationFromDates();
+                    }),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Row(children: [
                 Expanded(
-                    child: _field('Days', '2', _daysController,
+                    child: _field('Days', '1', _daysController,
                         inputType: TextInputType.number,
+                        readOnly: true,
                         validator: _requiredNum)),
                 const SizedBox(width: 12),
                 Expanded(
-                    child: _field('Nights', '1', _nightsController,
-                        inputType: TextInputType.number)),
+                    child: _field('Nights', '0', _nightsController,
+                        inputType: TextInputType.number, readOnly: true)),
               ]),
             ]),
             const SizedBox(height: 16),
@@ -286,14 +328,20 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
 
             // Itinerary
             _buildSectionCard('Itinerary', Icons.route_rounded, [
-              ..._itinerary.asMap().entries.map((e) =>
-                  _buildItineraryDayBlock(e.key, e.value)),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: _addItineraryDay,
-                icon: const Icon(Icons.add_circle_outline, size: 18),
-                label: const Text('Add Day'),
-              ),
+              if (_startDate == null || _endDate == null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: AppText.body(
+                      'Please select Start and End dates first to generate the itinerary.',
+                      color: appGrey,
+                      align: TextAlign.center,
+                    ),
+                  ),
+                )
+              else
+                ..._itinerary.asMap().entries.map((e) =>
+                    _buildItineraryDayBlock(e.key, e.value)),
             ]),
             const SizedBox(height: 16),
 
@@ -498,6 +546,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
     TextEditingController? controller, {
     TextInputType? inputType,
     int maxLines = 1,
+    bool readOnly = false,
     String? Function(String?)? validator,
   }) {
     return Column(
@@ -509,6 +558,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
           controller: controller,
           keyboardType: inputType,
           maxLines: maxLines,
+          readOnly: readOnly,
           validator: validator,
           style: GoogleFonts.montserrat(fontSize: 13),
           decoration: InputDecoration(
@@ -516,12 +566,67 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
             hintStyle:
                 GoogleFonts.montserrat(color: appGreyLight, fontSize: 12),
             filled: true,
-            fillColor: appGreyVeryLight,
+            fillColor: readOnly ? appGreyVeryLight.withOpacity(0.5) : appGreyVeryLight,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _datePicker(String label, DateTime? date, ValueChanged<DateTime?> onPicked) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppText.subHeading(label, size: 13, fontWeight: FontWeight.w700),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: () async {
+            final firstDate = DateTime.now();
+            final lastDate = DateTime.now().add(const Duration(days: 365 * 5));
+            final d = await showDatePicker(
+              context: context,
+              initialDate: date ?? DateTime.now(),
+              firstDate: firstDate,
+              lastDate: lastDate,
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: const ColorScheme.light(
+                      primary: primaryBlue,
+                      onPrimary: Colors.white,
+                      onSurface: appBlack,
+                    ),
+                  ),
+                  child: child!,
+                );
+              },
+            );
+            if (d != null) onPicked(d);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: appGreyVeryLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today_rounded, size: 16, color: primaryBlue.withOpacity(0.7)),
+                const SizedBox(width: 8),
+                Text(
+                  date != null ? DateFormat('MMM dd, yyyy').format(date) : 'Choose date',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 13,
+                    color: date != null ? appBlack : appGreyLight,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -597,14 +702,28 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
                   ),
                 ),
               ),
-              if (_itinerary.length > 1)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline,
-                      size: 18, color: errorColor),
-                  onPressed: () => _removeItineraryDay(index),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: primaryBlue.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_today_outlined, size: 12, color: primaryBlue),
+                    const SizedBox(width: 6),
+                    Text(
+                      day.date != null ? DateFormat('dd MMM, yyyy').format(day.date!) : 'Pending',
+                      style: const TextStyle(
+                        color: primaryBlue,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -688,10 +807,11 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
 
 class _ItineraryDay {
   int day;
+  DateTime? date;
   final TextEditingController titleCtl = TextEditingController();
   final List<TextEditingController> activities = [TextEditingController()];
 
-  _ItineraryDay({required this.day});
+  _ItineraryDay({required this.day, this.date});
 
   void dispose() {
     titleCtl.dispose();
@@ -701,6 +821,7 @@ class _ItineraryDay {
   Map<String, dynamic> toJson() => {
         'day': day,
         'title': titleCtl.text.trim(),
+        'date': date?.toIso8601String(),
         'activities': activities
             .map((c) => c.text.trim())
             .where((t) => t.isNotEmpty)

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
 
@@ -15,10 +14,9 @@ class PlaceNearbyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.m),
       decoration: BoxDecoration(
         color: appWhite,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: shadowColorLight,
@@ -31,7 +29,7 @@ class PlaceNearbyCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -39,13 +37,25 @@ class PlaceNearbyCard extends StatelessWidget {
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       child: CachedNetworkImage(
                         imageUrl: place.photoUrl,
                         height: 100,
                         width: 100,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => const ShimmerBox(),
+                        errorWidget: (context, url, error) => Container(
+                          height: 100,
+                          width: 100,
+                          color: onboardingBlueVeryLight,
+                          child: const Center(
+                            child: Icon(
+                              Icons.image_not_supported_outlined,
+                              color: appGrey,
+                              size: 40,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     if (place.distance != null)
@@ -157,7 +167,7 @@ class PlaceNearbyCard extends StatelessWidget {
                               fontWeight: FontWeight.w800,
                             ),
                             AppText.caption(
-                              " (${place.userRatingsTotal ?? 0})",
+                              " (${place.userRatingsTotal})",
                               color: appGreyLight,
                             ),
                           ],

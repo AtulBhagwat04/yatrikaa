@@ -6,12 +6,16 @@ class ModernSearchBar extends StatelessWidget {
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onTap;
+  final bool autoFocus;
+  final FocusNode? focusNode;
 
   const ModernSearchBar({
     super.key,
     this.controller,
     this.onChanged,
     this.onTap,
+    this.autoFocus = false,
+    this.focusNode,
   });
 
   @override
@@ -34,6 +38,8 @@ class ModernSearchBar extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         onTap: onTap,
+        focusNode: focusNode,
+        autofocus: autoFocus,
         readOnly: onTap != null,
         decoration: InputDecoration(
           hintText: AppStrings.searchHint,
@@ -43,7 +49,16 @@ class ModernSearchBar extends StatelessWidget {
             fontWeight: FontWeight.w400,
           ),
           prefixIcon: const Icon(Icons.search, color: primaryBlue, size: 22),
-          suffixIcon: null,
+          suffixIcon: controller != null && controller!.text.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    controller!.clear();
+                    if (onChanged != null) onChanged!("");
+                  },
+                  child: const Icon(Icons.close_rounded,
+                      color: appGrey, size: 20),
+                )
+              : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiConstants {
   // Local Backend URL (Replace with your computer's IP if testing on a physical device)
-  static const String localUrl = 'http://10.15.157.64:3000/api';
+  static const String localUrl = 'http://10.38.147.64:3000/api';
   
   // Render Deployed Backend URL
   static const String liveUrl = 'https://bhatkanti-backend-8msl.onrender.com/api';
@@ -19,9 +19,12 @@ class ApiConstants {
     final localHealthUrl = localUrl.replaceAll('/api', '') + '/health';
     try {
       print('Checking local backend at $localHealthUrl...');
-      final response = await http.get(Uri.parse(localHealthUrl)).timeout(
-        const Duration(milliseconds: 1500), // 1.5s timeout for fast fallback
-      );
+      final response = await http
+          .get(Uri.parse(localHealthUrl))
+          .timeout(
+            const Duration(milliseconds: 1500),
+            onTimeout: () => http.Response('Timeout', 408),
+          );
       
       if (response.statusCode == 200) {
         baseUrl = localUrl;

@@ -40,31 +40,45 @@ class PostModel {
   final String id;
   final PostAuthor author;
   final String location;
-  final String imageUrl;
+  final List<String> images;
   final String caption;
   final List<String> likes;
   final List<PostComment> comments;
   final DateTime createdAt;
+  final bool isEdited;
+  final DateTime? editedAt;
 
   PostModel({
     required this.id,
     required this.author,
     required this.location,
-    required this.imageUrl,
+    required this.images,
     required this.caption,
     required this.likes,
     required this.comments,
     required this.createdAt,
+    this.isEdited = false,
+    this.editedAt,
   });
 
+  String get primaryImageUrl => images.isNotEmpty ? images.first : '';
+
   factory PostModel.fromJson(Map<String, dynamic> json) {
+    // Handle both old 'imageUrl' and new 'images' fields
+    List<String> imagesList = [];
+    if (json['images'] != null) {
+      imagesList = List<String>.from(json['images']);
+    } else if (json['imageUrl'] != null) {
+      imagesList = [json['imageUrl']];
+    }
+
     return PostModel(
       id: json['_id'] ?? '',
       author: PostAuthor.fromJson(
         json['author'] is Map ? json['author'] : {'_id': json['author']},
       ),
       location: json['location'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
+      images: imagesList,
       caption: json['caption'] ?? '',
       likes: List<String>.from(json['likes'] ?? []),
       comments: (json['comments'] as List? ?? [])
@@ -73,6 +87,8 @@ class PostModel {
       createdAt: DateTime.parse(
         json['createdAt'] ?? DateTime.now().toIso8601String(),
       ),
+      isEdited: json['isEdited'] ?? false,
+      editedAt: json['editedAt'] != null ? DateTime.parse(json['editedAt']) : null,
     );
   }
 }

@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'package:image_picker/image_picker.dart';
 import '../models/event_model.dart';
 import '../constants/api_constants.dart';
 import '../services/auth_service.dart';
+import '../utils/app_cache.dart';
 
 class EventsService {
   final AuthService _authService = AuthService();
@@ -30,6 +30,12 @@ class EventsService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List results = data['results'] ?? [];
+
+        // Save to cache for offline support if it's a general request
+        if ((category == null || category == 'All')) {
+          await AppCache.saveRawData(AppCache.keyEvents, results);
+        }
+
         return results
             .map<EventModel>((json) => EventModel.fromJson(json))
             .toList();
@@ -38,6 +44,17 @@ class EventsService {
       }
     } catch (e) {
       print('Error fetching events: $e');
+
+      // Try falling back to cache if it's a general request
+      if (category == null || category == 'All') {
+        final cachedData = await AppCache.getRawData(AppCache.keyEvents);
+        if (cachedData.isNotEmpty) {
+          return cachedData
+              .map<EventModel>((json) => EventModel.fromJson(json))
+              .toList();
+        }
+      }
+
       return <EventModel>[];
     }
   }
@@ -132,7 +149,7 @@ class EventsService {
   Future<bool> updateEvent(
     String id,
     Map<String, dynamic> body, {
-    XFile? imageFile,
+    List<File> imageFiles = const [],
   }) async {
     try {
       final token = await _authService.getToken();
@@ -153,18 +170,21 @@ class EventsService {
         }
       });
 
-      if (imageFile != null) {
-        final String path = imageFile.path;
-        final String ext = path.split('.').last.toLowerCase();
-        MediaType contentType = MediaType('image', ext == 'png' ? 'png' : 'jpeg');
+      if (imageFiles.isNotEmpty) {
+        for (var imageFile in imageFiles) {
+          final String path = imageFile.path;
+          final String ext = path.split('.').last.toLowerCase();
+          MediaType contentType =
+              MediaType('image', ext == 'png' ? 'png' : 'jpeg');
 
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'images', // Field name matches backend upload.array('images', 3)
-            path,
-            contentType: contentType,
-          ),
-        );
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'images', // Field name matches backend upload.array('images', 3)
+              path,
+              contentType: contentType,
+            ),
+          );
+        }
       }
 
       final streamedResponse = await request.send();

@@ -3,7 +3,7 @@ const { uploadImage } = require('../services/cloudinaryService');
 
 class EventsController {
   /**
-   * Add a new event (Admin/Super-admin only)
+   * Add a new event (Admin only)
    */
   addEvent = async (req, res, next) => {
     try {
@@ -81,7 +81,7 @@ class EventsController {
   };
 
   /**
-   * Edit event (Admin/Super-admin only)
+   * Edit event (Admin only)
    */
   editEvent = async (req, res, next) => {
     const { id } = req.params;
@@ -125,7 +125,7 @@ class EventsController {
   };
 
   /**
-   * Delete event (Admin/Super-admin only)
+   * Delete event (Admin only)
    */
   deleteEvent = async (req, res, next) => {
     const { id } = req.params;

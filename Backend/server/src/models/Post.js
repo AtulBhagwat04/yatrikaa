@@ -10,10 +10,10 @@ const postSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  imageUrl: {
+  images: [{
     type: String,
     required: true
-  },
+  }],
   caption: {
     type: String,
     required: true
@@ -32,7 +32,14 @@ const postSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
-  }]
+  }],
+  isEdited: {
+    type: Boolean,
+    default: false
+  },
+  editedAt: {
+    type: Date
+  }
 }, {
   timestamps: true
 });

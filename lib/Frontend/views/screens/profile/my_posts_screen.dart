@@ -49,6 +49,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
   Widget build(BuildContext context) {
     final authState = context.watch<AuthBloc>().state;
     final currentUserId = authState is Authenticated ? authState.id : null;
+    final currentUserRole = authState is Authenticated ? authState.role : null;
 
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
@@ -76,6 +77,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                   return PostCard(
                     post: post,
                     currentUserId: currentUserId,
+                    currentUserRole: currentUserRole,
                     onUpdate: (updatedPost) {
                       if (mounted) {
                         setState(() {

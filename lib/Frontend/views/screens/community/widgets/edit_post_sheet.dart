@@ -22,7 +22,7 @@ class _EditPostSheetState extends State<EditPostSheet> {
   late TextEditingController _locationController;
   final _postService = PostService();
   final _picker = ImagePicker();
-  XFile? _imageFile;
+  List<XFile> _imageFiles = [];
   bool _isLoading = false;
   bool _isPickerActive = false;
 
@@ -40,18 +40,17 @@ class _EditPostSheetState extends State<EditPostSheet> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     if (_isPickerActive) return;
 
     setState(() => _isPickerActive = true);
     try {
-      final pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
+      final List<XFile> pickedFiles = await _picker.pickMultiImage(
         imageQuality: 70,
       );
-      if (pickedFile != null) {
+      if (pickedFiles.isNotEmpty) {
         setState(() {
-          _imageFile = pickedFile;
+          _imageFiles.addAll(pickedFiles);
         });
       }
     } catch (e) {
@@ -59,6 +58,12 @@ class _EditPostSheetState extends State<EditPostSheet> {
     } finally {
       if (mounted) setState(() => _isPickerActive = false);
     }
+  }
+
+  void _removeNewImage(int index) {
+    setState(() {
+      _imageFiles.removeAt(index);
+    });
   }
 
   Future<void> _updatePost() async {
@@ -73,7 +78,7 @@ class _EditPostSheetState extends State<EditPostSheet> {
       postId: widget.post.id,
       location: _locationController.text,
       caption: _captionController.text,
-      imageFile: _imageFile,
+      imageFiles: _imageFiles,
     );
 
     setState(() => _isLoading = false);
@@ -144,50 +149,82 @@ class _EditPostSheetState extends State<EditPostSheet> {
               fontWeight: FontWeight.bold,
             ),
             const SizedBox(height: 10),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.grey.shade300,
-                    style: BorderStyle.solid,
-                  ),
-                  image: _imageFile != null
-                      ? DecorationImage(
-                          image: FileImage(File(_imageFile!.path)),
-                          fit: BoxFit.cover,
-                        )
-                      : DecorationImage(
-                          image: NetworkImage(widget.post.imageUrl),
-                          fit: BoxFit.cover,
-                        ),
-                ),
-                child: _imageFile == null
-                    ? Container(
+            SizedBox(
+              height: 120,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                   // Show existing images
+                  ...widget.post.images.map((url) => Container(
+                    width: 120,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      image: DecorationImage(
+                        image: NetworkImage(url),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  )),
+                  // Show newly picked images
+                  ..._imageFiles.asMap().entries.map((entry) => Stack(
+                    children: [
+                      Container(
+                        width: 120,
+                        margin: const EdgeInsets.only(right: 12),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
+                          image: DecorationImage(
+                            image: FileImage(File(entry.value.path)),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 16,
+                        child: GestureDetector(
+                          onTap: () => _removeNewImage(entry.key),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, size: 12, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )),
+                  // Add more button
+                  if (_imageFiles.length + widget.post.images.length < 10)
+                    GestureDetector(
+                      onTap: _pickImages,
+                      child: Container(
+                        width: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
-                              Icons.edit_outlined,
-                              size: 30,
-                              color: Colors.white,
-                            ),
+                            Icon(Icons.add_a_photo, color: primaryBlue.withOpacity(0.5)),
                             const SizedBox(height: 4),
-                            AppText.caption(
-                              "Tap to change photo",
-                              color: Colors.white,
-                            ),
+                            AppText.caption("Add Photo", color: primaryBlue),
                           ],
                         ),
-                      )
-                    : null,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 20),

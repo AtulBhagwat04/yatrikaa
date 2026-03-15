@@ -4,6 +4,7 @@ import 'package:http_parser/http_parser.dart';
 import '../models/post_model.dart';
 import '../constants/api_constants.dart';
 import 'auth_service.dart';
+import '../utils/app_cache.dart';
 
 class PostService {
   final AuthService _authService = AuthService();
@@ -15,13 +16,24 @@ class PostService {
       );
 
       if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
-        return data.map((json) => PostModel.fromJson(json)).toList();
+        final List results = json.decode(response.body);
+        
+        // Cache the raw results for offline use
+        await AppCache.saveRawData(AppCache.keyPosts, results);
+        
+        return results.map((json) => PostModel.fromJson(json)).toList();
       } else {
         throw Exception("Failed to fetch posts");
       }
     } catch (e) {
       print('Error fetching posts: $e');
+      
+      // Fallback to cache if network fails
+      final cachedData = await AppCache.getRawData(AppCache.keyPosts);
+      if (cachedData.isNotEmpty) {
+        return cachedData.map((json) => PostModel.fromJson(json)).toList();
+      }
+      
       return [];
     }
   }
@@ -29,7 +41,7 @@ class PostService {
   Future<PostModel?> createPost({
     required String location,
     required String caption,
-    required dynamic imageFile, // XFile from image_picker
+    required List<dynamic> imageFiles, // List of XFile from image_picker
   }) async {
     try {
       final token = await _authService.getToken();
@@ -43,26 +55,28 @@ class PostService {
       request.fields['location'] = location;
       request.fields['caption'] = caption;
 
-      if (imageFile != null) {
-        final String path = imageFile.path;
-        final String ext = path.split('.').last.toLowerCase();
+      if (imageFiles.isNotEmpty) {
+        for (var imageFile in imageFiles) {
+          final String path = imageFile.path;
+          final String ext = path.split('.').last.toLowerCase();
 
-        MediaType contentType;
-        if (ext == 'png') {
-          contentType = MediaType('image', 'png');
-        } else if (ext == 'webp') {
-          contentType = MediaType('image', 'webp');
-        } else {
-          contentType = MediaType('image', 'jpeg');
+          MediaType contentType;
+          if (ext == 'png') {
+            contentType = MediaType('image', 'png');
+          } else if (ext == 'webp') {
+            contentType = MediaType('image', 'webp');
+          } else {
+            contentType = MediaType('image', 'jpeg');
+          }
+
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'images',
+              path,
+              contentType: contentType,
+            ),
+          );
         }
-
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            path,
-            contentType: contentType,
-          ),
-        );
       }
 
       final streamedResponse = await request.send();
@@ -179,7 +193,7 @@ class PostService {
     required String postId,
     required String location,
     required String caption,
-    dynamic imageFile,
+    List<dynamic> imageFiles = const [],
   }) async {
     try {
       final token = await _authService.getToken();
@@ -193,26 +207,28 @@ class PostService {
       request.fields['location'] = location;
       request.fields['caption'] = caption;
 
-      if (imageFile != null) {
-        final String path = imageFile.path;
-        final String ext = path.split('.').last.toLowerCase();
+      if (imageFiles.isNotEmpty) {
+        for (var imageFile in imageFiles) {
+          final String path = imageFile.path;
+          final String ext = path.split('.').last.toLowerCase();
 
-        MediaType contentType;
-        if (ext == 'png') {
-          contentType = MediaType('image', 'png');
-        } else if (ext == 'webp') {
-          contentType = MediaType('image', 'webp');
-        } else {
-          contentType = MediaType('image', 'jpeg');
+          MediaType contentType;
+          if (ext == 'png') {
+            contentType = MediaType('image', 'png');
+          } else if (ext == 'webp') {
+            contentType = MediaType('image', 'webp');
+          } else {
+            contentType = MediaType('image', 'jpeg');
+          }
+
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'images',
+              path,
+              contentType: contentType,
+            ),
+          );
         }
-
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            path,
-            contentType: contentType,
-          ),
-        );
       }
 
       final streamedResponse = await request.send();

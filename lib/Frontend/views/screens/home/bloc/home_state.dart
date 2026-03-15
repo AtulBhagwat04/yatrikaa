@@ -10,12 +10,21 @@ class HomeState extends Equatable {
   final bool isLoadingLocation;
   final String selectedCategory;
   final int selectedIndex;
+  
   final List<PlaceModel> recommendedPlaces;
   final List<PlaceModel> nearbyPlaces;
   final List<EventModel> popularEvents;
+  
+  final List<PlaceModel> searchResults;
+  final bool isSearching;
+  final String searchQuery;
+  
   final bool isLoadingRecommended;
   final bool isLoadingNearby;
   final bool isLoadingEvents;
+  final bool isLoadingSearch;
+  final bool isOffline;
+  final bool isLocationEnabled;
   final String? errorMessage;
 
   const HomeState({
@@ -27,9 +36,15 @@ class HomeState extends Equatable {
     this.recommendedPlaces = const <PlaceModel>[],
     this.nearbyPlaces = const <PlaceModel>[],
     this.popularEvents = const <EventModel>[],
+    this.searchResults = const <PlaceModel>[],
+    this.isSearching = false,
+    this.searchQuery = "",
     this.isLoadingRecommended = true,
     this.isLoadingNearby = true,
     this.isLoadingEvents = true,
+    this.isLoadingSearch = false,
+    this.isOffline = false,
+    this.isLocationEnabled = true,
     this.errorMessage,
   });
 
@@ -42,9 +57,15 @@ class HomeState extends Equatable {
     List<PlaceModel>? recommendedPlaces,
     List<PlaceModel>? nearbyPlaces,
     List<EventModel>? popularEvents,
+    List<PlaceModel>? searchResults,
+    bool? isSearching,
+    String? searchQuery,
     bool? isLoadingRecommended,
     bool? isLoadingNearby,
     bool? isLoadingEvents,
+    bool? isLoadingSearch,
+    bool? isOffline,
+    bool? isLocationEnabled,
     String? errorMessage,
   }) {
     return HomeState(
@@ -56,9 +77,15 @@ class HomeState extends Equatable {
       recommendedPlaces: recommendedPlaces ?? this.recommendedPlaces,
       nearbyPlaces: nearbyPlaces ?? this.nearbyPlaces,
       popularEvents: popularEvents ?? this.popularEvents,
+      searchResults: searchResults ?? this.searchResults,
+      isSearching: isSearching ?? this.isSearching,
+      searchQuery: searchQuery ?? this.searchQuery,
       isLoadingRecommended: isLoadingRecommended ?? this.isLoadingRecommended,
       isLoadingNearby: isLoadingNearby ?? this.isLoadingNearby,
       isLoadingEvents: isLoadingEvents ?? this.isLoadingEvents,
+      isLoadingSearch: isLoadingSearch ?? this.isLoadingSearch,
+      isOffline: isOffline ?? this.isOffline,
+      isLocationEnabled: isLocationEnabled ?? this.isLocationEnabled,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
@@ -73,9 +100,15 @@ class HomeState extends Equatable {
     recommendedPlaces,
     nearbyPlaces,
     popularEvents,
+    searchResults,
+    isSearching,
+    searchQuery,
     isLoadingRecommended,
     isLoadingNearby,
     isLoadingEvents,
+    isLoadingSearch,
+    isOffline,
+    isLocationEnabled,
     errorMessage,
   ];
 }
