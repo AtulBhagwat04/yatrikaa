@@ -120,9 +120,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                   ),
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? primaryBlue
-                        : appWhite.withOpacity(0.4),
+                    color: isSelected ? primaryBlue : appWhite.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected ? primaryBlue : appWhite,
@@ -286,6 +284,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                 LoggedIn(
                                   id: state.id,
                                   role: state.role,
+                                  guideRequestStatus: state.guideRequestStatus,
                                   name: state.name,
                                   email: state.email,
                                   tripsCount: state.tripsCount,

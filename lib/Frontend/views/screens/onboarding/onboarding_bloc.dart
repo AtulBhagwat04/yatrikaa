@@ -13,22 +13,13 @@ class OnboardingState {
   final int currentIndex;
   final bool isLastPage;
 
-  const OnboardingState({
-    required this.currentIndex,
-    required this.isLastPage,
-  });
+  const OnboardingState({required this.currentIndex, required this.isLastPage});
 
   factory OnboardingState.initial() {
-    return const OnboardingState(
-      currentIndex: 0,
-      isLastPage: false,
-    );
+    return const OnboardingState(currentIndex: 0, isLastPage: false);
   }
 
-  OnboardingState copyWith({
-    int? currentIndex,
-    bool? isLastPage,
-  }) {
+  OnboardingState copyWith({int? currentIndex, bool? isLastPage}) {
     return OnboardingState(
       currentIndex: currentIndex ?? this.currentIndex,
       isLastPage: isLastPage ?? this.isLastPage,
@@ -37,19 +28,15 @@ class OnboardingState {
 }
 
 /// BLOC
-class OnboardingBloc
-    extends Bloc<OnboardingEvent, OnboardingState> {
+class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final int totalPages;
 
   OnboardingBloc({required this.totalPages})
-      : super(OnboardingState.initial()) {
+    : super(OnboardingState.initial()) {
     on<PageChanged>(_onPageChanged);
   }
 
-  void _onPageChanged(
-      PageChanged event,
-      Emitter<OnboardingState> emit,
-      ) {
+  void _onPageChanged(PageChanged event, Emitter<OnboardingState> emit) {
     emit(
       state.copyWith(
         currentIndex: event.index,

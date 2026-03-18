@@ -20,6 +20,7 @@ class BookingModel {
   final String packageImage;
   final String destinationName;
   final String organiserName;
+  final String? userName;
 
   BookingModel({
     required this.id,
@@ -35,6 +36,7 @@ class BookingModel {
     required this.packageImage,
     required this.destinationName,
     required this.organiserName,
+    this.userName,
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -64,7 +66,7 @@ class BookingModel {
     }
 
     return BookingModel(
-      id: json['_id'] ?? '',
+      id: (json['_id'] ?? json['id'] ?? '').toString(),
       status: json['status'] ?? 'Pending',
       paymentStatus: json['paymentStatus'] ?? 'Pending',
       totalAmount: (json['totalAmount'] ?? 0.0).toDouble(),
@@ -79,6 +81,7 @@ class BookingModel {
       packageImage: pkgImage,
       destinationName: destName,
       organiserName: orgName,
+      userName: json['user'] is Map ? json['user']['name'] : json['userName'],
     );
   }
 }

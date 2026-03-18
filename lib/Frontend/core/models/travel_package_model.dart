@@ -147,6 +147,62 @@ class TravelPackageModel {
     );
   }
 
+  TravelPackageModel copyWith({
+    String? id,
+    String? title,
+    String? description,
+    List<String>? images,
+    String? destinationName,
+    double? lat,
+    double? lng,
+    int? days,
+    int? nights,
+    double? price,
+    int? maxGroupSize,
+    int? currentParticipants,
+    String? difficulty,
+    String? category,
+    List<ItineraryStep>? itinerary,
+    List<String>? inclusions,
+    List<String>? exclusions,
+    String? bestSeason,
+    OrganizerModel? organizer,
+    String? status,
+    bool? isPopular,
+    double? averageRating,
+    int? reviewCount,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    return TravelPackageModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      images: images ?? this.images,
+      destinationName: destinationName ?? this.destinationName,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      days: days ?? this.days,
+      nights: nights ?? this.nights,
+      price: price ?? this.price,
+      maxGroupSize: maxGroupSize ?? this.maxGroupSize,
+      currentParticipants: currentParticipants ?? this.currentParticipants,
+      difficulty: difficulty ?? this.difficulty,
+      category: category ?? this.category,
+      itinerary: itinerary ?? this.itinerary,
+      inclusions: inclusions ?? this.inclusions,
+      exclusions: exclusions ?? this.exclusions,
+      bestSeason: bestSeason ?? this.bestSeason,
+      organizer: organizer ?? this.organizer,
+      status: status ?? this.status,
+      isPopular: isPopular ?? this.isPopular,
+      averageRating: averageRating ?? this.averageRating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+    );
+  }
+
   String get mainPhotoUrl {
     if (images.isEmpty) return AppAssets.placeholderImageUrl;
     if (images.first.startsWith('http')) return images.first;

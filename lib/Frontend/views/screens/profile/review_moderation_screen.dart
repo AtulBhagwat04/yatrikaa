@@ -71,7 +71,8 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
-      appBar: AppBar(automaticallyImplyLeading: false, 
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         title: AppText.subHeading(
@@ -103,11 +104,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.rate_review_outlined,
-              size: 64,
-              color: appGreyLight,
-            ),
+            Icon(Icons.rate_review_outlined, size: 64, color: appGreyLight),
             const SizedBox(height: 16),
             AppText.body('No reviews to moderate', color: appGrey),
           ],
@@ -129,9 +126,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
           decoration: BoxDecoration(
             color: appWhite,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(color: shadowColor, blurRadius: 10),
-            ],
+            boxShadow: [BoxShadow(color: shadowColor, blurRadius: 10)],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,10 +177,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
                       size: 18,
                       color: errorColor,
                     ),
-                    label: Text(
-                      'Delete',
-                      style: TextStyle(color: errorColor),
-                    ),
+                    label: Text('Delete', style: TextStyle(color: errorColor)),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(

@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin', 'guide'],
     default: 'user'
   },
+  guideRequestStatus: {
+    type: String,
+    enum: ['None', 'Pending', 'Approved', 'Rejected'],
+    default: 'None'
+  },
   tripsCount: {
     type: Number,
     default: 0
@@ -40,9 +45,25 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  packagesCount: {
+    type: Number,
+    default: 0
+  },
   favoritePlaces: {
     type: [String],
     default: []
+  },
+  phoneNumber: {
+    type: String,
+    trim: true
+  },
+  gender: {
+    type: String,
+    enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+    default: 'Prefer not to say'
+  },
+  profilePicture: {
+    type: String
   }
 }, {
   timestamps: true

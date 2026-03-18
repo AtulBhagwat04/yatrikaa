@@ -2,15 +2,21 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 
 class ApiConstants {
-  // Local Backend URL (Replace with your computer's IP if testing on a physical device)
-  static const String localUrl = 'http://10.38.147.64:3000/api';
-  
-  // Render Deployed Backend URL
-  static const String liveUrl = 'https://bhatkanti-backend-8msl.onrender.com/api';
+  // Local Backend URL
+  //static const String localUrl = 'http://10.38.147.64:3000/api';
+  static const String localUrl = 'http://10.175.237.64:3000/api';
 
-  // Changed to non-const for automatic fallback
-  // Defaults to liveUrl, will switch to localUrl if available
+  // Render Deployed Backend URL
+  static const String liveUrl =
+      'https://bhatkanti-backend-8msl.onrender.com/api';
+
   static String baseUrl = liveUrl;
+
+  // ── Auth & Users
+  static String getGuideRequestsUrl() => '$baseUrl/auth/guide-requests';
+  static String getHandleGuideRequestUrl() =>
+      '$baseUrl/auth/guide-requests/handle';
+  static String getRequestGuideRoleUrl() => '$baseUrl/auth/request-guide';
 
   // Automatic Fallback Logic
   static Future<void> checkServerAvailability() async {
@@ -25,17 +31,17 @@ class ApiConstants {
             const Duration(milliseconds: 1500),
             onTimeout: () => http.Response('Timeout', 408),
           );
-      
+
       if (response.statusCode == 200) {
         baseUrl = localUrl;
-        print('✅ Local backend is running. Using: $baseUrl');
+        print('Local backend is running. Using: $baseUrl');
       } else {
         baseUrl = liveUrl;
-        print('⚠️ Local backend returned error. Falling back to Render: $baseUrl');
+        print('Local backend returned error. Falling back to Render: $baseUrl');
       }
     } catch (e) {
       baseUrl = liveUrl;
-      print('❌ Local backend not reachable. Falling back to Render: $baseUrl');
+      print('Local backend not reachable. Falling back to Render: $baseUrl');
     }
   }
 
@@ -115,8 +121,14 @@ class ApiConstants {
   static String getMyPackagesUrl() => '$baseUrl/packages/my';
   static String getJoinPackageUrl(String id) => '$baseUrl/packages/$id/join';
   static String getMyBookingsUrl() => '$baseUrl/packages/bookings/mine';
+  static String getGuideAllBookingsUrl() => '$baseUrl/packages/bookings/organizer';
   static String getCancelBookingUrl(String bookingId) =>
       '$baseUrl/packages/bookings/$bookingId/cancel';
+  static String getConfirmBookingUrl(String bookingId) =>
+      '$baseUrl/packages/bookings/$bookingId/confirm';
   static String getPackageParticipantsUrl(String id) =>
       '$baseUrl/packages/$id/participants';
+  static String getPublishPackageUrl(String id) =>
+      '$baseUrl/packages/admin/$id/publish';
+  static String getAdminAllPackagesUrl() => '$baseUrl/packages/admin/all';
 }

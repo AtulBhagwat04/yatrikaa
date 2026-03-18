@@ -103,13 +103,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       // DateFormat.jm() parses "10:00 AM" or "5:00 PM"
       final timeFormat = DateFormat.jm();
       final time = timeFormat.parse(timeString);
-      return DateTime(
-        date.year,
-        date.month,
-        date.day,
-        time.hour,
-        time.minute,
-      );
+      return DateTime(date.year, date.month, date.day, time.hour, time.minute);
     } catch (e) {
       // If parsing fails, use the date at 00:00
       return DateTime(date.year, date.month, date.day);
@@ -126,7 +120,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     DateTime endDateTime;
     if (event.endTime != null && event.endTime!.isNotEmpty) {
       endDateTime = _combineDateAndTime(event.date, event.endTime!);
-      // If end time is technically before start time (e.g. starts 10 PM, ends 2 AM), 
+      // If end time is technically before start time (e.g. starts 10 PM, ends 2 AM),
       // it means it ends the next day.
       if (endDateTime.isBefore(startDateTime)) {
         endDateTime = endDateTime.add(const Duration(days: 1));
@@ -134,7 +128,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     } else {
       // Default duration of 4 hours if no end time
       endDateTime = startDateTime.add(const Duration(hours: 4));
-      
+
       // If it's already past endDateTime, but it's still the same day,
       // maybe we should keep it as "Happening Now" if it's a day-long event?
       // Actually, if it's past midnight of the event day, it's definitely ended.
@@ -142,7 +136,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
     if (now.isAfter(endDateTime)) {
       return "Event Ended";
-    } else if (now.isAfter(startDateTime) || now.isAtSameMomentAs(startDateTime)) {
+    } else if (now.isAfter(startDateTime) ||
+        now.isAtSameMomentAs(startDateTime)) {
       return "Happening Now";
     } else {
       final difference = startDateTime.difference(now);
@@ -173,7 +168,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         final event = snapshot.data;
         if (event == null) {
           return Scaffold(
-            appBar: AppBar(automaticallyImplyLeading: false, title: const Text("Error")),
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              title: const Text("Error"),
+            ),
             body: const Center(child: Text("Event not found")),
           );
         }
@@ -635,10 +633,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             decoration: BoxDecoration(
               color: badgeColor,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: textColor.withAlpha(40),
-                width: 0.5,
-              ),
+              border: Border.all(color: textColor.withAlpha(40), width: 0.5),
             ),
             child: Center(
               child: AppText.caption(

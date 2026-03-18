@@ -23,7 +23,7 @@ class EventHorizontalCard extends StatelessWidget {
       width: 250,
       margin: const EdgeInsets.only(right: AppSpacing.m, bottom: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: shadowColorDark,
@@ -33,7 +33,7 @@ class EventHorizontalCard extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
           child: Stack(

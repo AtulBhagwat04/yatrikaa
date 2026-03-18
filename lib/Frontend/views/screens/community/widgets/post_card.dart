@@ -12,6 +12,7 @@ import 'package:bhatkanti_app/Frontend/views/screens/community/widgets/post_deta
 
 import 'package:bhatkanti_app/Frontend/views/screens/community/widgets/edit_post_sheet.dart';
 import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/custom_alert_dialog.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -90,40 +91,27 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _handleDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Post"),
-        content: const Text(
-          "Are you sure you want to delete this journey? This action cannot be undone.",
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: errorColor),
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      if (mounted) CustomToast.progress(context, "Deleting post...");
-      final success = await PostService().deletePost(widget.post.id);
-      if (success) {
-        if (mounted) {
-          CustomToast.success(context, "Post deleted successfully");
-          widget.onDelete();
+    CustomAlertDialog.show(
+      context,
+      title: 'Delete Post',
+      message:
+          'Are you sure you want to delete this journey? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      type: CustomAlertType.error,
+      icon: Icons.delete_forever_rounded,
+      onConfirm: () async {
+        CustomToast.progress(context, "Deleting post...");
+        final success = await PostService().deletePost(widget.post.id);
+        if (success) {
+          if (mounted) {
+            CustomToast.success(context, "Post deleted successfully");
+            widget.onDelete();
+          }
+        } else {
+          if (mounted) CustomToast.error(context, "Failed to delete post");
         }
-      } else {
-        if (mounted) CustomToast.error(context, "Failed to delete post");
-      }
-    }
+      },
+    );
   }
 
   void _handleEdit() async {
@@ -328,7 +316,9 @@ class _PostCardState extends State<PostCard> {
                                 ),
                                 const SizedBox(height: 8),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
                                   child: Text(
                                     "Image Not Available",
                                     textAlign: TextAlign.center,
@@ -408,12 +398,18 @@ class _PostCardState extends State<PostCard> {
                           Row(
                             children: [
                               if (p.isEdited) ...[
-                                AppText.caption("edited • ", size: 10, color: appGrey),
+                                AppText.caption(
+                                  "edited • ",
+                                  size: 10,
+                                  color: appGrey,
+                                ),
                               ],
                               AppText.caption(
-                                _timeAgo(p.isEdited && p.editedAt != null
-                                    ? p.editedAt!
-                                    : p.createdAt),
+                                _timeAgo(
+                                  p.isEdited && p.editedAt != null
+                                      ? p.editedAt!
+                                      : p.createdAt,
+                                ),
                                 size: 10,
                               ),
                             ],
@@ -472,8 +468,12 @@ class _PostCardState extends State<PostCard> {
                   label: AppStrings.commShare,
                   onTap: _handleShare,
                 ),
-                if (widget.currentUserId == p.author.id || 
-                    (widget.currentUserRole?.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '') == 'admin')) ...[
+                if (widget.currentUserId == p.author.id ||
+                    (widget.currentUserRole?.toLowerCase().replaceAll(
+                          RegExp(r'[^a-z]'),
+                          '',
+                        ) ==
+                        'admin')) ...[
                   const Spacer(),
                   IconButton(
                     onPressed: _showPostOptions,

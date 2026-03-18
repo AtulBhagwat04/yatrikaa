@@ -86,7 +86,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (_isPickerActive) return;
 
     if (_imageFiles.length >= 3) {
-      CustomToast.warning(context, 'Maximum 3 images allowed', title: "Hold on!");
+      CustomToast.warning(
+        context,
+        'Maximum 3 images allowed',
+        title: "Hold on!",
+      );
       return;
     }
 
@@ -267,7 +271,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverAppBar(automaticallyImplyLeading: false, 
+          SliverAppBar(
+            automaticallyImplyLeading: false,
             floating: true,
             pinned: true,
             backgroundColor: onboardingBlueVeryLight,
@@ -634,11 +639,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       color: appBlack.withAlpha(138),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.close,
-                      size: 12,
-                      color: appWhite,
-                    ),
+                    child: const Icon(Icons.close, size: 12, color: appWhite),
                   ),
                 ),
               ),
@@ -679,7 +680,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.montserrat(color: appGreyLight, fontSize: 13),
+              hintStyle: GoogleFonts.montserrat(
+                color: appGreyLight,
+                fontSize: 13,
+              ),
               prefixIcon: Icon(icon, color: primaryBlue, size: 16),
               filled: true,
               fillColor: onboardingBlueVeryLight.withAlpha(128),

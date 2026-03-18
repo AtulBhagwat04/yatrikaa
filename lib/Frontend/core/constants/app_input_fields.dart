@@ -11,6 +11,8 @@ class AppInputField extends StatefulWidget {
   final TextInputType? keyboardType;
   final Function(String)? onFieldSubmitted;
   final String? Function(String?)? validator;
+  final int maxLines;
+  final EdgeInsetsGeometry? contentPadding;
 
   const AppInputField({
     super.key,
@@ -23,6 +25,8 @@ class AppInputField extends StatefulWidget {
     this.keyboardType,
     this.onFieldSubmitted,
     this.validator,
+    this.maxLines = 1,
+    this.contentPadding,
   });
 
   @override
@@ -70,9 +74,15 @@ class _AppInputFieldState extends State<AppInputField> {
         keyboardType: widget.keyboardType,
         onFieldSubmitted: widget.onFieldSubmitted,
         validator: widget.validator,
+        maxLines: widget.maxLines,
         cursorColor: primaryBlue,
         decoration: InputDecoration(
           hintText: widget.hint,
+          hintStyle: TextStyle(
+            fontSize: 13,
+            color: appBlack.withOpacity(0.4),
+            fontWeight: FontWeight.w400,
+          ),
 
           /// Prefix Icon
           prefixIcon: Icon(widget.prefixIcon, color: primaryBlue),
@@ -97,10 +107,11 @@ class _AppInputFieldState extends State<AppInputField> {
           filled: true,
           fillColor: primaryWhite,
 
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 18,
-            horizontal: 16,
-          ),
+          contentPadding: widget.contentPadding ??
+              const EdgeInsets.symmetric(
+                vertical: 14,
+                horizontal: 16,
+              ),
 
           /// Default Border
           border: OutlineInputBorder(

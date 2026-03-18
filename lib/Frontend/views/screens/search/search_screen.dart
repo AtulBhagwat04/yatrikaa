@@ -73,8 +73,11 @@ class _SearchScreenState extends State<SearchScreen>
     }
   }
 
-  Future<void> _performSearch(String query,
-      {bool isCategory = false, bool force = false}) async {
+  Future<void> _performSearch(
+    String query, {
+    bool isCategory = false,
+    bool force = false,
+  }) async {
     final trimmedQuery = query.trim();
     if (trimmedQuery.isEmpty) {
       if (mounted) {
@@ -123,7 +126,7 @@ class _SearchScreenState extends State<SearchScreen>
         // Standard text search for user input
         results = await _placesService.searchPlaces(trimmedQuery, null, null);
 
-        // SMART SEARCH: If query is specific (like a city/state name), 
+        // SMART SEARCH: If query is specific (like a city/state name),
         // fetch related attractions to show "Related Results"
         if (trimmedQuery.length >= 3) {
           final isLikelyLocation = trimmedQuery.split(' ').length <= 2;
@@ -143,7 +146,9 @@ class _SearchScreenState extends State<SearchScreen>
               }
             }
             // Final sort to ensure the most popular merged results are on top
-            results.sort((a, b) => b.userRatingsTotal.compareTo(a.userRatingsTotal));
+            results.sort(
+              (a, b) => b.userRatingsTotal.compareTo(a.userRatingsTotal),
+            );
           }
         }
       }
@@ -167,7 +172,7 @@ class _SearchScreenState extends State<SearchScreen>
   String _mapCategoryToKeyword(String category) {
     // Normalize input for case-insensitive lookup
     final normalizedInput = category.trim().toLowerCase();
-    
+
     final Map<String, String> mapping = {
       AppStrings.catForts.toLowerCase(): "Fort",
       AppStrings.catBeaches.toLowerCase(): "Beach",
@@ -182,7 +187,7 @@ class _SearchScreenState extends State<SearchScreen>
       AppStrings.catUnesco.toLowerCase(): "Heritage",
       AppStrings.catSpiritual.toLowerCase(): "Temple",
     };
-    
+
     return mapping[normalizedInput] ?? category;
   }
 
@@ -254,9 +259,9 @@ class _SearchScreenState extends State<SearchScreen>
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
               ),
-                if (widget.isExploreMode) ...[
-                  // Notification icon removed as per request
-                ],
+              if (widget.isExploreMode) ...[
+                // Notification icon removed as per request
+              ],
             ],
           ),
           const SizedBox(height: 2),
@@ -347,7 +352,6 @@ class _SearchScreenState extends State<SearchScreen>
       ],
     );
   }
-
 
   Widget _buildExploreGridItem(PlaceModel place) {
     return AppAnimations.fadeIn(
@@ -496,22 +500,22 @@ class _SearchScreenState extends State<SearchScreen>
         ),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.ms),
         children: [
-        const SizedBox(height: 8),
-        _buildSectionTitle("Popular Categories", null),
-        const SizedBox(height: 16),
-        _buildCategoryGrid(),
+          const SizedBox(height: 8),
+          _buildSectionTitle("Popular Categories", null),
+          const SizedBox(height: 16),
+          _buildCategoryGrid(),
 
-        const SizedBox(height: 32),
-        _buildSectionTitle("Trending Now", null, color: Colors.orange),
-        const SizedBox(height: 16),
-        if (_isTrendingLoading)
-          ...List.generate(3, (i) => _buildShimmerCard())
-        else
-          ..._trendingPlaces.map((place) => _buildPlaceItem(place)),
+          const SizedBox(height: 32),
+          _buildSectionTitle("Trending Now", null, color: Colors.orange),
+          const SizedBox(height: 16),
+          if (_isTrendingLoading)
+            ...List.generate(3, (i) => _buildShimmerCard())
+          else
+            ..._trendingPlaces.map((place) => _buildPlaceItem(place)),
 
-        const SizedBox(height: 40),
-      ],
-    ),
+          const SizedBox(height: 40),
+        ],
+      ),
     );
   }
 
@@ -573,7 +577,10 @@ class _SearchScreenState extends State<SearchScreen>
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 width: 95,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -630,7 +637,8 @@ class _SearchScreenState extends State<SearchScreen>
         ),
         padding: const EdgeInsets.all(AppSpacing.ms),
         itemCount: _searchResults.length,
-        itemBuilder: (context, i) => _buildPlaceItem(_searchResults[i], index: i),
+        itemBuilder: (context, i) =>
+            _buildPlaceItem(_searchResults[i], index: i),
       ),
     );
   }

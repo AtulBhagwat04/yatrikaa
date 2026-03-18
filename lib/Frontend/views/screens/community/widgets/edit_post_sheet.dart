@@ -154,55 +154,63 @@ class _EditPostSheetState extends State<EditPostSheet> {
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                   // Show existing images
-                  ...widget.post.images.map((url) => Container(
-                    width: 120,
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      image: DecorationImage(
-                        image: NetworkImage(url),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    child: Container(
+                  // Show existing images
+                  ...widget.post.images.map(
+                    (url) => Container(
+                      width: 120,
+                      margin: const EdgeInsets.only(right: 12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(16),
+                        image: DecorationImage(
+                          image: NetworkImage(url),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                     ),
-                  )),
+                  ),
                   // Show newly picked images
-                  ..._imageFiles.asMap().entries.map((entry) => Stack(
-                    children: [
-                      Container(
-                        width: 120,
-                        margin: const EdgeInsets.only(right: 12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          image: DecorationImage(
-                            image: FileImage(File(entry.value.path)),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 4,
-                        right: 16,
-                        child: GestureDetector(
-                          onTap: () => _removeNewImage(entry.key),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
+                  ..._imageFiles.asMap().entries.map(
+                    (entry) => Stack(
+                      children: [
+                        Container(
+                          width: 120,
+                          margin: const EdgeInsets.only(right: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            image: DecorationImage(
+                              image: FileImage(File(entry.value.path)),
+                              fit: BoxFit.cover,
                             ),
-                            child: const Icon(Icons.close, size: 12, color: Colors.white),
                           ),
                         ),
-                      ),
-                    ],
-                  )),
+                        Positioned(
+                          top: 4,
+                          right: 16,
+                          child: GestureDetector(
+                            onTap: () => _removeNewImage(entry.key),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   // Add more button
                   if (_imageFiles.length + widget.post.images.length < 10)
                     GestureDetector(
@@ -217,7 +225,10 @@ class _EditPostSheetState extends State<EditPostSheet> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_a_photo, color: primaryBlue.withOpacity(0.5)),
+                            Icon(
+                              Icons.add_a_photo,
+                              color: primaryBlue.withOpacity(0.5),
+                            ),
                             const SizedBox(height: 4),
                             AppText.caption("Add Photo", color: primaryBlue),
                           ],

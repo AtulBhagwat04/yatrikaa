@@ -138,22 +138,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       backgroundColor: onboardingBlueVeryLight,
       body: Stack(
         children: [
-          // ── Background Gradient ──────────────────────────────────────────
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    primaryBlue.withOpacity(0.05),
-                    onboardingBlueVeryLight,
-                    onboardingBlueVeryLight,
-                  ],
-                ),
-              ),
-            ),
-          ),
+          // ── Background color (Inherited from Scaffold) ───────────────────
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

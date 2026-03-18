@@ -27,6 +27,7 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
         SignupSuccess(
           id: response['id'] ?? '',
           role: response['role'] ?? event.role,
+          guideRequestStatus: response['guideRequestStatus'] ?? 'None',
           name: response['name'] ?? event.name,
           email: response['email'] ?? event.email,
           tripsCount: (response['tripsCount'] as num?)?.toInt() ?? 0,

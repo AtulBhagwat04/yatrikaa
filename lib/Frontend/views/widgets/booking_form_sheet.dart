@@ -58,12 +58,20 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
   final _contactController = TextEditingController();
   final _notesController = TextEditingController();
 
+  final _contactNode = FocusNode();
+  final _notesNode = FocusNode();
+
   final List<_TravelerEntry> _travelers = [_TravelerEntry()];
 
   @override
   void dispose() {
     _contactController.dispose();
     _notesController.dispose();
+    _contactNode.dispose();
+    _notesNode.dispose();
+    for (var t in _travelers) {
+      t.dispose();
+    }
     super.dispose();
   }
 
@@ -87,14 +95,16 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
         .map((t) => {'name': t.name, 'age': t.age, 'gender': t.gender})
         .toList();
 
-    context.read<TravelBloc>().add(TravelJoinRequested(
-          packageId: widget.packageId,
-          travelers: travelers,
-          contactNumber: _contactController.text.trim(),
-          notes: _notesController.text.trim().isEmpty
-              ? null
-              : _notesController.text.trim(),
-        ));
+    context.read<TravelBloc>().add(
+      TravelJoinRequested(
+        packageId: widget.packageId,
+        travelers: travelers,
+        contactNumber: _contactController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
+      ),
+    );
   }
 
   @override
@@ -106,7 +116,9 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
           Navigator.pop(ctx); // close sheet
           ScaffoldMessenger.of(ctx).showSnackBar(
             SnackBar(
-              content: Text(state.actionSuccessMessage ?? 'Booking successful! 🎉'),
+              content: Text(
+                state.actionSuccessMessage ?? 'Booking successful! 🎉',
+              ),
               backgroundColor: successColorDark,
               behavior: SnackBarBehavior.floating,
             ),
@@ -151,19 +163,34 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
                     controller: scrollController,
                     padding: const EdgeInsets.all(AppSpacing.ms),
                     children: [
-                      AppText.heading('Join Package', size: 22, fontWeight: FontWeight.w900),
+                      AppText.heading(
+                        'Join Package',
+                        size: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
                       const SizedBox(height: 4),
-                      AppText.body(widget.packageTitle, color: appGrey, size: 13),
+                      AppText.body(
+                        widget.packageTitle,
+                        color: appGrey,
+                        size: 13,
+                      ),
                       const SizedBox(height: 24),
 
                       // ── Travelers ──────────────────────────────────────────
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          AppText.subHeading('Travelers', fontWeight: FontWeight.w800, size: 16),
+                          AppText.subHeading(
+                            'Travelers',
+                            fontWeight: FontWeight.w800,
+                            size: 16,
+                          ),
                           Text(
                             '${_travelers.length} / ${widget.availableSeats} seats',
-                            style: const TextStyle(color: appGrey, fontSize: 12),
+                            style: const TextStyle(
+                              color: appGrey,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -173,7 +200,9 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
                         (i) => _TravelerForm(
                           index: i,
                           entry: _travelers[i],
-                          onRemove: _travelers.length > 1 ? () => _removeTraveler(i) : null,
+                          onRemove: _travelers.length > 1
+                              ? () => _removeTraveler(i)
+                              : null,
                         ),
                       ),
                       if (_travelers.length < widget.availableSeats)
@@ -185,25 +214,42 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
                       const SizedBox(height: 16),
 
                       // ── Contact ────────────────────────────────────────────
-                      AppText.subHeading('Contact Number', fontWeight: FontWeight.w700, size: 15),
+                      AppText.subHeading(
+                        'Contact Number',
+                        fontWeight: FontWeight.w700,
+                        size: 15,
+                      ),
                       const SizedBox(height: 8),
                       _buildTextField(
                         controller: _contactController,
+                        focusNode: _contactNode,
                         hint: '+91 98765 43210',
                         keyboardType: TextInputType.phone,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        validator: (v) =>
-                            (v == null || v.length < 10) ? 'Enter a valid 10-digit number' : null,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) =>
+                            FocusScope.of(context).requestFocus(_notesNode),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (v) => (v == null || v.length < 10)
+                            ? 'Enter a valid 10-digit number'
+                            : null,
                       ),
                       const SizedBox(height: 16),
 
                       // ── Notes ──────────────────────────────────────────────
-                      AppText.subHeading('Notes (optional)', fontWeight: FontWeight.w700, size: 15),
+                      AppText.subHeading(
+                        'Notes (optional)',
+                        fontWeight: FontWeight.w700,
+                        size: 15,
+                      ),
                       const SizedBox(height: 8),
                       _buildTextField(
                         controller: _notesController,
+                        focusNode: _notesNode,
                         hint: 'Any special requirements...',
                         maxLines: 3,
+                        textInputAction: TextInputAction.done,
                       ),
                       const SizedBox(height: 24),
 
@@ -256,7 +302,8 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16)),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                               elevation: 0,
                             ),
                             child: isLoading
@@ -264,13 +311,16 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
                                     height: 20,
                                     width: 20,
                                     child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2),
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text(
                                     'Confirm & Join Trip',
                                     style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w800),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
                           );
                         },
@@ -289,15 +339,22 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
 
   Widget _buildTextField({
     required TextEditingController controller,
+    FocusNode? focusNode,
     required String hint,
     TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    void Function(String)? onFieldSubmitted,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
     int maxLines = 1,
   }) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      onFieldSubmitted:
+          onFieldSubmitted ?? (_) => FocusScope.of(context).nextFocus(),
       inputFormatters: inputFormatters,
       validator: validator,
       maxLines: maxLines,
@@ -311,7 +368,10 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
     );
   }
@@ -322,6 +382,13 @@ class _TravelerEntry {
   String name = '';
   int age = 18;
   String gender = 'Male';
+  final FocusNode nameNode = FocusNode();
+  final FocusNode ageNode = FocusNode();
+
+  void dispose() {
+    nameNode.dispose();
+    ageNode.dispose();
+  }
 }
 
 /// A single traveler info row inside the form.
@@ -354,15 +421,29 @@ class _TravelerForm extends StatelessWidget {
               CircleAvatar(
                 radius: 12,
                 backgroundColor: primaryBlue,
-                child: Text('${index + 1}',
-                    style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
-              AppText.subHeading('Traveler ${index + 1}', size: 14, fontWeight: FontWeight.w700),
+              AppText.subHeading(
+                'Traveler ${index + 1}',
+                size: 14,
+                fontWeight: FontWeight.w700,
+              ),
               const Spacer(),
               if (onRemove != null)
                 IconButton(
-                  icon: const Icon(Icons.remove_circle_outline, color: errorColor, size: 20),
+                  icon: const Icon(
+                    Icons.remove_circle_outline,
+                    color: errorColor,
+                    size: 20,
+                  ),
                   onPressed: onRemove,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -372,16 +453,30 @@ class _TravelerForm extends StatelessWidget {
           const SizedBox(height: 10),
           TextFormField(
             initialValue: entry.name,
+            focusNode: entry.nameNode,
             onChanged: (v) => entry.name = v,
-            validator: (v) => (v == null || v.isEmpty) ? 'Name is required' : null,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) =>
+                FocusScope.of(context).requestFocus(entry.ageNode),
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'Name is required' : null,
             style: GoogleFonts.montserrat(fontSize: 13),
             decoration: InputDecoration(
               hintText: 'Full Name',
-              hintStyle: GoogleFonts.montserrat(color: appGreyLight, fontSize: 12),
+              hintStyle: GoogleFonts.montserrat(
+                color: appGreyLight,
+                fontSize: 12,
+              ),
               filled: true,
               fillColor: appWhite,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -391,9 +486,13 @@ class _TravelerForm extends StatelessWidget {
               Expanded(
                 child: TextFormField(
                   initialValue: '${entry.age}',
+                  focusNode: entry.ageNode,
                   keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onChanged: (v) => entry.age = int.tryParse(v) ?? 18,
+                  onFieldSubmitted: (_) =>
+                      FocusScope.of(context).nextFocus(), // Skip dropdown to next form part
                   validator: (v) {
                     final n = int.tryParse(v ?? '');
                     return (n == null || n < 5) ? 'Invalid age' : null;
@@ -401,11 +500,20 @@ class _TravelerForm extends StatelessWidget {
                   style: GoogleFonts.montserrat(fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'Age',
-                    hintStyle: GoogleFonts.montserrat(color: appGreyLight, fontSize: 12),
+                    hintStyle: GoogleFonts.montserrat(
+                      color: appGreyLight,
+                      fontSize: 12,
+                    ),
                     filled: true,
                     fillColor: appWhite,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                   ),
                 ),
               ),
@@ -415,12 +523,21 @@ class _TravelerForm extends StatelessWidget {
                 child: DropdownButtonFormField<String>(
                   value: entry.gender,
                   onChanged: (v) => entry.gender = v!,
-                  style: GoogleFonts.montserrat(fontSize: 13, color: Colors.black),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 13,
+                    color: Colors.black,
+                  ),
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: appWhite,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                   ),
                   items: ['Male', 'Female', 'Other']
                       .map((g) => DropdownMenuItem(value: g, child: Text(g)))

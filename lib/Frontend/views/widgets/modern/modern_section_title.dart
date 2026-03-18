@@ -25,11 +25,7 @@ class ModernSectionTitle extends StatelessWidget {
             size: 20,
             color: blackOpacity,
           ),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: appGrey,
-            size: 24,
-          ),
+          const Icon(Icons.chevron_right_rounded, color: appGrey, size: 24),
         ],
       ),
     );

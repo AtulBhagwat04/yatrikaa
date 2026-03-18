@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
+import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
 import 'package:bhatkanti_app/Frontend/core/models/post_model.dart';
@@ -23,7 +23,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
   List<PostModel> _posts = [];
   bool _isLoading = true;
   // Removed local variables, will fetch from AuthBloc state in build
-
 
   @override
   void initState() {
@@ -87,9 +86,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.ms,
-                    AppSpacing.m,
+                    12,
                     AppSpacing.ms,
-                    AppSpacing.m,
+                    8,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -97,21 +96,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          AppText.heading(
                             AppStrings.commJourneys,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -1,
-                              color: appBlack,
-                            ),
+                            fontWeight: FontWeight.w900,
+                            size: 26,
+                            color: appBlack,
+                            letterSpacing: -0.5,
                           ),
-                          Text(
+                          const SizedBox(height: 2),
+                          AppText.caption(
                             AppStrings.commSubtitle,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 14,
-                              color: primaryBlue,
-                            ),
+                            color: appGrey,
+                            fontWeight: FontWeight.w500,
+                            size: 13,
                           ),
                         ],
                       ),
@@ -142,10 +139,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           color: appGreyLight,
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          AppStrings.commNoJourneys,
-                          style: GoogleFonts.montserrat(color: appGrey),
-                        ),
+                        AppText.body(AppStrings.commNoJourneys, color: appGrey),
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: _fetchPosts,
@@ -170,7 +164,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         onUpdate: (updatedPost) {
                           if (mounted) {
                             setState(() {
-                              final updateIndex = _posts.indexWhere((p) => p.id == updatedPost.id);
+                              final updateIndex = _posts.indexWhere(
+                                (p) => p.id == updatedPost.id,
+                              );
                               if (updateIndex != -1) {
                                 _posts[updateIndex] = updatedPost;
                               }
@@ -225,11 +221,7 @@ class _HeaderAction extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(
-          icon,
-          color: isPrimary ? appWhite : primaryBlue,
-          size: 24,
-        ),
+        child: Icon(icon, color: isPrimary ? appWhite : primaryBlue, size: 24),
       ),
     );
   }

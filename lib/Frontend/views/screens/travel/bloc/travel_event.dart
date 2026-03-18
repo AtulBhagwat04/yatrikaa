@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:equatable/equatable.dart';
 
 abstract class TravelEvent extends Equatable {
@@ -46,6 +47,37 @@ class TravelPackageDetailRequested extends TravelEvent {
 /// Load packages created by the logged-in guide.
 class TravelMyPackagesRequested extends TravelEvent {}
 
+class TravelDeletePackageRequested extends TravelEvent {
+  final String packageId;
+  const TravelDeletePackageRequested(this.packageId);
+  @override
+  List<Object?> get props => [packageId];
+}
+
+class TravelUpdatePackageRequested extends TravelEvent {
+  final String packageId;
+  final Map<String, dynamic> body;
+  final List<File> imageFiles;
+  const TravelUpdatePackageRequested({
+    required this.packageId,
+    required this.body,
+    this.imageFiles = const [],
+  });
+  @override
+  List<Object?> get props => [packageId, body, imageFiles];
+}
+
+class TravelCreatePackageRequested extends TravelEvent {
+  final Map<String, dynamic> body;
+  final List<File> imageFiles;
+  const TravelCreatePackageRequested({
+    required this.body,
+    this.imageFiles = const [],
+  });
+  @override
+  List<Object?> get props => [body, imageFiles];
+}
+
 // ── Booking Events ─────────────────────────────────────────────────────────
 
 /// Load the logged-in user's bookings.
@@ -73,6 +105,58 @@ class TravelCancelBookingRequested extends TravelEvent {
   const TravelCancelBookingRequested(this.bookingId);
   @override
   List<Object?> get props => [bookingId];
+}
+
+/// Load packages for admin review.
+class TravelAdminReviewRequested extends TravelEvent {
+  final String? status;
+  const TravelAdminReviewRequested({this.status});
+  @override
+  List<Object?> get props => [status];
+}
+
+/// Admin action to publish a package.
+class TravelPublishPackageRequested extends TravelEvent {
+  final String packageId;
+  const TravelPublishPackageRequested(this.packageId);
+  @override
+  List<Object?> get props => [packageId];
+}
+
+/// Admin action to load guide requests.
+class TravelGuideRequestsRequested extends TravelEvent {}
+
+/// Admin action to approve / reject guide request.
+class TravelHandleGuideRequested extends TravelEvent {
+  final String userId;
+  final String action; // 'approve' or 'reject'
+  const TravelHandleGuideRequested({
+    required this.userId,
+    required this.action,
+  });
+  @override
+  List<Object?> get props => [userId, action];
+}
+
+// ── Guide Booking Management ──────────────────────────────────────────────
+class TravelPackageParticipantsRequested extends TravelEvent {
+  final String packageId;
+  const TravelPackageParticipantsRequested(this.packageId);
+  @override
+  List<Object?> get props => [packageId];
+}
+
+class TravelAllGuideBookingsRequested extends TravelEvent {}
+
+class TravelHandleBookingRequested extends TravelEvent {
+  final String bookingId;
+  final String action; // 'Confirmed' or 'Cancelled'
+  const TravelHandleBookingRequested({
+    required this.bookingId,
+    required this.action,
+  });
+  @override
+  List<Object?> get props => [bookingId, action];
 }
 
 /// Clear any error / join success state after it has been consumed.
