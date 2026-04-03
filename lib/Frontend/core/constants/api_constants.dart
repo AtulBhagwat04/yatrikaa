@@ -3,8 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiConstants {
   // Local Backend URL
-  //static const String localUrl = 'http://10.38.147.64:3000/api';
-  static const String localUrl = 'http://10.175.237.64:3000/api';
+  static const String localUrl = 'http://10.63.28.64:3000/api';
 
   // Render Deployed Backend URL
   static const String liveUrl =
