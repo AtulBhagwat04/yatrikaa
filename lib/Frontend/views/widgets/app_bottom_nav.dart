@@ -53,11 +53,7 @@ class AppBottomNav extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isActive ? primaryBlue : appGreyLight,
-              size: 26,
-            ),
+            Icon(icon, color: isActive ? primaryBlue : appGreyLight, size: 26),
             if (isActive)
               Container(
                 margin: const EdgeInsets.only(top: 4),

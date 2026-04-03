@@ -15,6 +15,8 @@ class RouteNames {
   static const String placeDetails = '/place-details';
   static const String eventDetails = '/event-details';
   static const String map = '/map';
+  static const String featuredDestinations = '/featured-destinations';
+  static const String popularEvents = '/popular-events';
 
   // User
   static const String favorites = '/favorites';
@@ -30,7 +32,6 @@ class RouteNames {
   static const String myPosts = '/profile/my-posts';
 
   // Guide Panel
-  static const String guideDashboard = '/guide/dashboard';
   static const String manageTours = '/guide/tours';
   static const String bookingRequests = '/guide/bookings';
 
@@ -45,6 +46,7 @@ class RouteNames {
   static const String systemConfig = '/admin/config';
   static const String addPlace = '/admin/places/add';
   static const String addEvent = '/admin/events/add';
+  static const String adminApprovalQueue = '/admin/approval-queue';
 
   // Social (Phase 2+)
   static const String tripFeed = '/trip-feed';

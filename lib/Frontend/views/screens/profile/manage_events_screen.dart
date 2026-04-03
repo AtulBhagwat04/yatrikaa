@@ -8,6 +8,7 @@ import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/custom_alert_dialog.dart';
 import 'package:bhatkanti_app/Frontend/core/utils/error_handler.dart';
 import 'package:http/http.dart' as http;
 import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
@@ -58,7 +59,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
       final events = await _eventsService.getEvents();
       // Sort by date ascending (closest events first)
       events.sort((a, b) => a.date.compareTo(b.date));
-      
+
       if (!mounted) return;
       setState(() {
         _allEvents = events;
@@ -94,7 +95,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         displacement: 80,
         color: primaryBlue,
         child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           slivers: [
             _buildAppBar(),
             _buildSearchBox(),
@@ -169,7 +172,10 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
             onChanged: _filterEvents,
             decoration: InputDecoration(
               hintText: "Search your events...",
-              hintStyle: GoogleFonts.montserrat(color: Colors.grey.shade400, fontSize: 14),
+              hintStyle: GoogleFonts.montserrat(
+                color: Colors.grey.shade400,
+                fontSize: 14,
+              ),
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: primaryBlue,
@@ -259,8 +265,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
             final allIdx = _allEvents.indexWhere((e) => e.id == result.id);
             if (allIdx != -1) _allEvents[allIdx] = result;
 
-            final filterIdx =
-                _filteredEvents.indexWhere((e) => e.id == result.id);
+            final filterIdx = _filteredEvents.indexWhere(
+              (e) => e.id == result.id,
+            );
             if (filterIdx != -1) _filteredEvents[filterIdx] = result;
           });
         }
@@ -475,32 +482,15 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
   }
 
   void _confirmDelete(EventModel event) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: AppText.subHeading("Delete Event?"),
-        content: AppText.body(
+    CustomAlertDialog.show(
+      context,
+      title: 'Delete Event?',
+      message:
           "Are you sure you want to remove '${event.title}'? This action cannot be undone.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _deleteEvent(event.id);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
+      confirmLabel: 'Delete',
+      type: CustomAlertType.error,
+      icon: Icons.delete_forever_rounded,
+      onConfirm: () => _deleteEvent(event.id),
     );
   }
 
@@ -508,7 +498,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     final titleController = TextEditingController(text: event.title);
     final venueController = TextEditingController(text: event.venue);
     final addressController = TextEditingController(text: event.address);
-    final descriptionController = TextEditingController(text: event.description);
+    final descriptionController = TextEditingController(
+      text: event.description,
+    );
     final latController = TextEditingController(text: event.lat.toString());
     final lngController = TextEditingController(text: event.lng.toString());
 
@@ -535,8 +527,15 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     List<XFile> pickedFiles = [];
 
     final categories = [
-      'Cultural', 'Festival', 'Adventure', 'Spiritual', 'Exhibition',
-      'Workshop', 'Concert', 'Food Fair', 'Other'
+      'Cultural',
+      'Festival',
+      'Adventure',
+      'Spiritual',
+      'Exhibition',
+      'Workshop',
+      'Concert',
+      'Food Fair',
+      'Other',
     ];
 
     showModalBottomSheet(
@@ -558,14 +557,23 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
               children: [
                 // Header
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 20,
+                    horizontal: 24,
+                  ),
                   decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade100),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      AppText.heading("Edit Event", size: 20, fontWeight: FontWeight.w900),
+                      AppText.heading(
+                        "Edit Event",
+                        size: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
                       IconButton(
                         onPressed: () => Navigator.pop(ctx),
                         icon: const Icon(Icons.close_rounded),
@@ -579,7 +587,11 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        AppText.subHeading("MANAGE GALLERY", size: 12, color: Colors.grey),
+                        AppText.subHeading(
+                          "MANAGE GALLERY",
+                          size: 12,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 16),
                         SizedBox(
                           height: 150,
@@ -601,8 +613,15 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                           height: 150,
                                           width: 130,
                                           fit: BoxFit.cover,
-                                          placeholder: (_, __) => const ShimmerBox(),
-                                          errorWidget: (_, __, ___) => Container(color: Colors.grey.shade200, child: const Icon(Icons.broken_image)),
+                                          placeholder: (_, __) =>
+                                              const ShimmerBox(),
+                                          errorWidget: (_, __, ___) =>
+                                              Container(
+                                                color: Colors.grey.shade200,
+                                                child: const Icon(
+                                                  Icons.broken_image,
+                                                ),
+                                              ),
                                         ),
                                       ),
                                       Positioned(
@@ -610,16 +629,31 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                         right: 5,
                                         child: GestureDetector(
                                           onTap: () {
-                                            if (existingImages.length == 1 && pickedFiles.isEmpty) {
-                                              CustomToast.warning(context, "At least one image is required", title: "Wait!");
+                                            if (existingImages.length == 1 &&
+                                                pickedFiles.isEmpty) {
+                                              CustomToast.warning(
+                                                context,
+                                                "At least one image is required",
+                                                title: "Wait!",
+                                              );
                                               return;
                                             }
-                                            setSheetState(() => existingImages.removeAt(idx));
+                                            setSheetState(
+                                              () =>
+                                                  existingImages.removeAt(idx),
+                                            );
                                           },
                                           child: Container(
                                             padding: const EdgeInsets.all(4),
-                                            decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
-                                            child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.redAccent,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 14,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -646,11 +680,21 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                         top: 5,
                                         right: 5,
                                         child: GestureDetector(
-                                          onTap: () => setSheetState(() => pickedFiles.removeAt(entry.key)),
+                                          onTap: () => setSheetState(
+                                            () =>
+                                                pickedFiles.removeAt(entry.key),
+                                          ),
                                           child: Container(
                                             padding: const EdgeInsets.all(4),
-                                            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                            child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.black54,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 14,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -658,14 +702,21 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                   ),
                                 );
                               }),
-                              if (existingImages.length + pickedFiles.length < 3)
+                              if (existingImages.length + pickedFiles.length <
+                                  3)
                                 GestureDetector(
                                   onTap: () async {
-                                    final List<XFile> images = await _picker.pickMultiImage(imageQuality: 70);
+                                    final List<XFile> images = await _picker
+                                        .pickMultiImage(imageQuality: 70);
                                     if (images.isNotEmpty) {
                                       setSheetState(() {
-                                        int remaining = 3 - (existingImages.length + pickedFiles.length);
-                                        pickedFiles.addAll(images.take(remaining));
+                                        int remaining =
+                                            3 -
+                                            (existingImages.length +
+                                                pickedFiles.length);
+                                        pickedFiles.addAll(
+                                          images.take(remaining),
+                                        );
                                       });
                                     }
                                   },
@@ -674,14 +725,24 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                     decoration: BoxDecoration(
                                       color: onboardingBlueVeryLight,
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: primaryBlue.withOpacity(0.3)),
+                                      border: Border.all(
+                                        color: primaryBlue.withOpacity(0.3),
+                                      ),
                                     ),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.add_photo_alternate_rounded, color: primaryBlue.withOpacity(0.6), size: 32),
+                                        Icon(
+                                          Icons.add_photo_alternate_rounded,
+                                          color: primaryBlue.withOpacity(0.6),
+                                          size: 32,
+                                        ),
                                         const SizedBox(height: 8),
-                                        AppText.caption("Add Photo", color: primaryBlue),
+                                        AppText.caption(
+                                          "Add Photo",
+                                          color: primaryBlue,
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -690,51 +751,127 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        AppText.subHeading("EVENT INFO", size: 12, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        _buildSheetField("Event Title", titleController, Icons.title_rounded),
-                        _buildSheetDropdown("Category", selectedCategory, categories, (val) {
-                          if (val != null) setSheetState(() => selectedCategory = val);
-                        }),
-                        _buildSheetField("Description", descriptionController, Icons.notes_rounded, maxLines: 4),
-                        const SizedBox(height: 16),
-                        AppText.subHeading("LOCATION", size: 12, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        _buildSheetField("Venue Name", venueController, Icons.business_rounded),
-                        _buildSheetField("Address", addressController, Icons.location_on_rounded, maxLines: 2),
-                        Row(
-                          children: [
-                            Expanded(child: _buildSheetField("Latitude", latController, Icons.gps_fixed_rounded, isNumber: true)),
-                            const SizedBox(width: 12),
-                            Expanded(child: _buildSheetField("Longitude", lngController, Icons.gps_fixed_rounded, isNumber: true)),
-                          ],
+                        AppText.subHeading(
+                          "EVENT INFO",
+                          size: 12,
+                          color: Colors.grey,
                         ),
                         const SizedBox(height: 16),
-                        AppText.subHeading("SCHEDULE", size: 12, color: Colors.grey),
+                        _buildSheetField(
+                          "Event Title",
+                          titleController,
+                          Icons.title_rounded,
+                        ),
+                        _buildSheetDropdown(
+                          "Category",
+                          selectedCategory,
+                          categories,
+                          (val) {
+                            if (val != null)
+                              setSheetState(() => selectedCategory = val);
+                          },
+                        ),
+                        _buildSheetField(
+                          "Description",
+                          descriptionController,
+                          Icons.notes_rounded,
+                          maxLines: 4,
+                        ),
                         const SizedBox(height: 16),
-                        _buildSheetPickerSelector("Event Date", DateFormat('dd MMM, yyyy').format(selectedDate), Icons.calendar_today_rounded, () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: selectedDate,
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime.now().add(const Duration(days: 1000)),
-                          );
-                          if (picked != null) setSheetState(() => selectedDate = picked);
-                        }),
+                        AppText.subHeading(
+                          "LOCATION",
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSheetField(
+                          "Venue Name",
+                          venueController,
+                          Icons.business_rounded,
+                        ),
+                        _buildSheetField(
+                          "Address",
+                          addressController,
+                          Icons.location_on_rounded,
+                          maxLines: 2,
+                        ),
                         Row(
                           children: [
                             Expanded(
-                              child: _buildSheetPickerSelector("Start Time", _formatTimeOfDay(startTime), Icons.access_time_rounded, () async {
-                                final picked = await showTimePicker(context: context, initialTime: startTime);
-                                if (picked != null) setSheetState(() => startTime = picked);
-                              }),
+                              child: _buildSheetField(
+                                "Latitude",
+                                latController,
+                                Icons.gps_fixed_rounded,
+                                isNumber: true,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: _buildSheetPickerSelector("End Time", _formatTimeOfDay(endTime), Icons.access_time_rounded, () async {
-                                final picked = await showTimePicker(context: context, initialTime: endTime);
-                                if (picked != null) setSheetState(() => endTime = picked);
-                              }),
+                              child: _buildSheetField(
+                                "Longitude",
+                                lngController,
+                                Icons.gps_fixed_rounded,
+                                isNumber: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        AppText.subHeading(
+                          "SCHEDULE",
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSheetPickerSelector(
+                          "Event Date",
+                          DateFormat('dd MMM, yyyy').format(selectedDate),
+                          Icons.calendar_today_rounded,
+                          () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: selectedDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 1000),
+                              ),
+                            );
+                            if (picked != null)
+                              setSheetState(() => selectedDate = picked);
+                          },
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildSheetPickerSelector(
+                                "Start Time",
+                                _formatTimeOfDay(startTime),
+                                Icons.access_time_rounded,
+                                () async {
+                                  final picked = await showTimePicker(
+                                    context: context,
+                                    initialTime: startTime,
+                                  );
+                                  if (picked != null)
+                                    setSheetState(() => startTime = picked);
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildSheetPickerSelector(
+                                "End Time",
+                                _formatTimeOfDay(endTime),
+                                Icons.access_time_rounded,
+                                () async {
+                                  final picked = await showTimePicker(
+                                    context: context,
+                                    initialTime: endTime,
+                                  );
+                                  if (picked != null)
+                                    setSheetState(() => endTime = picked);
+                                },
+                              ),
                             ),
                           ],
                         ),
@@ -743,8 +880,13 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                           height: 55,
                           child: ElevatedButton(
                             onPressed: () async {
-                              if (existingImages.isEmpty && pickedFiles.isEmpty) {
-                                CustomToast.warning(context, "At least one image is required", title: "Wait!");
+                              if (existingImages.isEmpty &&
+                                  pickedFiles.isEmpty) {
+                                CustomToast.warning(
+                                  context,
+                                  "At least one image is required",
+                                  title: "Wait!",
+                                );
                                 return;
                               }
                               Navigator.pop(ctx);
@@ -752,7 +894,8 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                 event.id,
                                 {
                                   'title': titleController.text.trim(),
-                                  'description': descriptionController.text.trim(),
+                                  'description': descriptionController.text
+                                      .trim(),
                                   'venue': venueController.text.trim(),
                                   'address': addressController.text.trim(),
                                   'category': selectedCategory,
@@ -761,9 +904,13 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                   'endTime': _formatTimeOfDay(endTime),
                                   'geometry': {
                                     'location': {
-                                      'lat': double.tryParse(latController.text) ?? 0.0,
-                                      'lng': double.tryParse(lngController.text) ?? 0.0,
-                                    }
+                                      'lat':
+                                          double.tryParse(latController.text) ??
+                                          0.0,
+                                      'lng':
+                                          double.tryParse(lngController.text) ??
+                                          0.0,
+                                    },
                                   },
                                   'images': existingImages,
                                 },
@@ -773,10 +920,16 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primaryBlue,
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                               elevation: 0,
                             ),
-                            child: AppText.body("Update Event Info", color: Colors.white, fontWeight: FontWeight.bold),
+                            child: AppText.body(
+                              "Update Event Info",
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -792,13 +945,24 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     );
   }
 
-  Widget _buildSheetField(String label, TextEditingController controller, IconData icon, {int? maxLines = 1, bool isNumber = false}) {
+  Widget _buildSheetField(
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    int? maxLines = 1,
+    bool isNumber = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText.caption(label.toUpperCase(), size: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+          AppText.caption(
+            label.toUpperCase(),
+            size: 11,
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: controller,
@@ -808,8 +972,14 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
               prefixIcon: Icon(icon, color: primaryBlue, size: 18),
               filled: true,
               fillColor: onboardingBlueVeryLight.withOpacity(0.4),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
           ),
         ],
@@ -817,13 +987,23 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     );
   }
 
-  Widget _buildSheetDropdown(String label, String value, List<String> items, Function(String?) onChanged) {
+  Widget _buildSheetDropdown(
+    String label,
+    String value,
+    List<String> items,
+    Function(String?) onChanged,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText.caption(label.toUpperCase(), size: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+          AppText.caption(
+            label.toUpperCase(),
+            size: 11,
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+          ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -835,7 +1015,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
               child: DropdownButton<String>(
                 value: items.contains(value) ? value : items.first,
                 isExpanded: true,
-                items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                items: items
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
                 onChanged: onChanged,
               ),
             ),
@@ -845,13 +1027,23 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     );
   }
 
-  Widget _buildSheetPickerSelector(String label, String value, IconData icon, VoidCallback onTap) {
+  Widget _buildSheetPickerSelector(
+    String label,
+    String value,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppText.caption(label.toUpperCase(), size: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+          AppText.caption(
+            label.toUpperCase(),
+            size: 11,
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+          ),
           const SizedBox(height: 8),
           GestureDetector(
             onTap: onTap,
@@ -881,10 +1073,18 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     return DateFormat.jm().format(dt);
   }
 
-  Future<void> _handleUpdate(String id, Map<String, dynamic> body, List<File> images) async {
+  Future<void> _handleUpdate(
+    String id,
+    Map<String, dynamic> body,
+    List<File> images,
+  ) async {
     setState(() => _isLoading = true);
     try {
-      final success = await _eventsService.updateEvent(id, body, imageFiles: images);
+      final success = await _eventsService.updateEvent(
+        id,
+        body,
+        imageFiles: images,
+      );
       if (success && mounted) {
         CustomToast.success(context, "Event details updated successfully!");
         _fetchEvents();

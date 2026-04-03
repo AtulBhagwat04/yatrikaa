@@ -11,8 +11,10 @@ const {
   joinPackage,
   getMyBookings,
   cancelBooking,
+  confirmBooking,
   getPackageParticipants,
   getAllPackagesAdmin,
+  getGuideBookings,
 } = require('../controllers/packagesController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -23,7 +25,9 @@ router.get('/', getPackages);
 // ── Protected: Must be before /:id to avoid being swallowed ──────────────
 router.get('/my', protect, getMyPackages);                               // Guide: own packages
 router.get('/bookings/mine', protect, getMyBookings);                   // User: own bookings
-router.patch('/bookings/:id/cancel', protect, cancelBooking);           // User: cancel booking
+router.get('/bookings/organizer', protect, getGuideBookings);             // Guide: all bookings for their packages
+router.patch('/bookings/:id/cancel', protect, cancelBooking);           // User/Guide: cancel booking
+router.patch('/bookings/:id/confirm', protect, confirmBooking);          // Guide/Admin: confirm booking
 
 // ── Admin-only management ──────────────────────────────────────────────────
 router.get(

@@ -43,33 +43,41 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   void _setupListeners() {
     // 1. Connectivity listener
     _connectivitySubscription?.cancel();
-    
+
     // Initial check (with slight delay to ensure plugin is ready)
     Future.delayed(const Duration(milliseconds: 500), () async {
       final results = await Connectivity().checkConnectivity();
       await _handleConnectivityChange(results);
     });
 
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      results,
+    ) {
       _handleConnectivityChange(results);
     });
 
     // 2. Location Service status listener
     _serviceStatusSubscription?.cancel();
-    
+
     // Initial check for location
     Geolocator.isLocationServiceEnabled().then((enabled) {
       add(HomeLocationServiceStatusChanged(enabled));
     });
 
-    _serviceStatusSubscription = Geolocator.getServiceStatusStream().listen((status) {
+    _serviceStatusSubscription = Geolocator.getServiceStatusStream().listen((
+      status,
+    ) {
       add(HomeLocationServiceStatusChanged(status == ServiceStatus.enabled));
     });
   }
 
-  Future<void> _handleConnectivityChange(List<ConnectivityResult> results) async {
-    final hasInterface = results.isNotEmpty && !results.every((r) => r == ConnectivityResult.none);
-    
+  Future<void> _handleConnectivityChange(
+    List<ConnectivityResult> results,
+  ) async {
+    final hasInterface =
+        results.isNotEmpty &&
+        !results.every((r) => r == ConnectivityResult.none);
+
     if (!hasInterface) {
       add(const HomeConnectivityChanged(true));
       return;
@@ -82,32 +90,37 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<bool> _checkRealInternet() async {
     try {
-      final result = await InternetAddress.lookup('google.com').timeout(const Duration(seconds: 3));
+      final result = await InternetAddress.lookup(
+        'google.com',
+      ).timeout(const Duration(seconds: 3));
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } catch (_) {
       return false;
     }
   }
 
-  void _onConnectivityChanged(HomeConnectivityChanged event, Emitter<HomeState> emit) async {
+  void _onConnectivityChanged(
+    HomeConnectivityChanged event,
+    Emitter<HomeState> emit,
+  ) async {
     debugPrint('Connectivity Changed: isOffline = ${event.isOffline}');
-    
+
     // Only update and fetch if the status actually changed
     if (state.isOffline == event.isOffline) return;
 
     emit(state.copyWith(isOffline: event.isOffline));
-    
+
     if (!event.isOffline) {
       // If we just came online, trigger a fresh load
       // We await these so that the 'emit' object remains valid throughout the async calls
-      await Future.wait([
-        _fetchPopularPlaces(emit),
-        _fetchPopularEvents(emit),
-      ]);
+      await Future.wait([_fetchPopularPlaces(emit), _fetchPopularEvents(emit)]);
     }
   }
 
-  void _onLocationServiceStatusChanged(HomeLocationServiceStatusChanged event, Emitter<HomeState> emit) {
+  void _onLocationServiceStatusChanged(
+    HomeLocationServiceStatusChanged event,
+    Emitter<HomeState> emit,
+  ) {
     emit(state.copyWith(isLocationEnabled: event.isEnabled));
     if (event.isEnabled) {
       add(HomeLocationRefreshRequested());
@@ -122,25 +135,29 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     try {
       final cachedData = await AppCache.getCachedHomeData();
-      
+
       if (isClosed) return;
 
-      final recommended = List<PlaceModel>.from(cachedData['recommended'] ?? []);
+      final recommended = List<PlaceModel>.from(
+        cachedData['recommended'] ?? [],
+      );
       final nearby = List<PlaceModel>.from(cachedData['nearby'] ?? []);
       final events = List<EventModel>.from(cachedData['events'] ?? []);
       final location = cachedData['location'] as String?;
 
       if (recommended.isNotEmpty || nearby.isNotEmpty || events.isNotEmpty) {
-        emit(state.copyWith(
-          recommendedPlaces: recommended,
-          nearbyPlaces: nearby,
-          popularEvents: events,
-          currentLocation: location ?? state.currentLocation,
-          isLoadingRecommended: false,
-          isLoadingNearby: false,
-          isLoadingEvents: false,
-          isLoadingLocation: location == null,
-        ));
+        emit(
+          state.copyWith(
+            recommendedPlaces: recommended,
+            nearbyPlaces: nearby,
+            popularEvents: events,
+            currentLocation: location ?? state.currentLocation,
+            isLoadingRecommended: false,
+            isLoadingNearby: false,
+            isLoadingEvents: false,
+            isLoadingLocation: location == null,
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error loading home cache: $e');
@@ -211,8 +228,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             : (ApiConstants.categoryQueries[event.category] ??
                   "${event.category} in Maharashtra");
 
-        final googlePlaces = await _placesService.searchPlaces(searchQuery, null, null);
-        
+        final googlePlaces = await _placesService.searchPlaces(
+          searchQuery,
+          null,
+          null,
+        );
+
         final existingIds = places.map((p) => p.id).toSet();
         for (var p in googlePlaces) {
           if (!existingIds.contains(p.id)) {
@@ -268,7 +289,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         );
         return false;
       }
-      
+
       emit(state.copyWith(isLocationEnabled: true));
       return true;
     } catch (e) {
@@ -284,9 +305,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-        emit(state.copyWith(isLoadingLocation: false, currentLocation: "Permission Denied"));
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        emit(
+          state.copyWith(
+            isLoadingLocation: false,
+            currentLocation: "Permission Denied",
+          ),
+        );
         return;
       }
 
@@ -399,8 +426,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             : (ApiConstants.categoryQueries[state.selectedCategory] ??
                   "${state.selectedCategory} in Maharashtra");
 
-        final googlePlaces = await _placesService.searchPlaces(searchQuery, null, null);
-        
+        final googlePlaces = await _placesService.searchPlaces(
+          searchQuery,
+          null,
+          null,
+        );
+
         final existingIds = places.map((p) => p.id).toSet();
         for (var p in googlePlaces) {
           if (!existingIds.contains(p.id)) {
@@ -446,9 +477,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       }
     } catch (e) {
       if (!isClosed) {
-        emit(
-          state.copyWith(isLoadingNearby: false),
-        );
+        emit(state.copyWith(isLoadingNearby: false));
       }
     }
   }
@@ -472,11 +501,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       return;
     }
 
-    emit(state.copyWith(
-      isSearching: true,
-      searchQuery: event.query,
-      isLoadingSearch: true,
-    ));
+    emit(
+      state.copyWith(
+        isSearching: true,
+        searchQuery: event.query,
+        isLoadingSearch: true,
+      ),
+    );
 
     try {
       final results = await _placesService.searchPlaces(
@@ -486,28 +517,26 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       );
 
       if (!isClosed) {
-        emit(state.copyWith(
-          searchResults: results,
-          isLoadingSearch: false,
-        ));
+        emit(state.copyWith(searchResults: results, isLoadingSearch: false));
       }
     } catch (e) {
       if (!isClosed) {
-        emit(state.copyWith(
-          isLoadingSearch: false,
-          errorMessage: e.toString(),
-        ));
+        emit(
+          state.copyWith(isLoadingSearch: false, errorMessage: e.toString()),
+        );
       }
     }
   }
 
   void _onSearchCleared(HomeSearchCleared event, Emitter<HomeState> emit) {
-    emit(state.copyWith(
-      isSearching: false,
-      searchQuery: "",
-      searchResults: const [],
-      isLoadingSearch: false,
-    ));
+    emit(
+      state.copyWith(
+        isSearching: false,
+        searchQuery: "",
+        searchResults: const [],
+        isLoadingSearch: false,
+      ),
+    );
   }
 
   @override

@@ -58,7 +58,8 @@ class AppStrings {
   static const String navNearby = "Explore";
   static const String navCommunity = "Community";
   static const String navPackages = "Packages";
-  static const String navSaved = "Favorites";   // kept for FavoritesScreen internal use
+  static const String navSaved =
+      "Favorites"; // kept for FavoritesScreen internal use
   static const String navProfile = "Profile";
 
   // ================= ONBOARDING =================
@@ -151,8 +152,8 @@ class AppStrings {
   static const String pdOpenNowAlt = "Open now";
 
   // ================= COMMUNITY =================
-  static const String commJourneys = "Journeys";
-  static const String commSubtitle = "Community stories & tips";
+  static const String commJourneys = "Community";
+  static const String commSubtitle = "Share Your Experiences";
   static const String commNoJourneys = "No journeys shared yet.";
   static const String commShare = "Share";
   static const String commJustNow = "just now";
@@ -218,14 +219,29 @@ class AppStrings {
   static const String apSuccessMsg = "Place added successfully!";
   static const String apFillFieldsError = "Please fill all required fields";
 
+  // ================= PACKAGES =================
+  static const String packTitle = "Travel Packages";
+  static const String packSubtitle = "Curated trips across Maharashtra";
+
+  // ================= EXPLORE =================
+  static const String expTitle = "Explore";
+  static const String expSubtitle = "Discover Hidden Gems";
+
   // ================= FRIENDLY ERRORS =================
-  static const String errNoInternet = "No internet connection. Please check your data or Wi-Fi.";
+  static const String errNoInternet =
+      "No internet connection. Please check your data or Wi-Fi.";
   static const String errTimeout = "Request timed out. Please try again.";
-  static const String errServer = "Server is temporarily unavailable. We're working on it!";
-  static const String errUnauthorized = "Session expired. Please log in again to continue.";
+  static const String errServer =
+      "Server is temporarily unavailable. We're working on it!";
+  static const String errUnauthorized =
+      "Session expired. Please log in again to continue.";
   static const String errNotFound = "The requested info could not be found.";
-  static const String errUnexpected = "Something went wrong. Please try again later.";
-  static const String errLocationDenied = "Location permission is required to use this feature.";
-  static const String errInvalidData = "Some information seems incorrect. Please review and try again.";
-  static const String errImageUpload = "Failed to upload image. Please check your internet or try another image.";
+  static const String errUnexpected =
+      "Something went wrong. Please try again later.";
+  static const String errLocationDenied =
+      "Location permission is required to use this feature.";
+  static const String errInvalidData =
+      "Some information seems incorrect. Please review and try again.";
+  static const String errImageUpload =
+      "Failed to upload image. Please check your internet or try another image.";
 }

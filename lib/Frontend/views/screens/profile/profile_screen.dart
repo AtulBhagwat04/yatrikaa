@@ -9,6 +9,9 @@ import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
 import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
 import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
+import 'package:bhatkanti_app/Frontend/core/services/packages_service.dart';
+import 'package:bhatkanti_app/Frontend/views/widgets/custom_alert_dialog.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 // ─── Role configuration model ───────────────────────────────────
 class _RoleConfig {
@@ -172,7 +175,11 @@ class ProfileScreen extends StatelessWidget {
                 ),
 
                 // ── Role-based sections ───────────────────
-                ..._roleSections(authState.role, context),
+                ..._roleSections(
+                  authState.role,
+                  authState.guideRequestStatus,
+                  context,
+                ),
 
                 const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
@@ -224,9 +231,48 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  List<SliverToBoxAdapter> _roleSections(String role, BuildContext context) {
+  List<SliverToBoxAdapter> _roleSections(
+    String role,
+    String guideStatus,
+    BuildContext context,
+  ) {
     final r = role.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
     List<SliverToBoxAdapter> out = [];
+
+    // Traveler level - Request to be a Guide
+    if (r == 'user') {
+      out.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
+
+      String label = 'Join as Guide';
+      IconData icon = Icons.person_add_alt_1_rounded;
+      Color color = guideColor;
+      VoidCallback? onTap = () => _showGuideRequestDialog(context);
+
+      if (guideStatus == 'Pending') {
+        label = 'Guide Request Pending';
+        icon = Icons.hourglass_top_rounded;
+        color = appGrey;
+        onTap = null;
+      } else if (guideStatus == 'Rejected') {
+        label = 'Re-apply for Guide';
+      }
+
+      out.add(
+        SliverToBoxAdapter(
+          child: _SectionGroup(
+            heading: 'Opportunity',
+            items: [
+              _SectionItem(
+                icon: icon,
+                label: label,
+                color: color,
+                onTap: onTap,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     if (r == 'guide' || r == 'admin' || r == 'superadmin') {
       out.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
@@ -236,13 +282,6 @@ class ProfileScreen extends StatelessWidget {
             heading: 'Guide Panel',
             items: [
               _SectionItem(
-                icon: Icons.dashboard_outlined,
-                label: 'Guide Dashboard',
-                color: guidePanelColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.guideDashboard),
-              ),
-              _SectionItem(
                 icon: Icons.tour_rounded,
                 label: 'Manage Tours',
                 color: guidePanelColor,
@@ -250,8 +289,8 @@ class ProfileScreen extends StatelessWidget {
                     Navigator.pushNamed(context, RouteNames.manageTours),
               ),
               _SectionItem(
-                icon: Icons.calendar_today_outlined,
-                label: 'Booking Requests',
+                icon: Icons.assignment_turned_in_outlined,
+                label: 'Bookings',
                 color: guidePanelColor,
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.bookingRequests),
@@ -297,74 +336,64 @@ class ProfileScreen extends StatelessWidget {
                 onTap: () =>
                     Navigator.pushNamed(context, RouteNames.reviewModeration),
               ),
+              _SectionItem(
+                icon: Icons.checklist_rtl_rounded,
+                label: 'Global Approval Queue',
+                color: adminColor,
+                onTap: () =>
+                    Navigator.pushNamed(context, RouteNames.adminApprovalQueue),
+              ),
             ],
           ),
         ),
       );
     }
 
-
-
     return out;
   }
 
   void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: errorColorLight,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.logout_rounded,
-                color: errorColor,
-                size: 18,
-              ),
+    CustomAlertDialog.show(
+      context,
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out of Bhatkanti?',
+      confirmLabel: 'Sign Out',
+      cancelLabel: 'Cancel',
+      type: CustomAlertType.error,
+      icon: Icons.logout_rounded,
+      onConfirm: () {
+        context.read<AuthBloc>().add(LoggedOut());
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          RouteNames.login,
+          (_) => false,
+        );
+      },
+    );
+  }
+
+  void _showGuideRequestDialog(BuildContext context) {
+    CustomAlertDialog.show(
+      context,
+      title: 'Become a Guide',
+      message:
+          'Our admin will review your profile and approve you within 24-48 hours.',
+      confirmLabel: 'Send Request',
+      cancelLabel: 'Later',
+      type: CustomAlertType.info,
+      icon: Icons.person_add_rounded,
+      onConfirm: () async {
+        final success = await PackagesService().requestGuideRole();
+        if (success && context.mounted) {
+          context.read<AuthBloc>().add(AppStarted());
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Guide request sent successfully!'),
+              backgroundColor: successColorDark,
             ),
-            const SizedBox(width: 10),
-            AppText.body('Sign Out', fontWeight: FontWeight.w700),
-          ],
-        ),
-        content: AppText.caption(
-          'Are you sure you want to sign out of Bhatkanti?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: AppText.caption(
-              'Cancel',
-              fontWeight: FontWeight.w600,
-              color: appGrey,
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<AuthBloc>().add(LoggedOut());
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                RouteNames.login,
-                (_) => false,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: errorColor,
-              foregroundColor: appWhite,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 0,
-            ),
-            child: AppText.button('Sign Out'),
-          ),
-        ],
-      ),
+          );
+        }
+      },
     );
   }
 }
@@ -421,12 +450,36 @@ class _ProfileCard extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 30,
                     backgroundColor: appWhite.withAlpha(51),
-                    child: AppText.heading(
-                      firstChar,
-                      color: appWhite,
-                      size: 24,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    child:
+                        state.profilePicture != null &&
+                            state.profilePicture!.isNotEmpty
+                        ? ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: state.profilePicture!,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: appWhite,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  AppText.heading(
+                                    firstChar,
+                                    color: appWhite,
+                                    size: 24,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          )
+                        : AppText.heading(
+                            firstChar,
+                            color: appWhite,
+                            size: 24,
+                            fontWeight: FontWeight.w800,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -547,11 +600,7 @@ class _StatCell extends StatelessWidget {
                 color: color,
                 size: 16,
               ),
-              AppText.small(
-                label,
-                color: appGrey,
-                fontWeight: FontWeight.w500,
-              ),
+              AppText.small(label, color: appGrey, fontWeight: FontWeight.w500),
             ],
           ),
         ),
@@ -624,13 +673,13 @@ class _SectionItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _SectionItem({
     required this.icon,
     required this.label,
     required this.color,
-    required this.onTap,
+    this.onTap,
   });
 
   @override
@@ -638,10 +687,12 @@ class _SectionItem extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
+        onTap: onTap != null
+            ? () {
+                HapticFeedback.selectionClick();
+                onTap!();
+              }
+            : null,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
@@ -664,11 +715,7 @@ class _SectionItem extends StatelessWidget {
                   size: 14,
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: appGreyLight,
-              ),
+              Icon(Icons.chevron_right_rounded, size: 18, color: appGreyLight),
             ],
           ),
         ),

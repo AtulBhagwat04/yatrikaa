@@ -102,10 +102,8 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
                       width: double.infinity,
                       height: 350,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: appGreyVeryLight,
-                        height: 350,
-                      ),
+                      placeholder: (context, url) =>
+                          Container(color: appGreyVeryLight, height: 350),
                       errorWidget: (context, url, error) => Container(
                         color: appGreyVeryLight,
                         height: 350,
@@ -119,7 +117,9 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
                             ),
                             const SizedBox(height: 12),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 30),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 30,
+                              ),
                               child: Text(
                                 "Image not available",
                                 textAlign: TextAlign.center,

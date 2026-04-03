@@ -47,11 +47,7 @@ class CategoryChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected ? appWhite : appGrey,
-            ),
+            Icon(icon, size: 20, color: isSelected ? appWhite : appGrey),
             const SizedBox(width: 8),
             AppText.caption(
               label,

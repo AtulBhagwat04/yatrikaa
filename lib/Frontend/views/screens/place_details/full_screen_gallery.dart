@@ -87,11 +87,7 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                   top: MediaQuery.of(context).padding.top + 10,
                   left: 16,
                   child: IconButton(
-                    icon: const Icon(
-                      Icons.close,
-                      color: appWhite,
-                      size: 28,
-                    ),
+                    icon: const Icon(Icons.close, color: appWhite, size: 28),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -266,14 +262,23 @@ class _FullScreenGalleryState extends State<FullScreenGallery> {
                         Builder(
                           builder: (context) {
                             bool isOpen = PlaceUtils.checkIfOpenNow(
-                                widget.place.timings, widget.place.isOpen);
+                              widget.place.timings,
+                              widget.place.isOpen,
+                            );
                             return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: isOpen ? successColor.withAlpha(20) : errorColor.withAlpha(20),
+                                color: isOpen
+                                    ? successColor.withAlpha(20)
+                                    : errorColor.withAlpha(20),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: isOpen ? successColor.withAlpha(60) : errorColor.withAlpha(60),
+                                  color: isOpen
+                                      ? successColor.withAlpha(60)
+                                      : errorColor.withAlpha(60),
                                   width: 1,
                                 ),
                               ),

@@ -5,6 +5,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
 import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
 import 'package:bhatkanti_app/Frontend/core/models/booking_model.dart';
+import 'package:bhatkanti_app/Frontend/core/models/guide_request_model.dart';
 import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
 
 import 'package:bhatkanti_app/Frontend/core/utils/app_cache.dart';
@@ -28,8 +29,10 @@ class PackagesService {
     String? search,
   }) async {
     try {
-      final url =
-          ApiConstants.getPackagesUrl(category: category, search: search);
+      final url = ApiConstants.getPackagesUrl(
+        category: category,
+        search: search,
+      );
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -50,9 +53,7 @@ class PackagesService {
       if (category == null && search == null) {
         final cachedData = await AppCache.getRawData(AppCache.keyPackages);
         if (cachedData.isNotEmpty) {
-          return cachedData
-              .map((j) => TravelPackageModel.fromJson(j))
-              .toList();
+          return cachedData.map((j) => TravelPackageModel.fromJson(j)).toList();
         }
       }
 
@@ -120,11 +121,13 @@ class PackagesService {
 
       for (final file in imageFiles) {
         final ext = file.path.split('.').last.toLowerCase();
-        request.files.add(await http.MultipartFile.fromPath(
-          'images',
-          file.path,
-          contentType: MediaType('image', ext == 'png' ? 'png' : 'jpeg'),
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'images',
+            file.path,
+            contentType: MediaType('image', ext == 'png' ? 'png' : 'jpeg'),
+          ),
+        );
       }
 
       final streamed = await request.send();
@@ -135,6 +138,69 @@ class PackagesService {
       throw Exception(data['error'] ?? 'Failed to create package');
     } catch (e) {
       print('PackagesService.createPackage: $e');
+      rethrow;
+    }
+  }
+
+  /// Update an existing travel package.
+  Future<bool> updatePackage(
+    String id,
+    Map<String, dynamic> body, {
+    List<File> imageFiles = const [],
+  }) async {
+    try {
+      final token = await _authService.getToken();
+      final uri = Uri.parse('${ApiConstants.baseUrl}/packages/$id');
+      final request = http.MultipartRequest('PATCH', uri);
+
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
+      // Encode nested objects as JSON strings
+      body.forEach((key, value) {
+        if (value is Map || value is List) {
+          request.fields[key] = json.encode(value);
+        } else {
+          request.fields[key] = value.toString();
+        }
+      });
+
+      for (final file in imageFiles) {
+        final ext = file.path.split('.').last.toLowerCase();
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'images',
+            file.path,
+            contentType: MediaType('image', ext == 'png' ? 'png' : 'jpeg'),
+          ),
+        );
+      }
+
+      final streamed = await request.send();
+      if (streamed.statusCode == 200) return true;
+
+      final res = await http.Response.fromStream(streamed);
+      final data = json.decode(res.body);
+      throw Exception(data['error'] ?? 'Failed to update package');
+    } catch (e) {
+      print('PackagesService.updatePackage: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> deletePackage(String id) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.delete(
+        Uri.parse('${ApiConstants.baseUrl}/packages/$id'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) return true;
+      final data = json.decode(response.body);
+      throw Exception(data['error'] ?? 'Failed to delete package');
+    } catch (e) {
+      print('PackagesService.deletePackage: $e');
       rethrow;
     }
   }
@@ -192,16 +258,180 @@ class PackagesService {
     }
   }
 
-  Future<bool> cancelBooking(String bookingId) async {
+  Future<String> cancelBooking(String bookingId) async {
     try {
       final headers = await _authHeaders();
       final response = await http.patch(
         Uri.parse(ApiConstants.getCancelBookingUrl(bookingId)),
         headers: headers,
+        body: json.encode({}),
+      );
+
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return data['message'] ?? 'Cancellation processed';
+      }
+      throw Exception(data['error'] ?? 'Failed to cancel booking');
+    } catch (e) {
+      print('PackagesService.cancelBooking: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<BookingModel>> getPackageParticipants(String packageId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse(ApiConstants.getPackageParticipantsUrl(packageId)),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        return results.map((j) => BookingModel.fromJson(j)).toList();
+      }
+      throw Exception('Failed to fetch participants');
+    } catch (e) {
+      print('PackagesService.getPackageParticipants: $e');
+      return [];
+    }
+  }
+
+  Future<List<BookingModel>> getGuideAllBookings() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse(ApiConstants.getGuideAllBookingsUrl()),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        return results.map((j) => BookingModel.fromJson(j)).toList();
+      }
+      throw Exception('Failed to fetch all guide bookings');
+    } catch (e) {
+      print('PackagesService.getGuideAllBookings: $e');
+      return [];
+    }
+  }
+
+  Future<bool> handleBooking(String bookingId, String action) async {
+    try {
+      final headers = await _authHeaders();
+      final url = action == 'Confirmed'
+          ? ApiConstants.getConfirmBookingUrl(bookingId)
+          : ApiConstants.getCancelBookingUrl(bookingId);
+      final response = await http.patch(
+        Uri.parse(url),
+        headers: headers,
+        body: json.encode({}), // Some servers require a body for PATCH
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) return true;
+
+      String errorMsg =
+          'Failed to update booking status (${response.statusCode})';
+      try {
+        final data = json.decode(response.body);
+        errorMsg = data['error'] ?? errorMsg;
+      } catch (_) {
+        errorMsg = response.reasonPhrase ?? errorMsg;
+      }
+      throw Exception(errorMsg);
+    } catch (e) {
+      print('PackagesService.handleBooking: $e');
+      rethrow;
+    }
+  }
+
+  /// Admin only: Approve and publish a draft package.
+  Future<bool> publishPackage(String id) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.patch(
+        Uri.parse(ApiConstants.getPublishPackageUrl(id)),
+        headers: headers,
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('PackagesService.cancelBooking: $e');
+      print('PackagesService.publishPackage: $e');
+      return false;
+    }
+  }
+
+  /// Admin only: Fetch all packages regardless of status.
+  Future<List<TravelPackageModel>> getAdminPackages({String? status}) async {
+    try {
+      final headers = await _authHeaders();
+      String url = ApiConstants.getAdminAllPackagesUrl();
+      if (status != null) url += '?status=$status';
+
+      final response = await http.get(Uri.parse(url), headers: headers);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        return results.map((j) => TravelPackageModel.fromJson(j)).toList();
+      }
+      throw Exception(
+        'Failed to fetch admin packages (${response.statusCode})',
+      );
+    } catch (e) {
+      print('PackagesService.getAdminPackages Error: $e');
+      rethrow;
+    }
+  }
+
+  // ── Admin: Guide Requests ──────────────────────────────────────────────────
+
+  Future<List<GuideRequestModel>> getGuideRequests() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse(ApiConstants.getGuideRequestsUrl()),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        print('PackagesService.getGuideRequests Response: ${response.body}');
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        return results.map((j) => GuideRequestModel.fromJson(j)).toList();
+      }
+      throw Exception(
+        'Failed to fetch guide requests (${response.statusCode})',
+      );
+    } catch (e) {
+      print('PackagesService.getGuideRequests Error: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> handleGuideRequest(String userId, String action) async {
+    try {
+      final headers = await _authHeaders();
+      final body = {'userId': userId, 'action': action};
+      final response = await http.post(
+        Uri.parse(ApiConstants.getHandleGuideRequestUrl()),
+        headers: headers,
+        body: json.encode(body),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('PackagesService.handleGuideRequest: $e');
+      return false;
+    }
+  }
+
+  Future<bool> requestGuideRole() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.post(
+        Uri.parse(ApiConstants.getRequestGuideRoleUrl()),
+        headers: headers,
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('PackagesService.requestGuideRole: $e');
       return false;
     }
   }

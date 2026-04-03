@@ -18,23 +18,27 @@ import 'package:bhatkanti_app/Frontend/views/screens/profile/reviews_screen.dart
 import 'package:bhatkanti_app/Frontend/views/screens/profile/manage_places_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/review_moderation_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/user_management_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/guide_dashboard_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/generic_management_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/add_place_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/my_posts_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/splash/splash_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/admin/add_event_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/admin/admin_approval_queue_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/events/event_details_screen.dart';
 import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/profile/manage_events_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_bloc.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/place_details/place_details_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/home/featured_destinations_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/home/popular_events_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/travel/packages_discovery_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/travel/package_details_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/travel/create_package_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/travel/my_packages_screen.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/travel/user_bookings_screen.dart';
+import 'package:bhatkanti_app/Frontend/views/screens/travel/booking_requests_screen.dart';
+import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
 import 'package:bhatkanti_app/Frontend/views/screens/search/search_screen.dart';
 
 class AppRoutes {
@@ -59,6 +63,12 @@ class AppRoutes {
 
       case RouteNames.search:
         return _fadeRoute(const SearchScreen());
+
+      case RouteNames.featuredDestinations:
+        return _fadeRoute(const FeaturedDestinationsScreen());
+
+      case RouteNames.popularEvents:
+        return _fadeRoute(const PopularEventsScreen());
 
       case RouteNames.placeDetails:
         final placeId = settings.arguments as String?;
@@ -108,10 +118,24 @@ class AppRoutes {
         return _fadeRoute(const PackagesDiscoveryScreen());
 
       case RouteNames.packageDetails:
-        final packageId = settings.arguments as String?;
-        return _fadeRoute(PackageDetailsScreen(packageId: packageId ?? ''));
+        final args = settings.arguments;
+        if (args is Map<String, dynamic>) {
+          return _fadeRoute(
+            PackageDetailsScreen(
+              packageId: args['id'] ?? '',
+              heroTag: args['heroTag'],
+            ),
+          );
+        }
+        return _fadeRoute(
+          PackageDetailsScreen(packageId: (args as String?) ?? ''),
+        );
 
       case RouteNames.createPackage:
+        final args = settings.arguments;
+        if (args is TravelPackageModel) {
+          return _fadeRoute(CreatePackageScreen(package: args));
+        }
         return _fadeRoute(const CreatePackageScreen());
 
       case RouteNames.myPackages:
@@ -126,21 +150,11 @@ class AppRoutes {
         return _fadeRoute(const MyPostsScreen());
 
       // Guide Panel
-      case RouteNames.guideDashboard:
-        return _fadeRoute(const GuideDashboardScreen());
       case RouteNames.manageTours:
         return _fadeRoute(const MyPackagesScreen());
       case RouteNames.bookingRequests:
-        return _fadeRoute(
-          const GenericManagementScreen(
-            title: 'Booking Requests',
-            emptyTitle: 'No Pending Bookings',
-            emptySubtitle:
-                'Your traveler requests will appear here once they start booking your experiences.',
-            icon: Icons.calendar_today_outlined,
-            themeColor: Color(0xFFEA580C),
-          ),
-        );
+        final packageId = settings.arguments as String?;
+        return _fadeRoute(BookingRequestsScreen(packageId: packageId));
 
       // Admin Tools
       case RouteNames.managePlaces:
@@ -153,6 +167,8 @@ class AppRoutes {
         return _fadeRoute(const ManageEventsScreen());
       case RouteNames.addEvent:
         return _fadeRoute(const AddEventScreen());
+      case RouteNames.adminApprovalQueue:
+        return _fadeRoute(const AdminApprovalQueueScreen());
 
       // Admin Management
       case RouteNames.userManagement:

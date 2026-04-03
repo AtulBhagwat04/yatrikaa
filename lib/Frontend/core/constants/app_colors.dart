@@ -35,8 +35,12 @@ const Color ratingColorLight = Color(0xFFFFF9C4); // Colors.yellow[100]
 const Color ratingColorDark = Color(0xFFE65100); // Colors.orange[900]
 const Color shadowColor = Color(0x0A000000); // black with 0.04 opacity
 const Color shadowColorLight = Color(0x08000000); // black with 0.03 opacity
-const Color shadowColorDark = Color(0x33000000); // black with 0.2 opacity (alpha 50 approx)
-const Color overlayColor = Color(0x96000000); // black with 0.6 opacity (alpha 150 approx)
+const Color shadowColorDark = Color(
+  0x33000000,
+); // black with 0.2 opacity (alpha 50 approx)
+const Color overlayColor = Color(
+  0x96000000,
+); // black with 0.6 opacity (alpha 150 approx)
 // --- Semantic Colors ---
 const Color adminColor = Color(0xFFDC2626);
 const Color guideColor = Color(0xFF059669);

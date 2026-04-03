@@ -42,8 +42,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     HapticFeedback.mediumImpact();
     setState(() {
-      _notifications =
-          _notifications.map((n) => n.copyWith(isRead: true)).toList();
+      _notifications = _notifications
+          .map((n) => n.copyWith(isRead: true))
+          .toList();
     });
     _notificationService.markAllAsRead();
   }
@@ -67,7 +68,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
-      appBar: AppBar(automaticallyImplyLeading: false, 
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         title: AppText.subHeading(
@@ -91,8 +93,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: primaryBlue))
           : _notifications.isEmpty
-              ? _buildEmptyState()
-              : _buildNotificationList(),
+          ? _buildEmptyState()
+          : _buildNotificationList(),
     );
   }
 
@@ -158,7 +160,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       margin: const EdgeInsets.only(bottom: 2),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -168,7 +170,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -342,11 +344,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               // ── Bold Full-Width Banner Header ──
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 32, 20, 28),
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
                 decoration: BoxDecoration(
                   color: notification.color.withOpacity(0.12),
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(28),
+                    top: Radius.circular(14),
                   ),
                   border: Border(
                     bottom: BorderSide(
@@ -385,7 +387,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 8),
                     Text(
                       notification.title,
                       textAlign: TextAlign.center,
@@ -397,7 +399,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -429,12 +431,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
               // ── Message Content Area (Below Header) ──
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
                 child: Column(
                   children: [
                     Text(
                       notification.message,
-                      textAlign: TextAlign.justify,
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.montserrat(
                         fontSize: 15,
                         color: Colors.grey.shade700,
@@ -442,7 +444,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 8),
                     // DateTime Details in a clean row
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -574,4 +576,3 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 }
-

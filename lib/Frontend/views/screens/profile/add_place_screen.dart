@@ -133,9 +133,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
 
     setState(() => _isPickerActive = true);
     try {
-      final pickedFiles = await _picker.pickMultiImage(
-        imageQuality: 70,
-      );
+      final pickedFiles = await _picker.pickMultiImage(imageQuality: 70);
       if (pickedFiles.isNotEmpty) {
         setState(() {
           _imageFiles.addAll(pickedFiles);
@@ -325,7 +323,8 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         physics: const BouncingScrollPhysics(),
         slivers: [
           // --- HEADER ---
-          SliverAppBar(automaticallyImplyLeading: false, 
+          SliverAppBar(
+            automaticallyImplyLeading: false,
             floating: true,
             pinned: true,
             backgroundColor: onboardingBlueVeryLight,
@@ -668,7 +667,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                                   flex: 4,
                                   child: TextFormField(
                                     controller: _customFacilityController,
-                                     style: GoogleFonts.montserrat(fontSize: 13),
+                                    style: GoogleFonts.montserrat(fontSize: 13),
                                     decoration: InputDecoration(
                                       hintText: "Add facility",
                                       fillColor: onboardingBlueVeryLight
@@ -803,8 +802,10 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                     color: primaryBlue.withOpacity(0.5),
                   ),
                   const SizedBox(height: 8),
-                  AppText.small("Click to select multiple images",
-                      color: primaryBlue),
+                  AppText.small(
+                    "Click to select multiple images",
+                    color: primaryBlue,
+                  ),
                 ],
               ),
             )

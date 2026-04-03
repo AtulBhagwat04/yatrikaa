@@ -1,6 +1,7 @@
 const TravelPackage = require('../models/TravelPackage');
 const Booking = require('../models/Booking');
 const { uploadImage } = require('../services/cloudinaryService');
+const User = require('../models/User');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -125,6 +126,9 @@ const createPackage = async (req, res, next) => {
     // Populate organizer for response
     await pkg.populate('organizer', 'name profileImage role');
 
+    // Increment organizer's packagesCount
+    await User.findByIdAndUpdate(req.user._id, { $inc: { packagesCount: 1 } });
+
     console.log(`[packages] Created: "${pkg.title}" by ${req.user.name} (${status})`);
     res.status(201).json({ success: true, result: pkg });
   } catch (err) {
@@ -149,6 +153,11 @@ const updatePackage = async (req, res, next) => {
     }
 
     const body = _parsePackageBody(req.body);
+
+    // Security: Only admins can change status (e.g. Publish/Draft)
+    if (!isAdmin) {
+      delete body.status;
+    }
 
     // Upload any new images and merge with existing
     const newImageUrls = await _uploadImages(req.files, body.title || pkg.title);
@@ -201,6 +210,11 @@ const deletePackage = async (req, res, next) => {
       { status: 'Cancelled' }
     );
 
+    // Decrement organizer's packagesCount
+    if (pkg.organizer) {
+      await User.findByIdAndUpdate(pkg.organizer, { $inc: { packagesCount: -1 } });
+    }
+
     res.status(200).json({ success: true, message: 'Package deleted successfully' });
   } catch (err) {
     next(err);
@@ -250,15 +264,7 @@ const joinPackage = async (req, res, next) => {
       });
     }
 
-    // Prevent double booking
-    const existing = await Booking.findOne({
-      package: pkg._id,
-      user: req.user._id,
-      status: { $in: ['Pending', 'Confirmed'] },
-    });
-    if (existing) {
-      return res.status(400).json({ success: false, error: 'You have already joined this package' });
-    }
+    // Double booking prevention removed to allow multiple group bookings by same user
 
     const booking = await Booking.create({
       package: pkg._id,
@@ -303,31 +309,112 @@ const getMyBookings = async (req, res, next) => {
   }
 };
 
-// @desc  Cancel a booking
+// @desc  Cancel or Reject a booking
 // @route PATCH /api/packages/bookings/:id/cancel
-// @access Private
+// @access Private (User who booked, Organiser, or Admin)
 const cancelBooking = async (req, res, next) => {
   try {
-    const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id).populate('package');
     if (!booking) return res.status(404).json({ success: false, error: 'Booking not found' });
 
-    if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, error: 'Not authorised' });
+    const pkg = booking.package;
+    if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
+
+    const isUser = booking.user && booking.user.toString() === req.user._id.toString();
+    const isPackageOwner = pkg.organizer && pkg.organizer.toString() === req.user._id.toString();
+    const userRole = req.user.role ? req.user.role.toLowerCase().trim() : 'user';
+    const isAdmin = userRole === 'admin';
+
+    console.log(`[CancelBooking] LOGS:
+      BookingID: ${booking._id}
+      CurrentStatus: ${booking.status}
+      TravelerID: ${booking.user}
+      RequestUserID: ${req.user._id}
+      RequestUserRole: ${userRole}
+      isUser: ${isUser}
+      isPackageOwner: ${isPackageOwner}
+      isAdmin: ${isAdmin}`);
+
+    if (!isUser && !isPackageOwner && !isAdmin) {
+      console.log(`[CancelBooking] Denied: User is neither traveler, owner, nor admin.`);
+      return res.status(403).json({ success: false, error: 'Not authorised to cancel this booking' });
     }
+
     if (booking.status === 'Cancelled') {
       return res.status(400).json({ success: false, error: 'Booking is already cancelled' });
     }
 
+    const oldStatus = booking.status;
+
+    // Logic: If regular user tries to cancel, it becomes a "Request"
+    // If Organiser or Admin tries to cancel, it becomes "Cancelled" (Approved)
+    // IMPORTANT: Guide/Organiser role users are still treated as "User" if they book someone else's trip
+    // Logic: If regular user tries to cancel someone else's package, it becomes a "Request"
+    // If Package Owner or Admin tries to cancel, it becomes "Cancelled" immediately
+    if (isUser && !isPackageOwner && !isAdmin) {
+      if (booking.status === 'CancellationRequested') {
+        return res.status(400).json({ success: false, error: 'Cancellation request already sent' });
+      }
+      booking.status = 'CancellationRequested';
+      await booking.save();
+      console.log(`[CancelBooking] Success: User ${req.user._id} requested cancellation.`);
+      return res.status(200).json({ 
+        success: true, 
+        result: booking, 
+        message: 'Cancellation request submitted to admin for approval' 
+      });
+    }
+
+    // If we reach here, it's a privileged user cancelling or approving a request
     booking.status = 'Cancelled';
     await booking.save();
+    console.log(`[CancelBooking] Success: Booking ${booking._id} set to Cancelled by privileged user ${req.user._id}.`);
 
-    // Decrement participant count
-    const dec = booking.travelers?.length || 1;
-    await TravelPackage.findByIdAndUpdate(booking.package, {
-      $inc: { currentParticipants: -dec },
+    // Decrement participant count if it was Pending, Confirmed, or CancellationRequested
+    if (oldStatus !== 'Cancelled') {
+      const dec = booking.travelers?.length || 1;
+      await TravelPackage.findByIdAndUpdate(pkg._id, {
+        $inc: { currentParticipants: -dec },
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      result: booking, 
+      message: isPackageOwner || isAdmin ? 'Booking cancelled/approved' : 'Booking cancelled' 
     });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    res.status(200).json({ success: true, result: booking });
+// @desc  Confirm / Approve a booking
+// @route PATCH /api/packages/bookings/:id/confirm
+// @access Private (Organiser or Admin only)
+const confirmBooking = async (req, res, next) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate('package');
+    if (!booking) return res.status(404).json({ success: false, error: 'Booking not found' });
+
+    const pkg = booking.package;
+    if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
+
+    const isOrganiser = pkg.organizer.toString() === req.user._id.toString();
+    const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
+    const isAdmin = userRole === 'admin';
+
+    if (!isOrganiser && !isAdmin) {
+      return res.status(403).json({ success: false, error: 'Not authorised to confirm bookings for this package' });
+    }
+
+    if (booking.status === 'Confirmed') {
+      return res.status(400).json({ success: false, error: 'Booking is already confirmed' });
+    }
+
+    booking.status = 'Confirmed';
+    await booking.save();
+
+    res.status(200).json({ success: true, result: booking, message: 'Booking confirmed successfully' });
   } catch (err) {
     next(err);
   }
@@ -349,7 +436,31 @@ const getPackageParticipants = async (req, res, next) => {
     }
 
     const bookings = await Booking.find({ package: req.params.id })
-      .populate('user', 'name email profileImage contactNumber');
+      .populate('user', 'name email profileImage contactNumber')
+      .populate('package', 'title');
+
+    res.status(200).json({ success: true, count: bookings.length, results: bookings });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @desc  Get all bookings for all packages organized by the logged-in guide
+ * @route GET /api/packages/bookings/organizer
+ * @access Private (Guide, Admin)
+ */
+const getGuideBookings = async (req, res, next) => {
+  try {
+    // 1. Find all packages by this guide
+    const packages = await TravelPackage.find({ organizer: req.user._id }).select('_id');
+    const packageIds = packages.map(p => p._id);
+
+    // 2. Find all bookings for these packages
+    const bookings = await Booking.find({ package: { $in: packageIds } })
+      .populate('user', 'name email profileImage contactNumber')
+      .populate('package', 'title images destination duration price')
+      .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, count: bookings.length, results: bookings });
   } catch (err) {
@@ -385,6 +496,8 @@ module.exports = {
   joinPackage,
   getMyBookings,
   cancelBooking,
+  confirmBooking,
   getPackageParticipants,
   getAllPackagesAdmin,
+  getGuideBookings,
 };

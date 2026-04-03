@@ -55,8 +55,11 @@ class ModernSearchBar extends StatelessWidget {
                     controller!.clear();
                     if (onChanged != null) onChanged!("");
                   },
-                  child: const Icon(Icons.close_rounded,
-                      color: appGrey, size: 20),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: appGrey,
+                    size: 20,
+                  ),
                 )
               : null,
           border: InputBorder.none,

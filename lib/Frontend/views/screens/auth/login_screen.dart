@@ -196,6 +196,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 LoggedIn(
                                   id: state.id,
                                   role: state.role,
+                                  guideRequestStatus: state.guideRequestStatus,
                                   name: state.name,
                                   email: state.email,
                                   tripsCount: state.tripsCount,

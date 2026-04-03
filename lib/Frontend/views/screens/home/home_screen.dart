@@ -268,7 +268,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-
                     ],
                   ),
                   bottomNavigationBar: AppBottomNav(
@@ -283,7 +282,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 }
 
 // ─── Home Tab ─────────────────────────────────────────────────────────────────
@@ -410,23 +408,31 @@ class _HomeTabState extends State<_HomeTab> {
                             ),
                           ),
 
-                          const SizedBox(height: AppSpacing.m),
+                          const SizedBox(height: AppSpacing.s),
 
                           ModernSectionTitle(
                             title: "Featured Destinations",
-                            onTap: widget.onGoExplore,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              RouteNames.featuredDestinations,
+                            ),
                           ),
                           const SizedBox(height: AppSpacing.ms),
                           _buildFeaturedDestinations(context, state),
 
-                          const SizedBox(height: AppSpacing.l),
+                          const SizedBox(height: AppSpacing.s),
 
                           ModernSectionTitle(
                             title: AppStrings.popularEvents,
-                            onTap: widget.onGoExplore,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              RouteNames.popularEvents,
+                            ),
                           ),
                           const SizedBox(height: AppSpacing.ms),
                           _buildEventsHorizontalCards(context, state),
+
+                          const SizedBox(height: AppSpacing.s),
 
                           AppAnimations.fadeIn(
                             duration: AppAnimations.slow,
@@ -442,7 +448,7 @@ class _HomeTabState extends State<_HomeTab> {
                             ),
                           ),
 
-                          const SizedBox(height: AppSpacing.l),
+                          const SizedBox(height: AppSpacing.s),
 
                           ModernSectionTitle(
                             title: AppStrings.nearbyPopularPlaces,
@@ -451,7 +457,7 @@ class _HomeTabState extends State<_HomeTab> {
                           const SizedBox(height: AppSpacing.ms),
                           _buildNearbySection(context, state),
 
-                          const SizedBox(height: AppSpacing.xl),
+                          const SizedBox(height: AppSpacing.s),
                         ],
                       ),
                     ),
@@ -482,17 +488,17 @@ class _HomeTabState extends State<_HomeTab> {
     }
     if (state.recommendedPlaces.isEmpty) return const SizedBox();
     return SizedBox(
-      height: 280,
+      height: 250,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: state.recommendedPlaces.length,
+        itemCount: state.recommendedPlaces.take(15).length,
         itemBuilder: (context, i) {
-          final place = state.recommendedPlaces[i];
+          final place = state.recommendedPlaces.take(15).toList()[i];
           return ModernPlaceCard(
             place: place,
-            width: 240,
-            height: 300,
+            width: 250,
+            height: 250,
             onTap: () => Navigator.pushNamed(
               context,
               RouteNames.placeDetails,
@@ -543,12 +549,13 @@ class _HomeTabState extends State<_HomeTab> {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: state.popularEvents.length,
+        itemCount: state.popularEvents.take(10).length,
         itemBuilder: (context, i) {
-          final event = state.popularEvents[i];
+          final events = state.popularEvents.take(10).toList();
+          final event = events[i];
           return Padding(
             padding: EdgeInsets.only(
-              right: i < state.popularEvents.length - 1 ? AppSpacing.m : 0,
+              right: i < events.length - 1 ? AppSpacing.m : 0,
             ),
             child: EventHorizontalCard(
               event: event,
@@ -576,7 +583,7 @@ class _HomeTabState extends State<_HomeTab> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: appWhite,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
@@ -596,7 +603,7 @@ class _HomeTabState extends State<_HomeTab> {
               child: const Icon(
                 Icons.location_off_rounded,
                 color: primaryBlue,
-                size: 24,
+                size: 30,
               ),
             ),
             const SizedBox(height: 16),
@@ -625,7 +632,10 @@ class _HomeTabState extends State<_HomeTab> {
                 backgroundColor: primaryBlue,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -693,14 +703,14 @@ class _HomeTabState extends State<_HomeTab> {
         if (state.packagesStatus == TravelStatus.loading ||
             state.packagesStatus == TravelStatus.initial) {
           return SizedBox(
-            height: 160,
+            height: 200,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: 3,
               itemBuilder: (_, i) => Container(
                 width: 280,
                 margin: const EdgeInsets.only(right: 16),
-                child: const ShimmerBox(radius: 20),
+                child: const ShimmerBox(radius: 24),
               ),
             ),
           );
@@ -710,38 +720,46 @@ class _HomeTabState extends State<_HomeTab> {
           return GestureDetector(
             onTap: widget.onGoPackages,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.ms),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
                 color: appWhite,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: primaryBlue.withOpacity(0.18)),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: primaryBlue.withOpacity(0.08)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: primaryBlue.withOpacity(0.08),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.luggage_rounded,
+                      Icons.backpack_rounded,
                       color: primaryBlue,
-                      size: 20,
+                      size: 22,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         AppText.subHeading(
-                          'Browse travel packages',
-                          size: 13,
-                          fontWeight: FontWeight.w700,
+                          'Explore Curated Packages',
+                          size: 14,
+                          fontWeight: FontWeight.w800,
                         ),
                         AppText.body(
-                          'Curated trips across Maharashtra',
+                          'Browse unique trips across Maharashtra',
                           color: appGrey,
                           size: 11,
                         ),
@@ -749,9 +767,9 @@ class _HomeTabState extends State<_HomeTab> {
                     ),
                   ),
                   const Icon(
-                    Icons.chevron_right_rounded,
+                    Icons.arrow_forward_ios_rounded,
                     color: primaryBlue,
-                    size: 20,
+                    size: 16,
                   ),
                 ],
               ),
@@ -759,17 +777,30 @@ class _HomeTabState extends State<_HomeTab> {
           );
         }
         return SizedBox(
-          height: 180,
+          height: 230,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: preview.length,
             itemBuilder: (ctx, i) {
               final pkg = preview[i];
+              const double cardRadius = 12; // Standardized radius
               return Container(
-                width: 280,
+                width: 300,
                 margin: EdgeInsets.only(
                   right: i == preview.length - 1 ? 0 : 16,
+                  bottom: 12,
+                  top: 8,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(cardRadius),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: InkWell(
                   onTap: () => Navigator.pushNamed(
@@ -778,7 +809,7 @@ class _HomeTabState extends State<_HomeTab> {
                     arguments: pkg.id,
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(cardRadius),
                     child: Stack(
                       children: [
                         Positioned.fill(
@@ -792,7 +823,7 @@ class _HomeTabState extends State<_HomeTab> {
                                       Container(
                                         color: primaryBlue.withOpacity(0.1),
                                         child: const Icon(
-                                          Icons.luggage_rounded,
+                                          Icons.landscape_rounded,
                                           color: primaryBlue,
                                           size: 40,
                                         ),
@@ -801,12 +832,13 @@ class _HomeTabState extends State<_HomeTab> {
                               : Container(
                                   color: primaryBlue.withOpacity(0.1),
                                   child: const Icon(
-                                    Icons.luggage_rounded,
+                                    Icons.landscape_rounded,
                                     color: primaryBlue,
                                     size: 40,
                                   ),
                                 ),
                         ),
+                        // Gradient Overlay
                         Positioned.fill(
                           child: Container(
                             decoration: BoxDecoration(
@@ -815,134 +847,121 @@ class _HomeTabState extends State<_HomeTab> {
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.transparent,
-                                  Colors.black.withOpacity(0.1),
-                                  Colors.black.withOpacity(0.8),
+                                  Colors.black.withOpacity(0.05),
+                                  Colors.black.withOpacity(0.75),
+                                  Colors.black,
                                 ],
-                                stops: const [0.4, 0.7, 1.0],
+                                stops: const [0.5, 0.7, 0.9, 1.0],
                               ),
                             ),
                           ),
                         ),
-                        Positioned(
-                          top: 12,
-                          left: 12,
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _packageAccent(pkg.category),
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                child: Text(
-                                  pkg.category.toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
+                        // Remaining Seats Tag (Top Right)
+                        if (pkg.maxGroupSize > 0)
+                          Positioned(
+                            top: 14,
+                            right: 14,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
                               ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.4),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
                                   color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.schedule_rounded,
-                                      color: Colors.white,
-                                      size: 10,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${pkg.days}D / ${pkg.nights}N',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 12,
-                          left: 14,
-                          right: 14,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      pkg.title,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.place_rounded,
-                                          color: Colors.white70,
-                                          size: 12,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          pkg.destinationName,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Text(
-                                    'STARTING AT',
-                                    style: TextStyle(
-                                      color: Colors.white60,
-                                      fontSize: 7,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                  const Icon(
+                                    Icons.group_rounded,
+                                    color: Colors.white,
+                                    size: 13,
                                   ),
-                                  Text(
-                                    '₹${pkg.price.toInt()}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                    ),
+                                  const SizedBox(width: 6),
+                                  AppText.small(
+                                    '${pkg.maxGroupSize - pkg.currentParticipants} SEATS LEFT',
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    size: 10,
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
+                          ),
+                        // Content (Bottom)
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      AppText.heading(
+                                        pkg.title,
+                                        color: Colors.white,
+                                        size: 19,
+                                        fontWeight: FontWeight.w900,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // Duration (at place of location)
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.av_timer_rounded,
+                                            color: Colors.white70,
+                                            size: 12,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          AppText.body(
+                                            '${pkg.days}D / ${pkg.nights}N',
+                                            color: Colors.white.withOpacity(
+                                              0.85,
+                                            ),
+                                            size: 13,
+                                            fontWeight: FontWeight.w700,
+                                            maxLines: 1,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AppText.small(
+                                      'STARTING FROM',
+                                      color: Colors.white.withOpacity(0.6),
+                                      fontWeight: FontWeight.w800,
+                                      size: 8,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    AppText.heading(
+                                      '₹${pkg.price.toInt()}',
+                                      color: Colors.white,
+                                      size: 22,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -955,28 +974,5 @@ class _HomeTabState extends State<_HomeTab> {
         );
       },
     );
-  }
-
-  Color _packageAccent(String category) {
-    switch (category) {
-      case 'Fort Trek':
-        return const Color(0xFF6C63FF);
-      case 'Adventure':
-        return const Color(0xFFFF6B35);
-      case 'Beach':
-        return const Color(0xFF00B4D8);
-      case 'Spiritual':
-        return const Color(0xFFE9A21B);
-      case 'Wildlife':
-        return const Color(0xFF2DC653);
-      case 'Road Trip':
-        return const Color(0xFFFF4C6A);
-      case 'Weekend Trip':
-        return const Color(0xFF9B5DE5);
-      case 'Cultural':
-        return const Color(0xFFE91E8C);
-      default:
-        return primaryBlue;
-    }
   }
 }

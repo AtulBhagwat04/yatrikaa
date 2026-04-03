@@ -53,7 +53,8 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
 
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
-      appBar: AppBar(automaticallyImplyLeading: false, 
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         title: AppText.subHeading(
@@ -81,7 +82,9 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                     onUpdate: (updatedPost) {
                       if (mounted) {
                         setState(() {
-                          final updateIndex = _myPosts.indexWhere((p) => p.id == updatedPost.id);
+                          final updateIndex = _myPosts.indexWhere(
+                            (p) => p.id == updatedPost.id,
+                          );
                           if (updateIndex != -1) {
                             _myPosts[updateIndex] = updatedPost;
                           }

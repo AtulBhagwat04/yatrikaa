@@ -10,15 +10,15 @@ class HomeState extends Equatable {
   final bool isLoadingLocation;
   final String selectedCategory;
   final int selectedIndex;
-  
+
   final List<PlaceModel> recommendedPlaces;
   final List<PlaceModel> nearbyPlaces;
   final List<EventModel> popularEvents;
-  
+
   final List<PlaceModel> searchResults;
   final bool isSearching;
   final String searchQuery;
-  
+
   final bool isLoadingRecommended;
   final bool isLoadingNearby;
   final bool isLoadingEvents;

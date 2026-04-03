@@ -157,7 +157,8 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
               height: 120,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: _imageFiles.length + (_imageFiles.length < 10 ? 1 : 0),
+                itemCount:
+                    _imageFiles.length + (_imageFiles.length < 10 ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == _imageFiles.length) {
                     return GestureDetector(
@@ -173,7 +174,10 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_a_photo, color: primaryBlue.withOpacity(0.5)),
+                            Icon(
+                              Icons.add_a_photo,
+                              color: primaryBlue.withOpacity(0.5),
+                            ),
                             const SizedBox(height: 4),
                             AppText.caption("Add Photo", color: primaryBlue),
                           ],
@@ -206,7 +210,11 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                               color: Colors.black54,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close, size: 12, color: Colors.white),
+                            child: const Icon(
+                              Icons.close,
+                              size: 12,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),

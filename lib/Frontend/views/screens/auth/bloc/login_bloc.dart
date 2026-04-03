@@ -22,6 +22,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         LoginSuccess(
           id: response['id'] ?? '',
           role: response['role'] ?? 'user',
+          guideRequestStatus: response['guideRequestStatus'] ?? 'None',
           name: response['name'] ?? 'Traveler',
           email: response['email'] ?? event.email,
           tripsCount: (response['tripsCount'] as num?)?.toInt() ?? 0,

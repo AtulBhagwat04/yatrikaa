@@ -18,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final isLoggedIn = await _authService.isLoggedIn();
     if (isLoggedIn) {
       final role = await _authService.getRole();
+      final guideStatus = await _authService.getGuideRequestStatus();
       final name = await _authService.getName();
       final email = await _authService.getEmail();
       final id = await _authService.getUserId();
@@ -29,12 +30,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         Authenticated(
           id: id ?? '',
           role: role ?? 'user',
+          guideRequestStatus: guideStatus,
           name: name ?? 'Traveler',
           email: email ?? '',
           tripsCount: tripsCount,
           savedCount: savedCount,
           reviewsCount: reviewsCount,
           postsCount: postsCount,
+          phoneNumber: await _authService.getPhoneNumber(),
+          gender: await _authService.getGender(),
+          profilePicture: await _authService.getProfilePicture(),
         ),
       );
     } else {
@@ -47,12 +52,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       Authenticated(
         id: event.id,
         role: event.role,
+        guideRequestStatus: event.guideRequestStatus,
         name: event.name,
         email: event.email,
         tripsCount: event.tripsCount,
         savedCount: event.savedCount,
         reviewsCount: event.reviewsCount,
         postsCount: event.postsCount,
+        phoneNumber: event.phoneNumber,
+        gender: event.gender,
+        profilePicture: event.profilePicture,
       ),
     );
   }
@@ -87,12 +96,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         Authenticated(
           id: currentState.id,
           role: currentState.role,
+          guideRequestStatus: currentState.guideRequestStatus,
           name: currentState.name,
           email: currentState.email,
           tripsCount: newTripsCount,
           savedCount: newSavedCount,
           reviewsCount: newReviewsCount,
           postsCount: newPostsCount,
+          phoneNumber: currentState.phoneNumber,
+          gender: currentState.gender,
+          profilePicture: currentState.profilePicture,
         ),
       );
     }

@@ -26,9 +26,7 @@ class ExternalActionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: appWhite,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: primaryBlue.withAlpha(25),
-          ),
+          border: Border.all(color: primaryBlue.withAlpha(25)),
         ),
         child: Row(
           children: [

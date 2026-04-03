@@ -16,6 +16,7 @@ class LoginSuccess extends LoginState {
   final String role;
   final String name;
   final String email;
+  final String guideRequestStatus;
   final int tripsCount;
   final int savedCount;
   final int reviewsCount;
@@ -26,6 +27,7 @@ class LoginSuccess extends LoginState {
     required this.role,
     required this.name,
     required this.email,
+    this.guideRequestStatus = 'None',
     this.tripsCount = 0,
     this.savedCount = 0,
     this.reviewsCount = 0,
@@ -38,6 +40,7 @@ class LoginSuccess extends LoginState {
     role,
     name,
     email,
+    guideRequestStatus,
     tripsCount,
     savedCount,
     reviewsCount,

@@ -10,6 +10,8 @@ const generateToken = (user) => {
   );
 };
 
+const { uploadImage, deleteImage } = require('../services/cloudinaryService');
+
 class AuthController {
   async register(req, res, next) {
     const { name, email, password, role } = req.body;
@@ -19,11 +21,21 @@ class AuthController {
         return res.status(400).json({ error: 'User already exists' });
       }
 
+      let finalRole = role || 'user';
+      let guideStatus = 'None';
+
+      // If registering as guide, set role to user and request status to Pending
+      if (finalRole === 'guide') {
+        finalRole = 'user';
+        guideStatus = 'Pending';
+      }
+
       const user = await User.create({
         name,
         email,
         password,
-        role: role || 'user'
+        role: finalRole,
+        guideRequestStatus: guideStatus
       });
 
       res.status(201).json({
@@ -31,10 +43,14 @@ class AuthController {
         name: user.name,
         email: user.email,
         role: user.role,
+        guideRequestStatus: user.guideRequestStatus,
         tripsCount: user.tripsCount,
         savedCount: user.savedCount,
         reviewsCount: user.reviewsCount,
         postsCount: user.postsCount,
+        phoneNumber: user.phoneNumber,
+        gender: user.gender,
+        profilePicture: user.profilePicture,
         token: generateToken(user)
       });
     } catch (error) {
@@ -52,10 +68,14 @@ class AuthController {
           name: user.name,
           email: user.email,
           role: user.role,
+          guideRequestStatus: user.guideRequestStatus,
           tripsCount: user.tripsCount,
           savedCount: user.savedCount,
           reviewsCount: user.reviewsCount,
           postsCount: user.postsCount,
+          phoneNumber: user.phoneNumber,
+          gender: user.gender,
+          profilePicture: user.profilePicture,
           token: generateToken(user)
         });
       } else {
@@ -73,6 +93,30 @@ class AuthController {
       if (user) {
         user.name = req.body.name || user.name;
         user.email = req.body.email || user.email;
+        user.phoneNumber = req.body.phoneNumber !== undefined ? req.body.phoneNumber : user.phoneNumber;
+        user.gender = req.body.gender !== undefined ? req.body.gender : user.gender;
+
+        if (req.file) {
+          // Delete old profile picture if it exists on Cloudinary
+          if (user.profilePicture && user.profilePicture.includes('cloudinary.com')) {
+            try {
+              const urlParts = user.profilePicture.split('/');
+              const uploadIndex = urlParts.indexOf('upload');
+              if (uploadIndex !== -1) {
+                const publicIdWithExt = urlParts.slice(uploadIndex + 2).join('/');
+                const publicId = publicIdWithExt.split('.')[0];
+                await deleteImage(publicId);
+              }
+            } catch (e) {
+              console.error('Error deleting old profile picture:', e.message);
+            }
+          }
+
+          // Upload new profile picture to a folder unique to this user
+          const folderName = `Bhatkanti/Users/${user._id}/Profile`;
+          const result = await uploadImage(req.file, folderName);
+          user.profilePicture = result.secure_url;
+        }
 
         const updatedUser = await user.save();
 
@@ -85,6 +129,9 @@ class AuthController {
           savedCount: updatedUser.savedCount,
           reviewsCount: updatedUser.reviewsCount,
           postsCount: updatedUser.postsCount,
+          phoneNumber: updatedUser.phoneNumber,
+          gender: updatedUser.gender,
+          profilePicture: updatedUser.profilePicture,
           token: generateToken(updatedUser)
         });
       } else {
@@ -126,6 +173,66 @@ class AuthController {
       const user = await User.findByIdAndDelete(req.params.id);
       if (!user) return res.status(404).json({ error: 'User not found' });
       res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getGuideRequests(req, res, next) {
+    try {
+      console.log(`[auth] Fetching guide requests for admin: ${req.user.email}`);
+      const requests = await User.find({ guideRequestStatus: 'Pending' }).select('-password');
+      console.log(`[auth] Found ${requests.length} pending requests`);
+      res.json({ success: true, count: requests.length, results: requests });
+    } catch (error) {
+      console.error('[auth] getGuideRequests error:', error.message);
+      next(error);
+    }
+  }
+
+  async handleGuideRequest(req, res, next) {
+    const { userId, action } = req.body; // action: 'approve' or 'reject'
+    try {
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      if (action === 'approve') {
+        user.role = 'guide';
+        user.guideRequestStatus = 'Approved';
+      } else {
+        user.guideRequestStatus = 'Rejected';
+      }
+
+      await user.save();
+      console.log(`[auth] Guide Request ${action}d for ${user.email}`);
+
+      res.json({ 
+        success: true, 
+        message: `Guide request ${action}d successfully`,
+        result: {
+          id: user._id,
+          role: user.role,
+          guideRequestStatus: user.guideRequestStatus
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async requestGuideRole(req, res, next) {
+    try {
+      const user = await User.findById(req.user._id);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      if (user.role === 'guide') {
+        return res.status(400).json({ error: 'User is already a guide' });
+      }
+
+      user.guideRequestStatus = 'Pending';
+      await user.save();
+
+      res.json({ success: true, message: 'Guide request submitted successfully' });
     } catch (error) {
       next(error);
     }

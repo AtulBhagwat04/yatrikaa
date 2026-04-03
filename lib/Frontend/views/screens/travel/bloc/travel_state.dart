@@ -1,8 +1,10 @@
 import 'package:equatable/equatable.dart';
 import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
 import 'package:bhatkanti_app/Frontend/core/models/booking_model.dart';
+import 'package:bhatkanti_app/Frontend/core/models/guide_request_model.dart';
 
 enum TravelStatus { initial, loading, success, failure }
+
 enum BookingActionStatus { idle, loading, success, failure }
 
 class TravelState extends Equatable {
@@ -21,6 +23,18 @@ class TravelState extends Equatable {
   // ── Guide: My Packages ─────────────────────────────────────────────────────
   final TravelStatus myPackagesStatus;
   final List<TravelPackageModel> myPackages;
+
+  // ── Admin: Review Queue ───────────────────────────────────────────────────
+  final TravelStatus adminPackagesStatus;
+  final List<TravelPackageModel> adminPackages;
+
+  // ── Admin: Guide Requests ──────────────────────────────────────────────────
+  final TravelStatus adminGuideRequestsStatus;
+  final List<GuideRequestModel> adminGuideRequests;
+
+  // ── Guide: Booking Management ─────────────────────────────────────────────
+  final TravelStatus guideBookingsStatus;
+  final List<BookingModel> guideBookings;
 
   // ── User: Bookings ────────────────────────────────────────────────────────
   final TravelStatus bookingsStatus;
@@ -49,6 +63,12 @@ class TravelState extends Equatable {
     this.actionStatus = BookingActionStatus.idle,
     this.actionError,
     this.actionSuccessMessage,
+    this.adminPackagesStatus = TravelStatus.initial,
+    this.adminPackages = const [],
+    this.adminGuideRequestsStatus = TravelStatus.initial,
+    this.adminGuideRequests = const [],
+    this.guideBookingsStatus = TravelStatus.initial,
+    this.guideBookings = const [],
   });
 
   TravelState copyWith({
@@ -68,6 +88,12 @@ class TravelState extends Equatable {
     BookingActionStatus? actionStatus,
     String? actionError,
     String? actionSuccessMessage,
+    TravelStatus? adminPackagesStatus,
+    List<TravelPackageModel>? adminPackages,
+    TravelStatus? adminGuideRequestsStatus,
+    List<GuideRequestModel>? adminGuideRequests,
+    TravelStatus? guideBookingsStatus,
+    List<BookingModel>? guideBookings,
   }) {
     return TravelState(
       packagesStatus: packagesStatus ?? this.packagesStatus,
@@ -86,6 +112,13 @@ class TravelState extends Equatable {
       actionStatus: actionStatus ?? this.actionStatus,
       actionError: actionError ?? this.actionError,
       actionSuccessMessage: actionSuccessMessage ?? this.actionSuccessMessage,
+      adminPackagesStatus: adminPackagesStatus ?? this.adminPackagesStatus,
+      adminPackages: adminPackages ?? this.adminPackages,
+      adminGuideRequestsStatus:
+          adminGuideRequestsStatus ?? this.adminGuideRequestsStatus,
+      adminGuideRequests: adminGuideRequests ?? this.adminGuideRequests,
+      guideBookingsStatus: guideBookingsStatus ?? this.guideBookingsStatus,
+      guideBookings: guideBookings ?? this.guideBookings,
     );
   }
 
@@ -94,25 +127,30 @@ class TravelState extends Equatable {
     var list = packages;
     if (selectedCategory != 'All') {
       list = list
-          .where((p) =>
-              p.category.toLowerCase() ==
-              selectedCategory.toLowerCase())
+          .where(
+            (p) => p.category.toLowerCase() == selectedCategory.toLowerCase(),
+          )
           .toList();
     }
     if (searchQuery.isNotEmpty) {
       final q = searchQuery.toLowerCase();
       list = list
-          .where((p) =>
-              p.title.toLowerCase().contains(q) ||
-              p.destinationName.toLowerCase().contains(q))
+          .where(
+            (p) =>
+                p.title.toLowerCase().contains(q) ||
+                p.destinationName.toLowerCase().contains(q),
+          )
           .toList();
     }
     return list;
   }
 
-  /// Upcoming bookings (status Pending or Confirmed and bookingDate is future).
-  List<BookingModel> get upcomingBookings =>
-      myBookings.where((b) => b.status == 'Pending' || b.status == 'Confirmed').toList();
+  List<BookingModel> get upcomingBookings => myBookings
+      .where((b) =>
+          b.status == 'Pending' ||
+          b.status == 'Confirmed' ||
+          b.status == 'CancellationRequested')
+      .toList();
 
   List<BookingModel> get completedBookings =>
       myBookings.where((b) => b.status == 'Completed').toList();
@@ -122,21 +160,27 @@ class TravelState extends Equatable {
 
   @override
   List<Object?> get props => [
-        packagesStatus,
-        packages,
-        selectedCategory,
-        searchQuery,
-        packagesError,
-        detailStatus,
-        selectedPackage,
-        detailError,
-        myPackagesStatus,
-        myPackages,
-        bookingsStatus,
-        myBookings,
-        bookingsError,
-        actionStatus,
-        actionError,
-        actionSuccessMessage,
-      ];
+    packagesStatus,
+    packages,
+    selectedCategory,
+    searchQuery,
+    packagesError,
+    detailStatus,
+    selectedPackage,
+    detailError,
+    myPackagesStatus,
+    myPackages,
+    bookingsStatus,
+    myBookings,
+    bookingsError,
+    actionStatus,
+    actionError,
+    actionSuccessMessage,
+    adminPackagesStatus,
+    adminPackages,
+    adminGuideRequestsStatus,
+    adminGuideRequests,
+    guideBookingsStatus,
+    guideBookings,
+  ];
 }

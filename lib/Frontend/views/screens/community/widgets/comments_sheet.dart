@@ -41,7 +41,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
     setState(() => _isSending = true);
 
     PostModel? updatedPost;
-    
+
     if (_editingCommentId != null) {
       updatedPost = await PostService().editComment(
         _currentPost.id,
@@ -126,9 +126,12 @@ class _CommentsSheetState extends State<CommentsSheet> {
                           widget.currentUserId == comment.user.id;
                       final isPostOwner =
                           widget.currentUserId == widget.post.author.id;
-                      final userRole = widget.currentUserRole?.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+                      final userRole = widget.currentUserRole
+                          ?.toLowerCase()
+                          .replaceAll(RegExp(r'[^a-z]'), '');
                       final isAdmin = userRole == 'admin';
-                      final canDelete = isCommentOwner || isPostOwner || isAdmin;
+                      final canDelete =
+                          isCommentOwner || isPostOwner || isAdmin;
                       final canEdit = isCommentOwner || isAdmin;
 
                       return Padding(
@@ -175,17 +178,26 @@ class _CommentsSheetState extends State<CommentsSheet> {
                                 children: [
                                   if (canEdit)
                                     IconButton(
-                                      icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        size: 18,
+                                        color: Colors.grey,
+                                      ),
                                       onPressed: () => _startEditing(comment),
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
                                     ),
-                                  if (canEdit && canDelete) 
+                                  if (canEdit && canDelete)
                                     const SizedBox(width: 8),
                                   if (canDelete)
                                     IconButton(
-                                      icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
-                                      onPressed: () => _deleteComment(comment.id),
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        size: 18,
+                                        color: Colors.grey,
+                                      ),
+                                      onPressed: () =>
+                                          _deleteComment(comment.id),
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
                                     ),
@@ -224,7 +236,10 @@ class _CommentsSheetState extends State<CommentsSheet> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        AppText.caption('Editing comment...', color: primaryBlue),
+                        AppText.caption(
+                          'Editing comment...',
+                          color: primaryBlue,
+                        ),
                         GestureDetector(
                           onTap: () {
                             setState(() {
@@ -232,7 +247,11 @@ class _CommentsSheetState extends State<CommentsSheet> {
                               _commentController.clear();
                             });
                           },
-                          child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                          child: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),
@@ -243,7 +262,9 @@ class _CommentsSheetState extends State<CommentsSheet> {
                       child: TextField(
                         controller: _commentController,
                         decoration: InputDecoration(
-                          hintText: _editingCommentId != null ? 'Edit your comment...' : AppStrings.commAddComment,
+                          hintText: _editingCommentId != null
+                              ? 'Edit your comment...'
+                              : AppStrings.commAddComment,
                           border: InputBorder.none,
                           hintStyle: const TextStyle(fontSize: 14),
                         ),
@@ -258,7 +279,9 @@ class _CommentsSheetState extends State<CommentsSheet> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Text(
-                              _editingCommentId != null ? 'Update' : AppStrings.commPost,
+                              _editingCommentId != null
+                                  ? 'Update'
+                                  : AppStrings.commPost,
                               style: const TextStyle(
                                 color: primaryBlue,
                                 fontWeight: FontWeight.bold,

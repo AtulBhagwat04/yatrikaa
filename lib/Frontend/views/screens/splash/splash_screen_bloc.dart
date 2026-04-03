@@ -38,9 +38,9 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
   }
 
   Future<void> _startAnimation(
-      StartAnimation event,
-      Emitter<SplashState> emit,
-      ) async {
+    StartAnimation event,
+    Emitter<SplashState> emit,
+  ) async {
     // Step 1: Icon animation
     await Future.delayed(const Duration(milliseconds: 500));
     emit(state.copyWith(showIcon: true));

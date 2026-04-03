@@ -231,7 +231,8 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               state.place != null) {
             final place = state.place!;
             return Scaffold(
-              backgroundColor: onboardingBlueVeryLight, // Unified with other screens
+              backgroundColor:
+                  onboardingBlueVeryLight, // Unified with other screens
               body: Stack(
                 children: [
                   CustomScrollView(
@@ -619,14 +620,24 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
             ),
             Builder(
               builder: (context) {
-                bool isOpen = PlaceUtils.checkIfOpenNow(place.timings, place.isOpen);
+                bool isOpen = PlaceUtils.checkIfOpenNow(
+                  place.timings,
+                  place.isOpen,
+                );
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: isOpen ? successColor.withAlpha(20) : errorColor.withAlpha(20),
+                    color: isOpen
+                        ? successColor.withAlpha(20)
+                        : errorColor.withAlpha(20),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: isOpen ? successColor.withAlpha(60) : errorColor.withAlpha(60),
+                      color: isOpen
+                          ? successColor.withAlpha(60)
+                          : errorColor.withAlpha(60),
                       width: 1,
                     ),
                   ),
@@ -654,7 +665,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                     ],
                   ),
                 );
-              }
+              },
             ),
           ],
         ),
@@ -1015,10 +1026,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                           color: appWhite,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
-                            BoxShadow(
-                              color: shadowColor,
-                              blurRadius: 4,
-                            ),
+                            BoxShadow(color: shadowColor, blurRadius: 4),
                           ],
                         ),
                         child: Row(
@@ -1191,9 +1199,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               // Bookmark Button
               Container(
                 decoration: BoxDecoration(
-                  color: isBookmarked
-                      ? primaryBlue.withAlpha(20)
-                      : appWhite,
+                  color: isBookmarked ? primaryBlue.withAlpha(20) : appWhite,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isBookmarked ? primaryBlue : appGreyLight,

@@ -3,9 +3,13 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
 
+import 'package:image_picker/image_picker.dart';
+import 'package:http_parser/http_parser.dart';
+
 class AuthService {
   static const String _tokenKey = 'jwt_token';
   static const String _roleKey = 'user_role';
+  static const String _guideRequestStatusKey = 'user_guide_status';
   static const String _nameKey = 'user_name';
   static const String _emailKey = 'user_email';
   static const String _tripsCountKey = 'user_trips_count';
@@ -13,6 +17,9 @@ class AuthService {
   static const String _reviewsCountKey = 'user_reviews_count';
   static const String _postsCountKey = 'user_posts_count';
   static const String _idKey = 'user_id';
+  static const String _phoneNumberKey = 'user_phone';
+  static const String _genderKey = 'user_gender';
+  static const String _profilePictureKey = 'user_profile_picture';
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
@@ -27,12 +34,16 @@ class AuthService {
         token: data['token'] ?? '',
         id: data['id'] ?? '',
         role: data['role'] ?? 'user',
+        guideRequestStatus: data['guideRequestStatus'] ?? 'None',
         name: data['name'] ?? 'Traveler',
         email: data['email'] ?? email,
         tripsCount: (data['tripsCount'] as num?)?.toInt() ?? 0,
         savedCount: (data['savedCount'] as num?)?.toInt() ?? 0,
         reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
         postsCount: (data['postsCount'] as num?)?.toInt() ?? 0,
+        phoneNumber: data['phoneNumber'],
+        gender: data['gender'],
+        profilePicture: data['profilePicture'],
       );
       return data;
     } else {
@@ -64,12 +75,16 @@ class AuthService {
         token: data['token'] ?? '',
         id: data['id'] ?? '',
         role: data['role'] ?? role,
+        guideRequestStatus: data['guideRequestStatus'] ?? 'None',
         name: data['name'] ?? name,
         email: data['email'] ?? email,
         tripsCount: (data['tripsCount'] as num?)?.toInt() ?? 0,
         savedCount: (data['savedCount'] as num?)?.toInt() ?? 0,
         reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
         postsCount: (data['postsCount'] as num?)?.toInt() ?? 0,
+        phoneNumber: data['phoneNumber'],
+        gender: data['gender'],
+        profilePicture: data['profilePicture'],
       );
       return data;
     } else {
@@ -81,16 +96,34 @@ class AuthService {
   Future<Map<String, dynamic>> updateProfile({
     required String name,
     required String email,
+    String? phoneNumber,
+    String? gender,
+    XFile? profileImage,
   }) async {
     final token = await getToken();
-    final response = await http.put(
+    var request = http.MultipartRequest(
+      'PUT',
       Uri.parse('${ApiConstants.baseUrl}/auth/profile'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'name': name, 'email': email}),
     );
+
+    request.headers['Authorization'] = 'Bearer $token';
+    request.fields['name'] = name;
+    request.fields['email'] = email;
+    if (phoneNumber != null) request.fields['phoneNumber'] = phoneNumber;
+    if (gender != null) request.fields['gender'] = gender;
+
+    if (profileImage != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'profilePicture',
+          profileImage.path,
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+    }
+
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -98,12 +131,16 @@ class AuthService {
         token: data['token'] ?? '',
         id: data['id'] ?? '',
         role: data['role'] ?? 'user',
+        guideRequestStatus: data['guideRequestStatus'] ?? 'None',
         name: data['name'] ?? name,
         email: data['email'] ?? email,
         tripsCount: (data['tripsCount'] as num?)?.toInt() ?? 0,
         savedCount: (data['savedCount'] as num?)?.toInt() ?? 0,
         reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
         postsCount: (data['postsCount'] as num?)?.toInt() ?? 0,
+        phoneNumber: data['phoneNumber'],
+        gender: data['gender'],
+        profilePicture: data['profilePicture'],
       );
       return data;
     } else {
@@ -159,23 +196,31 @@ class AuthService {
     required String token,
     required String id,
     required String role,
+    required String guideRequestStatus,
     required String name,
     required String email,
     required int tripsCount,
     required int savedCount,
     required int reviewsCount,
     required int postsCount,
+    String? phoneNumber,
+    String? gender,
+    String? profilePicture,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
     await prefs.setString(_idKey, id);
     await prefs.setString(_roleKey, role);
+    await prefs.setString(_guideRequestStatusKey, guideRequestStatus);
     await prefs.setString(_nameKey, name);
     await prefs.setString(_emailKey, email);
     await prefs.setInt(_tripsCountKey, tripsCount);
     await prefs.setInt(_savedCountKey, savedCount);
     await prefs.setInt(_reviewsCountKey, reviewsCount);
     await prefs.setInt(_postsCountKey, postsCount);
+    if (phoneNumber != null) await prefs.setString(_phoneNumberKey, phoneNumber);
+    if (gender != null) await prefs.setString(_genderKey, gender);
+    if (profilePicture != null) await prefs.setString(_profilePictureKey, profilePicture);
   }
 
   Future<String?> getToken() async {
@@ -186,6 +231,11 @@ class AuthService {
   Future<String?> getRole() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_roleKey);
+  }
+
+  Future<String> getGuideRequestStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_guideRequestStatusKey) ?? 'None';
   }
 
   Future<String?> getName() async {
@@ -223,16 +273,40 @@ class AuthService {
     return prefs.getString(_idKey);
   }
 
+
+
+  Future<String?> getPhoneNumber() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_phoneNumberKey);
+  }
+
+
+
+  Future<String?> getGender() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_genderKey);
+  }
+
+  Future<String?> getProfilePicture() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_profilePictureKey);
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_roleKey);
+    await prefs.remove(_guideRequestStatusKey);
     await prefs.remove(_nameKey);
     await prefs.remove(_emailKey);
     await prefs.remove(_tripsCountKey);
     await prefs.remove(_savedCountKey);
     await prefs.remove(_reviewsCountKey);
     await prefs.remove(_postsCountKey);
+    await prefs.remove(_idKey);
+    await prefs.remove(_phoneNumberKey);
+    await prefs.remove(_genderKey);
+    await prefs.remove(_profilePictureKey);
   }
 
   Future<bool> isLoggedIn() async {
