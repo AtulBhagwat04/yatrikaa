@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -302,7 +302,7 @@ class PackagesService {
       final body = {
         'travelers': travelers,
         'contactNumber': contactNumber,
-        if (notes != null) 'notes': notes,
+        'notes': ?notes,
       };
       final response = await BackendHealthManager.instance.post(
         ApiConstants.getJoinPackageUrl(packageId),

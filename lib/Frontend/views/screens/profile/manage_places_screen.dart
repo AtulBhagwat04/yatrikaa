@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
@@ -286,7 +286,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     height: 160,
                     width: double.infinity,
                     color: Colors.grey.shade100,
@@ -549,9 +549,9 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                           height: 150,
                                           width: 130,
                                           fit: BoxFit.cover,
-                                          placeholder: (_, __) =>
+                                          placeholder: (_, _) =>
                                               const ShimmerBox(),
-                                          errorWidget: (_, __, ___) =>
+                                          errorWidget: (_, _, _) =>
                                               Container(
                                                 color: Colors.grey.shade200,
                                                 child: const Icon(

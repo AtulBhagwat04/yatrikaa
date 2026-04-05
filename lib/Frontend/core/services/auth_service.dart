@@ -73,8 +73,9 @@ class AuthService {
       return result;
     } on FirebaseAuthException catch (e) {
       String message = 'Login failed';
-      if (e.code == 'user-not-found') message = 'No user found for that email.';
-      else if (e.code == 'wrong-password') message = 'Wrong password provided.';
+      if (e.code == 'user-not-found') {
+        message = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') message = 'Wrong password provided.';
       else if (e.code == 'invalid-email') message = 'The email address is badly formatted.';
       throw Exception(message);
     } catch (e) {
@@ -198,8 +199,9 @@ class AuthService {
       return result;
     } on FirebaseAuthException catch (e) {
       String message = 'Registration failed';
-      if (e.code == 'email-already-in-use') message = 'The account already exists for that email.';
-      else if (e.code == 'weak-password') message = 'The password provided is too weak.';
+      if (e.code == 'email-already-in-use') {
+        message = 'The account already exists for that email.';
+      } else if (e.code == 'weak-password') message = 'The password provided is too weak.';
       throw Exception(message);
     } catch (e) {
       throw Exception(e.toString());
@@ -372,11 +374,13 @@ class AuthService {
     await prefs.setInt(_savedCountKey, savedCount);
     await prefs.setInt(_reviewsCountKey, reviewsCount);
     await prefs.setInt(_postsCountKey, postsCount);
-    if (phoneNumber != null)
+    if (phoneNumber != null) {
       await prefs.setString(_phoneNumberKey, phoneNumber);
+    }
     if (gender != null) await prefs.setString(_genderKey, gender);
-    if (profilePicture != null)
+    if (profilePicture != null) {
       await prefs.setString(_profilePictureKey, profilePicture);
+    }
   }
 
   Future<String?> getToken() async {

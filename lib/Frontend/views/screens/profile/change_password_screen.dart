@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_input_fields.dart';
@@ -152,10 +152,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 prefixIcon: Icons.lock_reset_rounded,
                                 isObscure: true,
                                 validator: (val) {
-                                  if (val == null || val.isEmpty)
+                                  if (val == null || val.isEmpty) {
                                     return 'New password is required';
-                                  if (val.length < 6)
+                                  }
+                                  if (val.length < 6) {
                                     return 'Minimum 6 characters required';
+                                  }
                                   return null;
                                 },
                               ),
@@ -169,10 +171,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 prefixIcon: Icons.lock_clock_outlined,
                                 isObscure: true,
                                 validator: (val) {
-                                  if (val == null || val.isEmpty)
+                                  if (val == null || val.isEmpty) {
                                     return 'Required';
-                                  if (val != _newPasswordController.text)
+                                  }
+                                  if (val != _newPasswordController.text) {
                                     return 'Passwords do not match';
+                                  }
                                   return null;
                                 },
                               ),

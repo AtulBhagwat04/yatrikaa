@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +39,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   final _customCategoryController = TextEditingController();
 
   final _picker = ImagePicker();
-  List<XFile> _imageFiles = [];
+  final List<XFile> _imageFiles = [];
 
   String _selectedCategory = AppStrings.catForts;
   String _selectedDifficulty = AppStrings.pdEasy;
@@ -100,7 +100,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
     'Locker Room',
     'Other',
   ];
-  List<String> _selectedFacilities = ['All Basic Facilities'];
+  final List<String> _selectedFacilities = ['All Basic Facilities'];
   String? _currentFacilityOption;
 
   TimeOfDay _fromTime = const TimeOfDay(hour: 9, minute: 0);
@@ -485,8 +485,9 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                                   value: _entryType,
                                   items: _entryTypes,
                                   onChanged: (v) {
-                                    if (v != null)
+                                    if (v != null) {
                                       setState(() => _entryType = v);
+                                    }
                                   },
                                 ),
                               ),
@@ -513,8 +514,9 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                                   value: _fromMonth,
                                   items: _months,
                                   onChanged: (v) {
-                                    if (v != null)
+                                    if (v != null) {
                                       setState(() => _fromMonth = v);
+                                    }
                                   },
                                 ),
                               ),
@@ -565,8 +567,9 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                             value: _selectedDifficulty,
                             items: _difficulties,
                             onChanged: (v) {
-                              if (v != null)
+                              if (v != null) {
                                 setState(() => _selectedDifficulty = v);
+                              }
                             },
                           ),
                         ],
@@ -928,8 +931,9 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
             ),
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Field required';
-              if (isNumber && double.tryParse(v.trim()) == null)
+              if (isNumber && double.tryParse(v.trim()) == null) {
                 return 'Invalid number';
+              }
               return null;
             },
           ),
@@ -1059,7 +1063,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
           ),
           Switch(
             value: value,
-            activeColor: primaryBlue,
+            activeThumbColor: primaryBlue,
             activeTrackColor: primaryBlue.withOpacity(0.2),
             onChanged: onChanged,
           ),

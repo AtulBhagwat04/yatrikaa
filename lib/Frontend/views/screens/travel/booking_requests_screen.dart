@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
@@ -127,10 +127,12 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen>
                     .toList()
                   ..sort((a, b) {
                     // Pending first
-                    if (a.status == 'Pending' && b.status != 'Pending')
+                    if (a.status == 'Pending' && b.status != 'Pending') {
                       return -1;
-                    if (a.status != 'Pending' && b.status == 'Pending')
+                    }
+                    if (a.status != 'Pending' && b.status == 'Pending') {
                       return 1;
+                    }
                     return 0;
                   });
 
@@ -145,11 +147,13 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen>
                   ..sort((a, b) {
                     // CancellationRequested first
                     if (a.status == 'CancellationRequested' &&
-                        b.status != 'CancellationRequested')
+                        b.status != 'CancellationRequested') {
                       return -1;
+                    }
                     if (a.status != 'CancellationRequested' &&
-                        b.status == 'CancellationRequested')
+                        b.status == 'CancellationRequested') {
                       return 1;
+                    }
                     return 0;
                   });
 
@@ -187,7 +191,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen>
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: bookings.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        separatorBuilder: (_, _) => const SizedBox(height: 16),
         itemBuilder: (context, index) => _BookingCard(booking: bookings[index]),
       ),
     );

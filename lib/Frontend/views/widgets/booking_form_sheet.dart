@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -522,7 +522,7 @@ class _TravelerForm extends StatelessWidget {
               // Gender
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: entry.gender,
+                  initialValue: entry.gender,
                   onChanged: (v) => entry.gender = v!,
                   style: GoogleFonts.montserrat(
                     fontSize: 13,

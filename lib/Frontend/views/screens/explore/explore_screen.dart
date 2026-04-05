@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
@@ -350,7 +350,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               childAspectRatio: 0.72,
             ),
             delegate: SliverChildBuilderDelegate(
-              (_, _a) => const ShimmerBox(radius: 16),
+              (_, a) => const ShimmerBox(radius: 16),
               childCount: 2,
             ),
           ),

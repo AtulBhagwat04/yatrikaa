@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -285,7 +285,7 @@ class _FeaturedDestinationsViewState extends State<_FeaturedDestinationsView> {
         childAspectRatio: 0.72,
       ),
       itemCount: 8,
-      itemBuilder: (_, __) => const ShimmerBox(radius: 12),
+      itemBuilder: (_, _) => const ShimmerBox(radius: 12),
     );
   }
 
@@ -294,7 +294,7 @@ class _FeaturedDestinationsViewState extends State<_FeaturedDestinationsView> {
       padding: const EdgeInsets.all(AppSpacing.ms),
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 6,
-      itemBuilder: (_, __) => Container(
+      itemBuilder: (_, _) => Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.s),
         height: 110,
         child: const ShimmerBox(radius: 12),

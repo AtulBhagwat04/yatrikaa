@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
@@ -553,7 +553,7 @@ class _SearchScreenState extends State<SearchScreen>
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (context, i) {
           final label = categories[i];
           final icon =

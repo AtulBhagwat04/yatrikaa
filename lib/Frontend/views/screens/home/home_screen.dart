@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -257,7 +257,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 children: [
                                   TextSpan(text: AppStrings.letExploreText),
                                   TextSpan(
-                                    text: AppStrings.appName + "!",
+                                    text: "${AppStrings.appName}!",
                                     style: const TextStyle(color: primaryBlue),
                                   ),
                                 ],

@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
@@ -22,7 +22,7 @@ class _EditPostSheetState extends State<EditPostSheet> {
   late TextEditingController _locationController;
   final _postService = PostService();
   final _picker = ImagePicker();
-  List<XFile> _imageFiles = [];
+  final List<XFile> _imageFiles = [];
   bool _isLoading = false;
   bool _isPickerActive = false;
 

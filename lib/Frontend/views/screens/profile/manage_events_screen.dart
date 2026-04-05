@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/models/event_model.dart';
@@ -295,8 +295,8 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => const ShimmerBox(),
-                    errorWidget: (_, __, ___) => Container(
+                    placeholder: (_, _) => const ShimmerBox(),
+                    errorWidget: (_, _, _) => Container(
                       height: 160,
                       color: Colors.grey.shade100,
                       child: const Icon(
@@ -612,9 +612,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                           height: 150,
                                           width: 130,
                                           fit: BoxFit.cover,
-                                          placeholder: (_, __) =>
+                                          placeholder: (_, _) =>
                                               const ShimmerBox(),
-                                          errorWidget: (_, __, ___) =>
+                                          errorWidget: (_, _, _) =>
                                               Container(
                                                 color: Colors.grey.shade200,
                                                 child: const Icon(
@@ -766,8 +766,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                           selectedCategory,
                           categories,
                           (val) {
-                            if (val != null)
+                            if (val != null) {
                               setSheetState(() => selectedCategory = val);
+                            }
                           },
                         ),
                         _buildSheetField(
@@ -835,8 +836,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                 const Duration(days: 1000),
                               ),
                             );
-                            if (picked != null)
+                            if (picked != null) {
                               setSheetState(() => selectedDate = picked);
+                            }
                           },
                         ),
                         Row(
@@ -851,8 +853,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                     context: context,
                                     initialTime: startTime,
                                   );
-                                  if (picked != null)
+                                  if (picked != null) {
                                     setSheetState(() => startTime = picked);
+                                  }
                                 },
                               ),
                             ),
@@ -867,8 +870,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                     context: context,
                                     initialTime: endTime,
                                   );
-                                  if (picked != null)
+                                  if (picked != null) {
                                     setSheetState(() => endTime = picked);
+                                  }
                                 },
                               ),
                             ),

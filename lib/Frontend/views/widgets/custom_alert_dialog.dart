@@ -1,4 +1,4 @@
-﻿import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -37,14 +37,16 @@ class CustomAlertDialog extends StatelessWidget {
       case CustomAlertType.success:
         primaryColor = successColorDark;
         secondaryColor = successColorLight;
-        if (displayIcon == Icons.info_outline_rounded)
+        if (displayIcon == Icons.info_outline_rounded) {
           displayIcon = Icons.verified_user_rounded;
+        }
         break;
       case CustomAlertType.error:
         primaryColor = errorColor;
         secondaryColor = errorColorLight;
-        if (displayIcon == Icons.info_outline_rounded)
+        if (displayIcon == Icons.info_outline_rounded) {
           displayIcon = Icons.report_problem_rounded;
+        }
         break;
       case CustomAlertType.info:
         primaryColor = primaryBlue;

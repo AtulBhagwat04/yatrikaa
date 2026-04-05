@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -167,7 +167,7 @@ class _PackageApprovalQueue extends StatelessWidget {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(AppSpacing.ms),
                   itemCount: drafts.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  separatorBuilder: (_, _) => const SizedBox(height: 16),
                   itemBuilder: (_, i) => _PackageReviewCard(package: drafts[i]),
                 ),
         );
@@ -237,7 +237,7 @@ class _GuideApprovalQueue extends StatelessWidget {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(AppSpacing.ms),
                   itemCount: requests.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  separatorBuilder: (_, _) => const SizedBox(height: 16),
                   itemBuilder: (_, i) =>
                       _GuideRequestCard(request: requests[i]),
                 ),

@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +36,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   final _interestedCountController = TextEditingController(text: '0');
 
   final _picker = ImagePicker();
-  List<XFile> _imageFiles = [];
+  final List<XFile> _imageFiles = [];
 
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
@@ -163,10 +163,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
     if (picked != null) {
       setState(() {
-        if (isStart)
+        if (isStart) {
           _startTime = picked;
-        else
+        } else {
           _endTime = picked;
+        }
       });
     }
   }
@@ -314,8 +315,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
                             value: _selectedCategory,
                             items: _categories,
                             onChanged: (v) {
-                              if (v != null)
+                              if (v != null) {
                                 setState(() => _selectedCategory = v);
+                              }
                             },
                           ),
                           const SizedBox(height: 16),
@@ -441,8 +443,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
                                   value: _entryType,
                                   items: _entryTypes,
                                   onChanged: (v) {
-                                    if (v != null)
+                                    if (v != null) {
                                       setState(() => _entryType = v);
+                                    }
                                   },
                                 ),
                               ),
@@ -841,7 +844,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             fontWeight: FontWeight.w500,
             color: Colors.black87,
           ),
-          Switch(value: value, activeColor: primaryBlue, onChanged: onChanged),
+          Switch(value: value, activeThumbColor: primaryBlue, onChanged: onChanged),
         ],
       ),
     );

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -331,7 +331,7 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
               padding: const EdgeInsets.all(16),
               itemCount: packages.length,
               physics: const AlwaysScrollableScrollPhysics(),
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
+              separatorBuilder: (_, _) => const SizedBox(height: 16),
               itemBuilder: (_, i) => _PackageCard(
                 package: packages[i],
                 heroTag: 'package_${type}_${packages[i].id}',
@@ -491,9 +491,9 @@ class _PackageCard extends StatelessWidget {
                             width: 125,
                             height: 170,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) =>
+                            placeholder: (_, _) =>
                                 const ShimmerBox(height: 170, width: 125),
-                            errorWidget: (_, __, ___) => Container(
+                            errorWidget: (_, _, _) => Container(
                               width: 125,
                               height: 170,
                               decoration: BoxDecoration(

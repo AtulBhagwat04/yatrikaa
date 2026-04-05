@@ -215,7 +215,7 @@ class AppRoutes {
 
   static PageRouteBuilder _fadeRoute(Widget page) {
     return PageRouteBuilder(
-      pageBuilder: (_, __, ___) => page,
+      pageBuilder: (_, _, _) => page,
       transitionDuration: const Duration(milliseconds: 800),
       transitionsBuilder: (_, animation, secondaryAnimation, child) {
         // Smooth Fade

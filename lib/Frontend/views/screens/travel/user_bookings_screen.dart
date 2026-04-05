@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
@@ -154,7 +154,7 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
       child: ListView.separated(
         padding: const EdgeInsets.all(AppSpacing.ms),
         itemCount: bookings.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (_, i) => _BookingCard(
           booking: bookings[i],
           onCancel: type == 'upcoming'

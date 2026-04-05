@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -744,7 +744,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _existingImages.length + _pickedImages.length + 1,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 if (i == _existingImages.length + _pickedImages.length) {
                   return _addImageBtn();
