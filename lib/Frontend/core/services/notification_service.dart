@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:http/http.dart' as http;
+import 'package:yatrikaa/main.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -47,7 +49,7 @@ class NotificationService {
     );
 
     await _localNotifications.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
@@ -117,10 +119,10 @@ class NotificationService {
 
     if (notification != null && android != null) {
       await _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        const NotificationDetails(
+        id: notification.hashCode,
+        title: notification.title,
+        body: notification.body,
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             _channelId,
             _channelName,
@@ -138,44 +140,160 @@ class NotificationService {
 
   void _onNotificationTapped(NotificationResponse response) {
     if (response.payload != null) {
-      final data = jsonDecode(response.payload!);
-      debugPrint('[NotificationService] Notification tapped with data: $data');
-      // TODO: Handle navigation based on data
+      try {
+        final Map<String, dynamic> data = jsonDecode(response.payload!);
+        debugPrint('[NotificationService] Notification tapped with data: $data');
+        _handleNavigation(data);
+      } catch (e) {
+        debugPrint('[NotificationService] Error parsing tap payload: $e');
+      }
     }
   }
 
   void _onNotificationOpenedApp(RemoteMessage message) {
     debugPrint('[NotificationService] App opened from notification: ${message.data}');
-    // TODO: Handle navigation based on message data
+    _handleNavigation(message.data);
   }
 
-  // --- UI/Mock related methods (Keep if needed by UI) ---
-  
-  static final List<NotificationModel> _mockNotifications = [];
+  /// Centralized navigation logic based on notification data
+  void _handleNavigation(Map<String, dynamic> data) {
+    final type = data['type'];
+    
+    // Check for explicit route field
+    if (data.containsKey('route') && data['route'] != null) {
+      MyApp.navigatorKey.currentState?.pushNamed(
+        data['route'] as String,
+        arguments: data['arguments'] ?? data,
+      );
+      return;
+    }
+
+    // fallback to type-based navigation
+    switch (type) {
+      case 'event':
+        if (data.containsKey('eventId')) {
+          MyApp.navigatorKey.currentState?.pushNamed(
+            RouteNames.eventDetails,
+            arguments: {'eventId': data['eventId']},
+          );
+        }
+        break;
+      case 'place':
+      case 'new_place':
+        if (data.containsKey('placeId')) {
+          MyApp.navigatorKey.currentState?.pushNamed(
+            RouteNames.placeDetails,
+            arguments: data['placeId'], // PlaceDetails usually takes a String ID
+          );
+        }
+        break;
+      case 'guide_request':
+        MyApp.navigatorKey.currentState?.pushNamed(RouteNames.profile);
+        break;
+      default:
+        // Default to notifications screen if it exists, or home
+        debugPrint('[NotificationService] No specific route for type: $type');
+    }
+  }
+
 
   Future<bool> hasUnreadNotifications() async {
-    return _mockNotifications.any((n) => !n.isRead);
+    final notifications = await getAllNotifications();
+    return notifications.any((n) => !n.isRead);
   }
 
   Future<List<NotificationModel>> getAllNotifications() async {
-    // In a real app, you might fetch this from a local database or backend
-    return _mockNotifications;
+    try {
+      final jwtToken = await _authService.getToken();
+      if (jwtToken == null) return [];
+
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/notifications'),
+        headers: {
+          'Authorization': 'Bearer $jwtToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => _mapJsonToNotification(json)).toList();
+      }
+    } catch (e) {
+      debugPrint('[NotificationService] Error fetching notifications: $e');
+    }
+    return [];
   }
 
   Future<void> markAsRead(String id) async {
-    final index = _mockNotifications.indexWhere((n) => n.id == id);
-    if (index != -1) {
-      _mockNotifications[index] = _mockNotifications[index].copyWith(isRead: true);
+    try {
+      final jwtToken = await _authService.getToken();
+      if (jwtToken == null) return;
+
+      await http.put(
+        Uri.parse('${ApiConstants.baseUrl}/notifications/$id/read'),
+        headers: {
+          'Authorization': 'Bearer $jwtToken',
+        },
+      );
+    } catch (e) {
+      debugPrint('[NotificationService] Error marking as read: $e');
     }
   }
 
   Future<void> markAllAsRead() async {
-    for (int i = 0; i < _mockNotifications.length; i++) {
-      _mockNotifications[i] = _mockNotifications[i].copyWith(isRead: true);
+    try {
+      final jwtToken = await _authService.getToken();
+      if (jwtToken == null) return;
+
+      await http.put(
+        Uri.parse('${ApiConstants.baseUrl}/notifications/mark-all-read'),
+        headers: {
+          'Authorization': 'Bearer $jwtToken',
+        },
+      );
+    } catch (e) {
+      debugPrint('[NotificationService] Error marking all as read: $e');
     }
   }
 
   Future<void> clearAll() async {
-    _mockNotifications.clear();
+    try {
+      final jwtToken = await _authService.getToken();
+      if (jwtToken == null) return;
+
+      await http.delete(
+        Uri.parse('${ApiConstants.baseUrl}/notifications/clear-all'),
+        headers: {
+          'Authorization': 'Bearer $jwtToken',
+        },
+      );
+    } catch (e) {
+      debugPrint('[NotificationService] Error clearing notifications: $e');
+    }
+  }
+
+  NotificationModel _mapJsonToNotification(Map<String, dynamic> json) {
+    return NotificationModel(
+      id: json['_id'] ?? '',
+      title: json['title'] ?? '',
+      message: json['message'] ?? '',
+      timestamp: DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
+      isRead: json['isRead'] ?? false,
+      type: _parseNotificationType(json['type']),
+      route: json['route'],
+      arguments: json['arguments'],
+    );
+  }
+
+  NotificationType _parseNotificationType(String? type) {
+    switch (type) {
+      case 'success': return NotificationType.success;
+      case 'warning': return NotificationType.warning;
+      case 'error': return NotificationType.error;
+      case 'event': return NotificationType.event;
+      case 'place': case 'new_place': return NotificationType.place;
+      case 'trip': return NotificationType.trip;
+      default: return NotificationType.info;
+    }
   }
 }

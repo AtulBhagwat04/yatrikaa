@@ -342,7 +342,7 @@ class AuthController {
           timestamp: new Date().toISOString()
         };
 
-        notificationService.sendToToken(user.fcmToken, notification, data)
+        notificationService.sendToToken(user.fcmToken, notification, data, user._id)
           .catch(err => console.error('[auth] Failed to send guide request notification:', err.message));
       }
 
