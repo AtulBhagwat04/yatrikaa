@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,40 +6,45 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_assets.dart';
-import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/place_nearby_card.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/review_card.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/rating_badge.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/external_action_card.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/guide_info_card.dart';
-import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/widgets/place_nearby_card.dart';
+import 'package:yatrikaa/Frontend/views/widgets/review_card.dart';
+import 'package:yatrikaa/Frontend/views/widgets/rating_badge.dart';
+import 'package:yatrikaa/Frontend/views/widgets/external_action_card.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'full_screen_gallery.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as ll;
 
 import 'bloc/place_details_bloc.dart';
 import 'bloc/place_details_event.dart';
 import 'bloc/place_details_state.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/place_utils.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
 
 class PlaceDetailsScreen extends StatelessWidget {
   final String placeId;
+  final PlaceModel? initialPlace;
 
-  const PlaceDetailsScreen({super.key, required this.placeId});
+  const PlaceDetailsScreen({
+    super.key,
+    required this.placeId,
+    this.initialPlace,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
-          PlaceDetailsBloc()..add(PlaceDetailsStarted(placeId)),
+          PlaceDetailsBloc()
+            ..add(PlaceDetailsStarted(placeId, initialPlace: initialPlace)),
       child: PlaceDetailsView(placeId: placeId),
     );
   }
@@ -55,9 +61,9 @@ class PlaceDetailsView extends StatefulWidget {
 class _PlaceDetailsViewState extends State<PlaceDetailsView> {
   final ScrollController _scrollController = ScrollController();
   final PageController _pageController = PageController();
-  int _currentPage = 0;
   bool _showAppBarTitle = false;
   bool _isDescriptionExpanded = false;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -69,10 +75,25 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
         setState(() => _showAppBarTitle = false);
       }
     });
+
+    _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+      if (!mounted) return;
+      final state = context.read<PlaceDetailsBloc>().state;
+      if (state.status == PlaceDetailsStatus.success && state.place != null) {
+        final place = state.place!;
+        if (place.allPhotoUrls.length > 1 && _pageController.hasClients) {
+          _pageController.nextPage(
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _scrollController.dispose();
     _pageController.dispose();
     super.dispose();
@@ -132,9 +153,10 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
       },
       child: BlocBuilder<PlaceDetailsBloc, PlaceDetailsState>(
         builder: (context, state) {
-          if (state.status == PlaceDetailsStatus.loading) {
+          if (state.status == PlaceDetailsStatus.loading &&
+              state.place == null) {
             return Scaffold(
-              backgroundColor: onboardingBlueVeryLight,
+              backgroundColor: appWhite,
               body: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -157,7 +179,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
 
           if (state.status == PlaceDetailsStatus.failure) {
             return Scaffold(
-              backgroundColor: onboardingBlueVeryLight,
+              backgroundColor: appWhite,
               body: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.l),
@@ -231,8 +253,36 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               state.place != null) {
             final place = state.place!;
             return Scaffold(
-              backgroundColor:
-                  onboardingBlueVeryLight, // Unified with other screens
+              backgroundColor: appWhite,
+              floatingActionButton: FloatingActionButton.extended(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'This feature is coming soon! Get ready to share your experience at ${place.name}!',
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: appBlack,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                },
+                backgroundColor: primaryBlue,
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                icon: const Icon(Icons.rate_review_rounded, color: appWhite),
+                label: AppText.button(
+                  "Rate & Review",
+                  color: appWhite,
+                  fontWeight: FontWeight.w800,
+                  size: 14,
+                  letterSpacing: 1.2,
+                ),
+              ),
               body: Stack(
                 children: [
                   CustomScrollView(
@@ -253,49 +303,53 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                               // Section 1: Title & Overview (White background)
                               Container(
                                 padding: const EdgeInsets.only(
-                                  top: 24,
-                                  left: 20,
-                                  right: 20,
-                                  bottom: 10,
+                                  top: AppSpacing.ml,
+                                  left: AppSpacing.m,
+                                  right: AppSpacing.m,
+                                  bottom: AppSpacing.s,
                                 ),
                                 decoration: const BoxDecoration(
-                                  color: onboardingBlueVeryLight,
+                                  color: appWhite,
                                   borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(30),
+                                    top: Radius.circular(12),
                                   ),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildTitleSection(place),
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: AppSpacing.m),
                                     _buildFeaturesSection(place),
                                   ],
                                 ),
                               ),
 
+                              _buildSectionDivider(),
+
                               // Section 2: Plan Your Visit (Experience + Guide)
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.l,
-                                  vertical: 8,
+                                  horizontal: AppSpacing.m,
+                                  vertical: AppSpacing.xs,
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildDescriptionSection(place),
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: AppSpacing.m),
                                     _buildInfoSection(place),
                                   ],
                                 ),
                               ),
 
+                              _buildSectionDivider(),
+
                               // Section 4: Map & Nearby
                               Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.l,
-                                  vertical: 8,
+                                  horizontal: AppSpacing.m,
+                                  vertical: AppSpacing.xs,
                                 ),
                                 child: Column(
                                   children: [
@@ -306,11 +360,13 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                                 ),
                               ),
 
+                              _buildSectionDivider(),
+
                               // Section 5: Reviews
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.l,
-                                  vertical: 8,
+                                  horizontal: AppSpacing.m,
+                                  vertical: AppSpacing.xs,
                                 ),
                                 child: _buildReviewsSection(place),
                               ),
@@ -323,7 +379,6 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                     ],
                   ),
                   _buildStickyHeader(context, place, state.isFavorite),
-                  _buildBottomAction(context, place, state.isBookmarked),
                 ],
               ),
             );
@@ -362,15 +417,20 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
         ),
         child: Row(
           children: [
+            _circularHeaderButton(
+              icon: Icons.arrow_back,
+              onPressed: () => Navigator.pop(context),
+              isLight: !_showAppBarTitle,
+            ),
             if (_showAppBarTitle)
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.only(left: 12, right: 16),
                   child: AppAnimations.fadeIn(
                     child: AppText.subHeading(
                       place.name,
                       maxLines: 1,
-                      align: TextAlign.center,
+                      align: TextAlign.start,
                       overflow: TextOverflow.ellipsis,
                       fontWeight: FontWeight.w800,
                     ),
@@ -379,22 +439,24 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               )
             else
               const Spacer(),
-            _circularHeaderButton(
-              icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-              onPressed: () {
-                context.read<PlaceDetailsBloc>().add(
-                  PlaceDetailsFavoriteToggled(),
-                );
-              },
-              iconColor: isFavorite ? errorColor : appBlack,
-              isLight: !_showAppBarTitle,
-            ),
-            const SizedBox(width: 12),
-            _circularHeaderButton(
-              icon: Icons.share_rounded,
-              onPressed: () => _sharePlace(place),
-              isLight: !_showAppBarTitle,
-            ),
+            if (!_showAppBarTitle) ...[
+              _circularHeaderButton(
+                icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+                onPressed: () {
+                  context.read<PlaceDetailsBloc>().add(
+                    PlaceDetailsFavoriteToggled(),
+                  );
+                },
+                iconColor: isFavorite ? errorColor : appBlack,
+                isLight: !_showAppBarTitle,
+              ),
+              const SizedBox(width: 12),
+              _circularHeaderButton(
+                icon: Icons.share_rounded,
+                onPressed: () => _sharePlace(place),
+                isLight: !_showAppBarTitle,
+              ),
+            ],
           ],
         ),
       ),
@@ -408,6 +470,8 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
     bool isLight = false,
   }) {
     return IconButton(
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
       icon: Icon(
         icon,
         color: isLight ? appWhite : iconColor,
@@ -447,9 +511,13 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
           children: [
             PageView.builder(
               controller: _pageController,
-              itemCount: place.allPhotoUrls.length,
-              onPageChanged: (index) => setState(() => _currentPage = index),
+              itemCount: place.allPhotoUrls.length <= 1
+                  ? place.allPhotoUrls.length
+                  : null,
               itemBuilder: (context, index) {
+                final realIndex = place.allPhotoUrls.isNotEmpty
+                    ? index % place.allPhotoUrls.length
+                    : 0;
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -457,14 +525,14 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                       MaterialPageRoute(
                         builder: (context) => FullScreenGallery(
                           imageUrls: place.allPhotoUrls,
-                          initialIndex: index,
+                          initialIndex: realIndex,
                           place: place,
                         ),
                       ),
                     );
                   },
                   child: CachedNetworkImage(
-                    imageUrl: place.allPhotoUrls[index],
+                    imageUrl: place.allPhotoUrls[realIndex],
                     fit: BoxFit.cover,
                     placeholder: (context, url) => const ShimmerBox(),
                     errorWidget: (context, url, error) => Container(
@@ -496,7 +564,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
             Positioned(
               left: 20,
               right: 20,
-              bottom: 40,
+              bottom: 15,
               child: ListenableBuilder(
                 listenable: _scrollController,
                 builder: (context, child) {
@@ -515,23 +583,6 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: primaryBlue,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: AppText.caption(
-                              place.category?.toUpperCase() ?? "DESTINATION",
-                              color: appWhite,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
                           AppText.heading(
                             place.name,
                             color: appWhite,
@@ -546,30 +597,6 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                 },
               ),
             ),
-            // Thin Progress Indicator
-            if (place.allPhotoUrls.length > 1)
-              Positioned(
-                bottom: 20,
-                left: 20,
-                right: 20,
-                child: Row(
-                  children: List.generate(
-                    place.allPhotoUrls.length,
-                    (index) => Expanded(
-                      child: Container(
-                        height: 3,
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        decoration: BoxDecoration(
-                          color: index == _currentPage
-                              ? appWhite
-                              : appWhite.withAlpha(80),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -618,72 +645,17 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                 ],
               ),
             ),
-            Builder(
-              builder: (context) {
-                bool isOpen = PlaceUtils.checkIfOpenNow(
-                  place.timings,
-                  place.isOpen,
-                );
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isOpen
-                        ? successColor.withAlpha(20)
-                        : errorColor.withAlpha(20),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isOpen
-                          ? successColor.withAlpha(60)
-                          : errorColor.withAlpha(60),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: isOpen ? successColor : errorColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        isOpen ? "Open Now" : "Closed",
-                        style: TextStyle(
-                          color: isOpen ? successColor : errorColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
           ],
         ),
         if (place.distance != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.compare_arrows, color: primaryBlue, size: 20),
+              const Icon(Icons.directions, color: primaryBlue, size: 16),
               const SizedBox(width: 8),
               AppText.body(
-                "Distance: ",
+                "Approx. ${place.distance!.toStringAsFixed(1)} km from you",
                 fontWeight: FontWeight.w600,
-                color: appGrey,
-                size: 14,
-              ),
-              AppText.body(
-                "${place.distance!.toStringAsFixed(2)} km",
-                fontWeight: FontWeight.w900,
                 color: appGrey,
                 size: 14,
               ),
@@ -867,17 +839,17 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
   Widget _buildInfoSection(PlaceModel place) {
     final infoItems = [
       (
-        Icons.history_toggle_off,
+        Icons.event_available_rounded,
         AppStrings.pdBestTime,
         place.bestTimeToVisit ?? AppStrings.pdYearRound,
       ),
       (
-        Icons.wallet_travel_outlined,
+        Icons.payments_rounded,
         AppStrings.pdEntryFee,
         place.entryFee ?? AppStrings.pdFree,
       ),
       (
-        Icons.access_time_filled,
+        Icons.schedule_rounded,
         AppStrings.pdTimings,
         place.timings ?? AppStrings.pdOpen247,
       ),
@@ -894,12 +866,12 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
             : AppStrings.pdNotAvailable,
       ),
       (
-        Icons.family_restroom_rounded,
+        Icons.groups_rounded,
         AppStrings.pdSuitableFor,
         place.suitableFor ?? "Everyone",
       ),
       (
-        Icons.camera_alt_rounded,
+        Icons.photo_camera_rounded,
         AppStrings.pdPhotography,
         (place.photographyAllowed == false)
             ? AppStrings.pdPhotographyNotAllowed
@@ -917,30 +889,62 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppText.subHeading(
-          "Plan Your Visit",
-          fontWeight: FontWeight.w900,
-          size: 18,
+        Row(
+          children: [
+            Container(
+              width: 4,
+              height: 22,
+              decoration: BoxDecoration(
+                color: primaryBlue,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 10),
+            AppText.subHeading(
+              "Know Before You Go",
+              fontWeight: FontWeight.w900,
+              size: 20,
+            ),
+          ],
         ),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.1,
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: appWhite,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: appGreyVeryLight, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: shadowColor.withAlpha(25),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          itemCount: infoItems.length,
-          itemBuilder: (context, index) {
-            final item = infoItems[index];
-
-            return GuideInfoCard(
-              icon: item.$1,
-              label: item.$2,
-              value: item.$3.toString(),
-            );
-          },
+          child: Column(
+            children: List.generate(infoItems.length, (index) {
+              final item = infoItems[index];
+              return Column(
+                children: [
+                  _buildExpandablePlanItem(
+                    icon: item.$1,
+                    label: item.$2,
+                    value: item.$3.toString(),
+                  ),
+                  if (index != infoItems.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(
+                        height: 1,
+                        thickness: 0.8,
+                        color: appGreyVeryLight,
+                      ),
+                    ),
+                ],
+              );
+            }),
+          ),
         ),
         if (place.website != null) ...[
           const SizedBox(height: 24),
@@ -965,12 +969,12 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
           width: double.infinity,
           decoration: BoxDecoration(
             color: appWhite,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: shadowColor,
+                color: shadowColor.withAlpha(30),
                 blurRadius: 15,
-                offset: const Offset(0, 5),
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -978,38 +982,50 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
             children: [
               Stack(
                 children: [
-                  Container(
-                    height: 180,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(16),
-                      ),
-                      image: const DecorationImage(
-                        image: NetworkImage(AppAssets.dummyMapUrl),
-                        fit: BoxFit.cover,
-                      ),
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withAlpha(20),
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16),
-                        ),
-                      ),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: const BoxDecoration(
-                            color: appWhite,
-                            shape: BoxShape.circle,
+                    child: SizedBox(
+                      height: 180,
+                      width: double.infinity,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          FlutterMap(
+                            options: MapOptions(
+                              initialCenter: ll.LatLng(place.lat, place.lng),
+                              initialZoom: 15,
+                              interactionOptions: const InteractionOptions(
+                                flags: InteractiveFlag.none,
+                              ),
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.yatrikaa.app',
+                              ),
+                            ],
                           ),
-                          child: const Icon(
-                            Icons.location_on_rounded,
-                            color: errorColor,
-                            size: 32,
+                          Container(
+                            color: Colors.black.withAlpha(20),
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: const BoxDecoration(
+                                  color: appWhite,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.location_on_rounded,
+                                  color: errorColor,
+                                  size: 32,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
@@ -1048,8 +1064,14 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                     ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(20),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.m),
+                decoration: const BoxDecoration(
+                  color: appWhite,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(12),
+                  ),
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -1171,140 +1193,75 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
     );
   }
 
-  Widget _buildBottomAction(
-    BuildContext context,
-    PlaceModel place,
-    bool isBookmarked,
-  ) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          color: appWhite,
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor,
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
+  Widget _buildExpandablePlanItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        dividerColor: Colors.transparent,
+        splashColor: primaryBlue.withAlpha(5),
+      ),
+      child: ExpansionTile(
+        dense: true,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        childrenPadding: const EdgeInsets.only(
+          left: 64,
+          right: 20,
+          bottom: 14,
+          top: 0,
         ),
-        child: SafeArea(
-          top: false,
-          child: Row(
-            children: [
-              // Bookmark Button
-              Container(
-                decoration: BoxDecoration(
-                  color: isBookmarked ? primaryBlue.withAlpha(20) : appWhite,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isBookmarked ? primaryBlue : appGreyLight,
-                    width: 1.5,
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      context.read<PlaceDetailsBloc>().add(
-                        PlaceDetailsBookmarkToggled(),
-                      );
-                      final authState = context.read<AuthBloc>().state;
-                      if (authState is Authenticated) {
-                        context.read<AuthBloc>().add(
-                          UpdateAuthCounts(
-                            savedCount: isBookmarked
-                                ? authState.savedCount - 1
-                                : authState.savedCount + 1,
-                          ),
-                        );
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Icon(
-                        isBookmarked
-                            ? Icons.bookmark_rounded
-                            : Icons.bookmark_border_rounded,
-                        color: isBookmarked ? primaryBlue : appGrey,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Start Trip Button
-              Expanded(
-                child: Container(
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: primaryBlue,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryBlue.withAlpha(80),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        final authState = context.read<AuthBloc>().state;
-                        if (authState is Authenticated) {
-                          context.read<AuthBloc>().add(
-                            UpdateAuthCounts(
-                              tripsCount: authState.tripsCount + 1,
-                            ),
-                          );
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              '${AppStrings.pdStartingTripPrefix}${place.name}${AppStrings.pdStartingTripSuffix}',
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.near_me_rounded,
-                              color: appWhite,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            AppText.button(
-                              AppStrings.pdStartMyTrip.toUpperCase(),
-                              color: appWhite,
-                              fontWeight: FontWeight.w800,
-                              size: 14,
-                              letterSpacing: 1.2,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: primaryBlue.withAlpha(15),
+            borderRadius: BorderRadius.circular(10),
           ),
+          child: Icon(icon, color: primaryBlue, size: 18),
+        ),
+        title: AppText.body(
+          label,
+          fontWeight: FontWeight.w700,
+          size: 14,
+          color: appBlack,
+        ),
+        trailing: const Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: appGrey,
+          size: 20,
+        ),
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: AppText.body(
+              value,
+              fontWeight: FontWeight.w800,
+              size: 14,
+              color: primaryBlue,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionDivider() {
+    return Container(
+      height: 1,
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.m),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            appGreyLight.withAlpha(0),
+            appGreyLight,
+            appGreyLight,
+            appGreyLight.withAlpha(0),
+          ],
+          stops: const [0.0, 0.2, 0.8, 1.0],
         ),
       ),
     );

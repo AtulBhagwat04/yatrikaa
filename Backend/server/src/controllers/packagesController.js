@@ -2,6 +2,7 @@ const TravelPackage = require('../models/TravelPackage');
 const Booking = require('../models/Booking');
 const { uploadImage } = require('../services/cloudinaryService');
 const User = require('../models/User');
+const notificationService = require('../services/notificationService');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -40,7 +41,7 @@ const _parsePackageBody = (body) => {
 };
 
 /**
- * Upload all req.files to Cloudinary under Bhatkanti/Packages/<safeTitle>
+ * Upload all req.files to Cloudinary under Yatrikaa/Packages/<safeTitle>
  * Returns array of secure_url strings.
  */
 const _uploadImages = async (files, title) => {
@@ -49,7 +50,7 @@ const _uploadImages = async (files, title) => {
     .trim()
     .replace(/[^\w\s-]/g, '')
     .replace(/\s+/g, '_');
-  const folder = `Bhatkanti/Packages/${safeTitle}`;
+  const folder = `Yatrikaa/Packages/${safeTitle}`;
   const results = await Promise.all(files.map(f => uploadImage(f, folder)));
   return results.map(r => r.secure_url);
 };
@@ -58,12 +59,17 @@ const _uploadImages = async (files, title) => {
 // PACKAGE CONTROLLERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-// @desc  Get all published travel packages (with optional filters)
-// @route GET /api/packages
+// @desc  Get all published travel packages (with optional filters + pagination)
+// @route GET /api/packages?page=1&limit=10&category=&search=
 // @access Public
 const getPackages = async (req, res, next) => {
   try {
     const { category, difficulty, search } = req.query;
+
+    // Pagination params (default: page=1, limit=10; limit=0 → all)
+    const page  = Math.max(1, parseInt(req.query.page  || '1',  10));
+    const limit = Math.max(0, parseInt(req.query.limit || '10', 10));
+
     const filter = { status: 'Published' };
 
     if (category && category !== 'All') filter.category = category;
@@ -76,11 +82,34 @@ const getPackages = async (req, res, next) => {
       ];
     }
 
-    const packages = await TravelPackage.find(filter)
-      .populate('organizer', 'name profileImage role')
+    const baseQuery = TravelPackage.find(filter)
+      .populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus')
       .sort({ isPopular: -1, createdAt: -1 });
 
-    res.status(200).json({ success: true, count: packages.length, results: packages });
+    let packages;
+    let totalCount;
+
+    if (limit === 0) {
+      // Legacy / admin: return all
+      packages   = await baseQuery;
+      totalCount = packages.length;
+    } else {
+      totalCount = await TravelPackage.countDocuments(filter);
+      packages   = await baseQuery.skip((page - 1) * limit).limit(limit);
+    }
+
+    const totalPages = limit > 0 ? Math.ceil(totalCount / limit) : 1;
+    const hasMore    = limit > 0 && page < totalPages;
+
+    res.status(200).json({
+      success: true,
+      count: packages.length,
+      totalCount,
+      page,
+      totalPages,
+      hasMore,
+      results: packages,
+    });
   } catch (err) {
     next(err);
   }
@@ -92,7 +121,7 @@ const getPackages = async (req, res, next) => {
 const getPackageDetails = async (req, res, next) => {
   try {
     const pkg = await TravelPackage.findById(req.params.id)
-      .populate('organizer', 'name profileImage role');
+      .populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus');
 
     if (!pkg) return res.status(404).json({ success: false, error: 'Travel package not found' });
 
@@ -124,7 +153,7 @@ const createPackage = async (req, res, next) => {
     });
 
     // Populate organizer for response
-    await pkg.populate('organizer', 'name profileImage role');
+    await pkg.populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus');
 
     // Increment organizer's packagesCount
     await User.findByIdAndUpdate(req.user._id, { $inc: { packagesCount: 1 } });
@@ -170,7 +199,7 @@ const updatePackage = async (req, res, next) => {
       req.params.id,
       body,
       { new: true, runValidators: true }
-    ).populate('organizer', 'name profileImage role');
+    ).populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus');
 
     res.status(200).json({ success: true, result: updated });
   } catch (err) {
@@ -189,6 +218,16 @@ const publishPackage = async (req, res, next) => {
       { new: true }
     );
     if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
+
+    // --- AUTOMATED NOTIFICATIONS ---
+    // Notify the guide that their package is live!
+    const guide = await User.findById(pkg.organizer);
+    if (guide && guide.fcmToken) {
+      notificationService.sendToToken(guide.fcmToken, {
+        title: 'Package Published! 🌟',
+        body: `Your package "${pkg.title}" is now live and visible to all travelers.`,
+      }, { type: 'package_published', packageId: pkg._id.toString() }).catch(e => console.error(e));
+    }
 
     res.status(200).json({ success: true, result: pkg, message: 'Package published successfully' });
   } catch (err) {
@@ -227,7 +266,7 @@ const deletePackage = async (req, res, next) => {
 const getMyPackages = async (req, res, next) => {
   try {
     const packages = await TravelPackage.find({ organizer: req.user._id })
-      .populate('organizer', 'name profileImage role')
+      .populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus')
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, count: packages.length, results: packages });
@@ -283,6 +322,24 @@ const joinPackage = async (req, res, next) => {
     // Populate package info in response for the Flutter model
     await booking.populate('package', 'title images destination duration price');
 
+    // --- AUTOMATED NOTIFICATIONS ---
+    // 1. Notify the User (Booking Success)
+    if (req.user.fcmToken) {
+      notificationService.sendToToken(req.user.fcmToken, {
+        title: 'Booking Successful! ✈️',
+        body: `You have successfully joined "${pkg.title}". Get ready for the adventure!`,
+      }, { type: 'booking_success', bookingId: booking._id.toString() }).catch(e => console.error(e));
+    }
+
+    // 2. Notify the Guide (New Booking Alert)
+    const guide = await User.findById(pkg.organizer);
+    if (guide && guide.fcmToken) {
+      notificationService.sendToToken(guide.fcmToken, {
+        title: 'New Booking Received! 💰',
+        body: `${req.user.name} and ${travelersCount - 1} others joined "${pkg.title}".`,
+      }, { type: 'new_booking', bookingId: booking._id.toString() }).catch(e => console.error(e));
+    }
+
     console.log(`[packages] ${req.user.name} joined "${pkg.title}" (${travelersCount} travelers)`);
     res.status(201).json({ success: true, result: booking });
   } catch (err) {
@@ -299,7 +356,7 @@ const getMyBookings = async (req, res, next) => {
       .populate('package', 'title images destination duration price organizer')
       .populate({
         path: 'package',
-        populate: { path: 'organizer', select: 'name profileImage role' },
+        populate: { path: 'organizer', select: 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus' },
       })
       .sort({ createdAt: -1 });
 
@@ -378,6 +435,24 @@ const cancelBooking = async (req, res, next) => {
       });
     }
 
+    // --- AUTOMATED NOTIFICATIONS ---
+    // Notify the user about the cancellation/rejection
+    if (booking.user) {
+      const dbUser = await User.findById(booking.user);
+      if (dbUser && dbUser.fcmToken) {
+        let title = 'Booking Cancelled';
+        let body = `Your booking for "${pkg.title}" has been cancelled.`;
+        
+        if (booking.status === 'CancellationRequested') {
+          title = 'Cancellation Requested';
+          body = `Your request to cancel "${pkg.title}" has been submitted.`;
+        }
+
+        notificationService.sendToToken(dbUser.fcmToken, { title, body }, 
+          { type: 'booking_cancelled', bookingId: booking._id.toString() }).catch(e => console.error(e));
+      }
+    }
+
     res.status(200).json({ 
       success: true, 
       result: booking, 
@@ -413,6 +488,16 @@ const confirmBooking = async (req, res, next) => {
 
     booking.status = 'Confirmed';
     await booking.save();
+
+    // --- AUTOMATED NOTIFICATIONS ---
+    // Notify user that booking is confirmed
+    const dbUser = await User.findById(booking.user);
+    if (dbUser && dbUser.fcmToken) {
+      notificationService.sendToToken(dbUser.fcmToken, {
+        title: 'Booking Confirmed! ✅',
+        body: `Pack your bags! Your booking for "${pkg.title}" is now confirmed.`,
+      }, { type: 'booking_confirmed', bookingId: booking._id.toString() }).catch(e => console.error(e));
+    }
 
     res.status(200).json({ success: true, result: booking, message: 'Booking confirmed successfully' });
   } catch (err) {
@@ -476,7 +561,7 @@ const getAllPackagesAdmin = async (req, res, next) => {
     const { status } = req.query;
     const filter = status ? { status } : {};
     const packages = await TravelPackage.find(filter)
-      .populate('organizer', 'name email profileImage role')
+      .populate('organizer', 'name email profileImage role tripsCount packagesCount isVerified guideRequestStatus')
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, count: packages.length, results: packages });

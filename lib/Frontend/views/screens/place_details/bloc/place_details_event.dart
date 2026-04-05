@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../core/models/place_model.dart';
 
 abstract class PlaceDetailsEvent extends Equatable {
   const PlaceDetailsEvent();
@@ -9,10 +10,12 @@ abstract class PlaceDetailsEvent extends Equatable {
 
 class PlaceDetailsStarted extends PlaceDetailsEvent {
   final String placeId;
-  const PlaceDetailsStarted(this.placeId);
+  final PlaceModel? initialPlace;
+
+  const PlaceDetailsStarted(this.placeId, {this.initialPlace});
 
   @override
-  List<Object?> get props => [placeId];
+  List<Object?> get props => [placeId, initialPlace];
 }
 
 class PlaceDetailsFavoriteToggled extends PlaceDetailsEvent {}

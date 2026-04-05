@@ -55,9 +55,13 @@ Backend/server/debug_db.js
 Backend/server/debug_output.txt
 Backend/server/popular_api_output.json
 Backend/server/test_api.js
+Backend/server/serviceAccountKey.json
 
 # Tooling outputs
 analyze_error.txt
 analyze_output.txt
 files_list.txt
 full_analyze.txt
+out.txt
+tmp/
+*.txt

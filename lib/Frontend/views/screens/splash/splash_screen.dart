@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/splash/splash_screen_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/screens/splash/splash_screen_bloc.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -16,7 +18,6 @@ class SplashScreen extends StatelessWidget {
     } else if (authState is Unauthenticated) {
       Navigator.pushReplacementNamed(context, RouteNames.onboarding);
     }
-    // If AuthLoading or AuthInitial, we do nothing and wait for the AuthBloc listener
   }
 
   @override
@@ -42,82 +43,100 @@ class SplashScreen extends StatelessWidget {
             },
           ),
         ],
-        child: BlocBuilder<SplashBloc, SplashState>(
-          builder: (context, state) {
-            return Scaffold(
-              body: Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment(0, -0.2),
-                    radius: 2.2,
-                    colors: [
-                      onboardingBlueVeryLight,
-                      onboardingBlueLight,
-                      onboardingBlueVeryLight,
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedScale(
-                        scale: state.showIcon ? 1.0 : 0.3,
-                        duration: const Duration(milliseconds: 900),
-                        curve: Curves.elasticOut,
-                        child: AnimatedOpacity(
-                          opacity: state.showIcon ? 1 : 0,
-                          duration: const Duration(milliseconds: 600),
-                          child: const Icon(
-                            Icons.travel_explore_rounded,
-                            size: 96,
-                            color: primaryBlue,
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light, 
+            systemNavigationBarColor: primaryBlue,
+            systemNavigationBarIconBrightness: Brightness.light,
+          ),
+          child: Container(
+            decoration: const BoxDecoration(color: primaryBlue),
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: Stack(
+                children: [
+                  // Main Content
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // App Name
+                        Text(
+                          'YATRIKAA',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 44,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 5,
+                            color: appWhite,
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      AnimatedSlide(
-                        offset: state.showText
-                            ? Offset.zero
-                            : const Offset(0, 0.3),
-                        duration: const Duration(milliseconds: 900),
-                        curve: Curves.easeOutExpo,
-                        child: AnimatedOpacity(
-                          opacity: state.showText ? 1 : 0,
-                          duration: const Duration(milliseconds: 700),
-                          child: Column(
-                            children: [
-                              Text(
-                                'BHATKANTI',
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 34,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 7,
-                                  color: primaryBlue,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Discover • Plan • Travel',
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 3,
-                                  color: primaryBlue.withOpacity(0.75),
-                                ),
-                              ),
-                            ],
+                        ).animate().fadeIn(delay: 200.ms, duration: 1000.ms),
+
+                        const SizedBox(height: 10),
+
+                        // Tagline
+                        Text(
+                          'Discover • Plan • Travel',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 4,
+                            color: appWhite.withOpacity(0.85),
                           ),
-                        ),
-                      ),
-                    ],
+                        ).animate().fadeIn(delay: 200.ms, duration: 1000.ms),
+                      ],
+                    ),
                   ),
-                ),
+
+                  // Bottom loading indicator and Made in India tag
+                  Positioned(
+                    bottom: 60,
+                    left: 0,
+                    right: 0,
+                    child: Column(
+                      children: [
+                        // Loading bar
+                        SizedBox(
+                          width: 60,
+                          height: 2,
+                          child: LinearProgressIndicator(
+                            backgroundColor: appWhite.withOpacity(0.15),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              appWhite,
+                            ),
+                          ),
+                        ).animate().fadeIn(delay: 1000.ms),
+
+                        const SizedBox(height: 24),
+
+                        // Made in India Badge
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.favorite_rounded,
+                              size: 14,
+                              color: appWhite.withOpacity(0.9),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'MADE IN INDIA',
+                              style: GoogleFonts.montserrat(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2,
+                                color: appWhite.withOpacity(0.75),
+                              ),
+                            ),
+                          ],
+                        ).animate().fadeIn(delay: 1000.ms),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );

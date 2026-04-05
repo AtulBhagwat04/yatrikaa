@@ -72,10 +72,7 @@ class CustomToast extends StatelessWidget {
           child: Row(
             children: [
               // Accent Bar
-              Container(
-                width: 6,
-                color: iconColor,
-              ),
+              Container(width: 6, color: iconColor),
               const SizedBox(width: 16),
               // Icon Container
               Container(
@@ -132,7 +129,9 @@ class CustomToast extends StatelessWidget {
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     onClose?.call();
                   },
-                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
+                  borderRadius: const BorderRadius.horizontal(
+                    right: Radius.circular(16),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Center(

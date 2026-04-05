@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
 
 /// Guide / Admin dashboard showing all their own travel packages,
 /// with real data fetched from the backend via TravelBloc.
@@ -80,7 +80,9 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
               .where((p) => p.status == 'Published' || p.status == 'Draft')
               .toList();
           final active = allPackages
-              .where((p) => p.currentParticipants > 0 && p.status == 'Published')
+              .where(
+                (p) => p.currentParticipants > 0 && p.status == 'Published',
+              )
               .toList();
           final completed = allPackages
               .where((p) => p.status == 'Completed')
@@ -94,7 +96,6 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
                   SliverAppBar(
                     pinned: true,
                     floating: true,
-                    automaticallyImplyLeading: false,
                     backgroundColor: onboardingBlueVeryLight,
                     elevation: 0,
                     scrolledUnderElevation: 2,
@@ -172,7 +173,11 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
                 borderRadius: BorderRadius.circular(16),
               ),
               tooltip: 'Create Package',
-              child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+              child: const Icon(
+                Icons.add_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
             ),
           );
         },
@@ -185,7 +190,10 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: AppText.subHeading('Delete Package?', fontWeight: FontWeight.w800),
+        title: AppText.subHeading(
+          'Delete Package?',
+          fontWeight: FontWeight.w800,
+        ),
         content: AppText.body(
           'Are you sure you want to delete "${package.title}"? travelers who booked this trip will be notified. This action cannot be undone.',
           size: 13,
@@ -193,14 +201,24 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: AppText.body('Cancel', color: appGrey, fontWeight: FontWeight.w700),
+            child: AppText.body(
+              'Cancel',
+              color: appGrey,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context.read<TravelBloc>().add(TravelDeletePackageRequested(package.id));
+              context.read<TravelBloc>().add(
+                TravelDeletePackageRequested(package.id),
+              );
             },
-            child: AppText.body('Delete', color: errorColorDark, fontWeight: FontWeight.w800),
+            child: AppText.body(
+              'Delete',
+              color: errorColorDark,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),

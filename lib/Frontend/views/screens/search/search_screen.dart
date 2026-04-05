@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
-import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
-import 'package:bhatkanti_app/Frontend/core/services/places_service.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/modern/modern_search_bar.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/place_nearby_card.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_categories.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/core/services/places_service.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
+import 'package:yatrikaa/Frontend/views/widgets/place_nearby_card.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_categories.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui';
 
@@ -362,7 +362,7 @@ class _SearchScreenState extends State<SearchScreen>
           Navigator.pushNamed(
             context,
             RouteNames.placeDetails,
-            arguments: place.id,
+            arguments: {'placeId': place.id, 'place': place},
           );
         },
         child: Container(
@@ -675,7 +675,7 @@ class _SearchScreenState extends State<SearchScreen>
             Navigator.pushNamed(
               context,
               RouteNames.placeDetails,
-              arguments: place.id,
+              arguments: {'placeId': place.id, 'place': place},
             );
           },
         ),

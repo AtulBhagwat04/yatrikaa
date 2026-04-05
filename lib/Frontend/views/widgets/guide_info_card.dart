@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 
 class GuideInfoCard extends StatelessWidget {
   final IconData icon;
@@ -19,40 +19,45 @@ class GuideInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: onboardingBlueSoft.withAlpha(50),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: appGreyVeryLight),
+        color: appWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: primaryBlue.withAlpha(20)),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withAlpha(10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (iconColor ?? primaryBlue).withAlpha(30),
-              shape: BoxShape.circle,
+              color: (iconColor ?? primaryBlue).withAlpha(15),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor ?? primaryBlue, size: 20),
+            child: Icon(icon, color: iconColor ?? primaryBlue, size: 24),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText.caption(
-                label,
-                color: appGrey,
-                fontWeight: FontWeight.w600,
-              ),
-              const SizedBox(height: 2),
-              AppText.body(
-                value,
-                fontWeight: FontWeight.w800,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText.caption(
+                  label,
+                  color: appGrey,
+                  fontWeight: FontWeight.w600,
+                  size: 13,
+                ),
+                const SizedBox(height: 2),
+                AppText.body(value, fontWeight: FontWeight.w800, size: 15),
+              ],
+            ),
           ),
         ],
       ),

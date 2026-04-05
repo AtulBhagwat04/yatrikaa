@@ -1,10 +1,10 @@
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
+﻿import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
 
 /// Lightweight booking model returned by the API.
 /// A booking links a User → TravelPackage with traveler details and status.
 class BookingModel {
   final String id;
-  final String status;       // Pending | Confirmed | Cancelled | Completed
+  final String status; // Pending | Confirmed | Cancelled | Completed
   final String paymentStatus; // Pending | Paid | Refunded
   final double totalAmount;
   final String contactNumber;

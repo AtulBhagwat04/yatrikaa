@@ -1,8 +1,8 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
-import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/core/models/event_model.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
 
 class AppCache {
   static const String _keyRecommended = 'home_recommended';
@@ -46,13 +46,16 @@ class AppCache {
     String? location,
   }) async {
     if (recommended != null) {
-      await saveRawData(_keyRecommended, recommended.map((p) => p.toJson()).toList());
+      await saveRawData(
+        _keyRecommended,
+        recommended.map((p) => p.toJson()).toList(),
+      );
     }
-    
+
     if (nearby != null) {
       await saveRawData(_keyNearby, nearby.map((p) => p.toJson()).toList());
     }
-    
+
     if (events != null) {
       await saveRawData(_keyEvents, events.map((e) => e.toJson()).toList());
     }
@@ -60,7 +63,7 @@ class AppCache {
     if (packages != null) {
       await saveRawData(_keyPackages, packages.map((p) => p.toJson()).toList());
     }
-    
+
     if (location != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyLocation, location);
@@ -72,16 +75,20 @@ class AppCache {
     final nearbyData = await getRawData(_keyNearby);
     final eventsData = await getRawData(_keyEvents);
     final packagesData = await getRawData(_keyPackages);
-    
+
     final prefs = await SharedPreferences.getInstance();
     final location = prefs.getString(_keyLocation);
     final lastUpdate = prefs.getInt(_keyLastUpdate);
 
     return {
-      'recommended': recommendedData.map((j) => PlaceModel.fromJson(j)).toList(),
+      'recommended': recommendedData
+          .map((j) => PlaceModel.fromJson(j))
+          .toList(),
       'nearby': nearbyData.map((j) => PlaceModel.fromJson(j)).toList(),
       'events': eventsData.map((j) => EventModel.fromJson(j)).toList(),
-      'packages': packagesData.map((j) => TravelPackageModel.fromJson(j)).toList(),
+      'packages': packagesData
+          .map((j) => TravelPackageModel.fromJson(j))
+          .toList(),
       'location': location,
       'lastUpdate': lastUpdate,
     };

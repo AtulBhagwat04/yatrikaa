@@ -88,7 +88,9 @@ class PostModel {
         json['createdAt'] ?? DateTime.now().toIso8601String(),
       ),
       isEdited: json['isEdited'] ?? false,
-      editedAt: json['editedAt'] != null ? DateTime.parse(json['editedAt']) : null,
+      editedAt: json['editedAt'] != null
+          ? DateTime.parse(json['editedAt'])
+          : null,
     );
   }
 }

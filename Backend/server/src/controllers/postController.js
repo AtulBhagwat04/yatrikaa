@@ -1,6 +1,7 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
 const { uploadImage, deleteImage } = require('../services/cloudinaryService');
+const notificationService = require('../services/notificationService');
 
 class PostController {
   async createPost(req, res, next) {
@@ -9,7 +10,7 @@ class PostController {
       let finalImages = [];
 
       if (req.files && req.files.length > 0) {
-        const folderName = `Bhatkanti/Posts/${req.user._id}`;
+        const folderName = `Yatrikaa/Posts/${req.user._id}`;
         const uploadPromises = req.files.map(file => uploadImage(file, folderName));
         const results = await Promise.all(uploadPromises);
         finalImages = results.map(r => r.secure_url);
@@ -61,6 +62,19 @@ class PostController {
       }
 
       await post.save();
+      
+      // --- AUTOMATED NOTIFICATIONS ---
+      // Notify the author that someone liked their post
+      if (likedIndex === -1 && post.author.toString() !== userId) {
+        const author = await User.findById(post.author);
+        if (author && author.fcmToken) {
+          notificationService.sendToToken(author.fcmToken, {
+            title: 'New Like! ❤️',
+            body: `${req.user.name} liked your post.`,
+          }, { type: 'social_like', postId: post._id.toString() }).catch(e => console.error(e));
+        }
+      }
+
       const populatedPost = await Post.findById(post._id)
         .populate('author', 'name')
         .populate('comments.user', 'name');
@@ -82,6 +96,20 @@ class PostController {
       });
 
       await post.save();
+
+      // --- AUTOMATED NOTIFICATIONS ---
+      // Notify the author that someone commented
+      const userId = req.user._id.toString();
+      if (post.author.toString() !== userId) {
+        const author = await User.findById(post.author);
+        if (author && author.fcmToken) {
+          notificationService.sendToToken(author.fcmToken, {
+            title: 'New Comment! 💬',
+            body: `${req.user.name} commented: "${text}"`,
+          }, { type: 'social_comment', postId: post._id.toString() }).catch(e => console.error(e));
+        }
+      }
+
       const populatedPost = await Post.findById(post._id)
         .populate('author', 'name')
         .populate('comments.user', 'name');
@@ -232,7 +260,7 @@ class PostController {
           }
         }
 
-        const folderName = `Bhatkanti/Posts/${req.user._id}`;
+        const folderName = `Yatrikaa/Posts/${req.user._id}`;
         const uploadPromises = req.files.map(file => uploadImage(file, folderName));
         const results = await Promise.all(uploadPromises);
         post.images = results.map(r => r.secure_url);

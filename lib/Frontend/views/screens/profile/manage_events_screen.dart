@@ -1,19 +1,19 @@
-import 'package:flutter/material.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
-import 'package:bhatkanti_app/Frontend/core/services/events_service.dart';
-import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/models/event_model.dart';
+import 'package:yatrikaa/Frontend/core/services/events_service.dart';
+import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/custom_alert_dialog.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/error_handler.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
+import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
 import 'package:http/http.dart' as http;
-import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 
@@ -125,7 +125,6 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      automaticallyImplyLeading: false,
       floating: true,
       pinned: true,
       backgroundColor: onboardingBlueVeryLight,
@@ -703,7 +702,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                 );
                               }),
                               if (existingImages.length + pickedFiles.length <
-                                  3)
+                                  10)
                                 GestureDetector(
                                   onTap: () async {
                                     final List<XFile> images = await _picker
@@ -711,7 +710,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                     if (images.isNotEmpty) {
                                       setSheetState(() {
                                         int remaining =
-                                            3 -
+                                            10 -
                                             (existingImages.length +
                                                 pickedFiles.length);
                                         pickedFiles.addAll(

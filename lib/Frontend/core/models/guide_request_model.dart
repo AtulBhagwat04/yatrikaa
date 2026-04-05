@@ -21,8 +21,8 @@ class GuideRequestModel extends Equatable {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       profileImage: json['profileImage'],
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
     );
   }

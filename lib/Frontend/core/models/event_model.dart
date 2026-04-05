@@ -1,7 +1,7 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_assets.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
 
 class EventModel extends Equatable {
   final String id;
@@ -52,28 +52,28 @@ class EventModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        description,
-        date,
-        startTime,
-        endTime,
-        venue,
-        address,
-        lat,
-        lng,
-        category,
-        images,
-        organizer,
-        entryFee,
-        contactNumber,
-        website,
-        isPopular,
-        isVerified,
-        createdBy,
-        interestedCount,
-        interestedUsers,
-      ];
+    id,
+    title,
+    description,
+    date,
+    startTime,
+    endTime,
+    venue,
+    address,
+    lat,
+    lng,
+    category,
+    images,
+    organizer,
+    entryFee,
+    contactNumber,
+    website,
+    isPopular,
+    isVerified,
+    createdBy,
+    interestedCount,
+    interestedUsers,
+  ];
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
     try {
@@ -86,7 +86,9 @@ class EventModel extends Equatable {
         }
       }
 
-      final location = (geometry != null && geometry is Map) ? geometry['location'] : null;
+      final location = (geometry != null && geometry is Map)
+          ? geometry['location']
+          : null;
 
       return EventModel(
         id: json['_id'] ?? json['id'] ?? '',
@@ -118,7 +120,9 @@ class EventModel extends Equatable {
             : json['createdBy'],
         interestedCount: (json['interestedCount'] as num?)?.toInt() ?? 0,
         interestedUsers: json['interestedUsers'] != null
-            ? (json['interestedUsers'] as List).map((e) => e is Map ? (e['_id'] as String) : (e as String)).toList()
+            ? (json['interestedUsers'] as List)
+                  .map((e) => e is Map ? (e['_id'] as String) : (e as String))
+                  .toList()
             : [],
       );
     } catch (e) {

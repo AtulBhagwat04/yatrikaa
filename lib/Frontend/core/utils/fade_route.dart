@@ -12,13 +12,11 @@ class RouteUtils {
       transitionDuration: duration,
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(
-          opacity: animation,
-          child: child,
-        );
+        return FadeTransition(opacity: animation, child: child);
       },
     );
   }
+
   static Route slideFadeRoute({
     required Widget page,
     Duration duration = const Duration(milliseconds: 600),

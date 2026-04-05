@@ -1,29 +1,35 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/models/event_model.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 
 class EventHorizontalCard extends StatelessWidget {
   final EventModel event;
   final VoidCallback onTap;
+  final double width;
+  final double radius;
 
   const EventHorizontalCard({
     super.key,
     required this.event,
     required this.onTap,
+    this.width = 250,
+    this.radius = 16,
+    this.margin,
   });
+  final EdgeInsetsGeometry? margin;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 250,
-      margin: const EdgeInsets.only(right: AppSpacing.m, bottom: 8),
+      width: width,
+      margin: margin ?? const EdgeInsets.only(right: AppSpacing.m, bottom: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(radius),
         boxShadow: [
           BoxShadow(
             color: shadowColorDark,
@@ -33,7 +39,7 @@ class EventHorizontalCard extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(radius),
         child: InkWell(
           onTap: onTap,
           child: Stack(

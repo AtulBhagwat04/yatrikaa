@@ -1,5 +1,6 @@
 const Event = require('../models/Event');
 const { uploadImage } = require('../services/cloudinaryService');
+const notificationService = require('../services/notificationService');
 
 class EventsController {
   /**
@@ -17,7 +18,7 @@ class EventsController {
           .replace(/[^\w\s-]/g, '') // remove special chars
           .replace(/\s+/g, '_'); // replace spaces with underscores
           
-        const folderName = `Bhatkanti/Events/${safeTitle}`;
+        const folderName = `Yatrikaa/Events/${safeTitle}`;
         
         const uploadPromises = req.files.map(file => uploadImage(file, folderName));
         const results = await Promise.all(uploadPromises);
@@ -27,6 +28,14 @@ class EventsController {
       body.createdBy = req.user ? req.user._id : null;
 
       const event = await Event.create(body);
+
+      // --- BROADCAST NOTIFICATION ---
+      // Notify all users about the new event
+      notificationService.sendToTopic('all_users', {
+        title: 'New Event: ' + event.title + ' 🎊',
+        body: 'A new event has been added! Check it out now.',
+      }, { type: 'new_event', eventId: event._id.toString() }).catch(e => console.error(e));
+
       res.status(201).json({
         status: "OK",
         result: event
@@ -38,10 +47,14 @@ class EventsController {
   };
 
   /**
-   * Get all events with optional filtering
+   * Get all events with optional filtering + pagination
+   * Query params: category, popular, page (default 1), limit (default 10, 0 = all)
    */
   getEvents = async (req, res, next) => {
     const { category, popular } = req.query;
+    const page  = Math.max(1, parseInt(req.query.page  || '1',  10));
+    const limit = Math.max(0, parseInt(req.query.limit || '10', 10));
+
     try {
       let filter = {};
       if (category && category !== 'All') {
@@ -51,10 +64,30 @@ class EventsController {
         filter.isPopular = true;
       }
 
-      const events = await Event.find(filter).sort({ date: 1 });
+      const baseQuery = Event.find(filter).sort({ date: 1 });
+
+      let events;
+      let totalCount;
+
+      if (limit === 0) {
+        events     = await baseQuery;
+        totalCount = events.length;
+      } else {
+        totalCount = await Event.countDocuments(filter);
+        events     = await baseQuery.skip((page - 1) * limit).limit(limit);
+      }
+
+      const totalPages = limit > 0 ? Math.ceil(totalCount / limit) : 1;
+      const hasMore    = limit > 0 && page < totalPages;
+
       res.status(200).json({
         status: "OK",
-        results: events
+        count: events.length,
+        totalCount,
+        page,
+        totalPages,
+        hasMore,
+        results: events,
       });
     } catch (error) {
       next(error);
@@ -95,7 +128,7 @@ class EventsController {
           .replace(/[^\w\s-]/g, '')
           .replace(/\s+/g, '_');
           
-        const folderName = `Bhatkanti/Events/${safeTitle}`;
+        const folderName = `Yatrikaa/Events/${safeTitle}`;
         const uploadPromises = req.files.map(file => uploadImage(file, folderName));
         const results = await Promise.all(uploadPromises);
         const newImages = results.map(res => res.secure_url);

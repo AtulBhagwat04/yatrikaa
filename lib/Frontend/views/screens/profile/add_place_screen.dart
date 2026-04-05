@@ -1,16 +1,16 @@
-import 'dart:io';
-import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/error_handler.dart';
+﻿import 'dart:io';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
+import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/services/places_service.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/services/places_service.dart';
 
 class AddPlaceScreen extends StatefulWidget {
   const AddPlaceScreen({super.key});
@@ -324,7 +324,6 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         slivers: [
           // --- HEADER ---
           SliverAppBar(
-            automaticallyImplyLeading: false,
             floating: true,
             pinned: true,
             backgroundColor: onboardingBlueVeryLight,

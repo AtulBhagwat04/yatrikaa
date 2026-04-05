@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/text_styles.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/constants/text_styles.dart';
 
 class AppText extends StatelessWidget {
   final String text;

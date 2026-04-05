@@ -16,8 +16,17 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
     minlength: 6
+  },
+  firebaseUid: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  fcmToken: {
+    type: String,
+    trim: true
   },
   role: {
     type: String,

@@ -1,23 +1,41 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/app_routes.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
+import 'package:yatrikaa/Frontend/views/Routes/app_routes.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
+import 'package:yatrikaa/Frontend/core/bloc/connectivity/connectivity_bloc.dart';
+import 'package:yatrikaa/Frontend/views/widgets/global_connectivity_banner.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_observer.dart';
+import 'package:yatrikaa/Frontend/core/services/notification_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('[Background Message] Received message: ${message.messageId}');
+}
 
 void main() async {
-  // Required for experimental initialization before runApp
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Smartly check if a local backend is running (3000)
-  // If not found in 2 seconds, it defaults to the Live Render URL
-  await ApiConstants.checkServerAvailability();
-  
+
+  try {
+    await Firebase.initializeApp();
+    // Set background messaging handler early
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    
+    // Initialize notification service
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('Firebase or Notification initialization failed: $e');
+  }
+  BackendHealthManager.instance.initialize(useLocal: true);
+
   runApp(const MyApp());
 }
 
@@ -30,18 +48,36 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => AuthBloc()..add(AppStarted())),
         BlocProvider(create: (_) => TravelBloc()),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          textTheme: GoogleFonts.montserratTextTheme(
-            Theme.of(context).textTheme,
-          ),
-          colorSchemeSeed: primaryBlue,
+        BlocProvider(
+          create: (_) => ConnectivityBloc()..add(ConnectivityStarted()),
         ),
-        initialRoute: RouteNames.splash,
-        onGenerateRoute: AppRoutes.generateRoute,
+      ],
+      child: Builder(
+        builder: (context) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              textTheme: GoogleFonts.montserratTextTheme(
+                Theme.of(context).textTheme,
+              ),
+              colorSchemeSeed: primaryBlue,
+            ),
+            initialRoute: RouteNames.splash,
+            onGenerateRoute: AppRoutes.generateRoute,
+            navigatorObservers: [
+              ConnectivityRouteObserver(context.read<ConnectivityBloc>()),
+            ],
+            builder: (context, child) {
+              return Column(
+                children: [
+                  Expanded(child: child ?? const SizedBox()),
+                  const GlobalConnectivityBanner(),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }

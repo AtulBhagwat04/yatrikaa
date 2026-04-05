@@ -1,19 +1,21 @@
+﻿import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-// Removed unused import
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_state.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/booking_form_sheet.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/views/widgets/booking_form_sheet.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/widgets/rating_badge.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
   final String packageId;
@@ -44,7 +46,6 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           p.detailStatus != c.detailStatus ||
           p.selectedPackage != c.selectedPackage,
       builder: (ctx, state) {
-        // Loading
         if (state.detailStatus == TravelStatus.loading ||
             state.detailStatus == TravelStatus.initial) {
           return const Scaffold(
@@ -53,7 +54,6 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           );
         }
 
-        // Error
         if (state.detailStatus == TravelStatus.failure ||
             state.selectedPackage == null) {
           return Scaffold(
@@ -88,6 +88,10 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN VIEW
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _PackageDetailsView extends StatefulWidget {
   final TravelPackageModel package;
   final String? heroTag;
@@ -99,108 +103,169 @@ class _PackageDetailsView extends StatefulWidget {
 
 class _PackageDetailsViewState extends State<_PackageDetailsView> {
   final ScrollController _scrollController = ScrollController();
+  final PageController _pageController = PageController();
   bool _showAppBarTitle = false;
+  int _currentPage = 0;
+  Timer? _timer;
+
+  bool _inclusionsExpanded = false;
+  bool _exclusionsExpanded = false;
 
   @override
   void initState() {
     super.initState();
+
     _scrollController.addListener(() {
-      if (_scrollController.offset > 300 && !_showAppBarTitle) {
-        setState(() => _showAppBarTitle = true);
-      } else if (_scrollController.offset <= 300 && _showAppBarTitle) {
-        setState(() => _showAppBarTitle = false);
+      final shouldShow = _scrollController.offset > 200;
+      if (shouldShow != _showAppBarTitle) {
+        setState(() => _showAppBarTitle = shouldShow);
       }
     });
+
+    _pageController.addListener(() {
+      final page = _pageController.page?.round() ?? 0;
+      final realPage = widget.package.allPhotoUrls.length > 1
+          ? page % widget.package.allPhotoUrls.length
+          : 0;
+      if (realPage != _currentPage) {
+        setState(() => _currentPage = realPage);
+      }
+    });
+
+    if (widget.package.allPhotoUrls.length > 1) {
+      _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+        if (_pageController.hasClients) {
+          _pageController.nextPage(
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  int get _availableSeats =>
-      widget.package.maxGroupSize - widget.package.currentParticipants;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: appWhite,
       body: Stack(
         children: [
           CustomScrollView(
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
-              _buildModernHero(context),
+              _buildHero(context),
               SliverToBoxAdapter(
-                child: Transform.translate(
-                  offset: const Offset(0, -35),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(35),
+                child: Container(
+                  decoration: const BoxDecoration(color: appWhite),
+                  child: Column(
+                    children: [
+                      // Section 2: Experience / About
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.m,
+                          AppSpacing.m,
+                          AppSpacing.m,
+                          AppSpacing.xs,
+                        ),
+                        child: _AboutSection(
+                          description: widget.package.description,
+                        ),
                       ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 45),
-                          _buildQuickInfo(),
-                          const SizedBox(height: 32),
-                          _buildAboutSection(),
-                          const SizedBox(height: 32),
-                          _buildVisualItinerary(),
-                          const SizedBox(height: 32),
-                          _buildSeatsCard(),
-                          const SizedBox(height: 32),
-                          _buildDetailsAccordion(),
-                          const SizedBox(height: 32),
-                          _buildMeetGuide(),
-                          const SizedBox(height: 140), // clearance
-                        ],
+
+                      // Section 3: Stats Row
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.m,
+                          vertical: AppSpacing.xs,
+                        ),
+                        child: _buildStatsCard(),
                       ),
-                    ),
+
+                      if (widget.package.itinerary.isNotEmpty) ...[
+                        _buildSectionDivider(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.m,
+                            vertical: AppSpacing.xs,
+                          ),
+                          child: _buildItinerary(),
+                        ),
+                      ],
+
+                      // Section 4: Inclusions
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.m,
+                          vertical: AppSpacing.xs,
+                        ),
+                        child: _buildInclusionsExclusions(),
+                      ),
+
+                      // Section 5: Guide
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.m,
+                          vertical: AppSpacing.xs,
+                        ),
+                        child: _buildGuideCard(),
+                      ),
+
+                      const SizedBox(height: 170),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
           _buildStickyHeader(context),
-          _buildFloatingBookingBar(context),
+          _buildBookingBar(context),
         ],
       ),
     );
   }
 
-  Widget _buildModernHero(BuildContext context) {
+  // ───────────────────────────── HERO ───────────────────────────────────────
+
+  Widget _buildHero(BuildContext context) {
+    final photos = widget.package.allPhotoUrls;
     return SliverAppBar(
-      expandedHeight: 440,
       automaticallyImplyLeading: false,
+      expandedHeight: 320,
+      backgroundColor: appWhite,
+      elevation: 0,
+      scrolledUnderElevation: 0,
       pinned: true,
       stretch: true,
-      backgroundColor: Colors.white,
-      elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [StretchMode.zoomBackground],
         background: Stack(
           fit: StackFit.expand,
           children: [
-            // Image with Hero
             Hero(
               tag: widget.heroTag ?? 'package_${widget.package.id}',
-              child: CachedNetworkImage(
-                imageUrl: widget.package.mainPhotoUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const ShimmerBox(),
-                errorWidget: (_, __, ___) => _buildImageError(),
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: photos.length <= 1 ? photos.length : null,
+                itemBuilder: (_, index) {
+                  final real = photos.isNotEmpty ? index % photos.length : 0;
+                  return CachedNetworkImage(
+                    imageUrl: photos[real],
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => const ShimmerBox(),
+                    errorWidget: (_, __, ___) => _imageError(),
+                  );
+                },
               ),
             ),
-
-            // Premium Overlay Gradients
             IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -208,67 +273,86 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      appBlack.withAlpha(120),
+                      appBlack.withAlpha(80),
                       Colors.transparent,
-                      appBlack.withAlpha(200),
+                      appBlack.withAlpha(180),
                     ],
                     stops: const [0.0, 0.4, 1.0],
                   ),
                 ),
               ),
             ),
-
-            // Animated Title Section (Aligned with Places/Events)
+            // 📸 PHOTO COUNTER
+            if (photos.length > 1)
+              Positioned(
+                top: 110,
+                right: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.photo_library_outlined,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_currentPage + 1}/${photos.length}',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             Positioned(
               left: 20,
               right: 20,
-              bottom: 60,
+              bottom: 20,
               child: ListenableBuilder(
                 listenable: _scrollController,
-                builder: (context, child) {
+                builder: (_, __) {
                   final offset = _scrollController.hasClients
                       ? _scrollController.offset
                       : 0.0;
-                  final opacity = (1.0 - (offset / 300)).clamp(0.0, 1.0);
-                  final slide = -offset * 0.15;
-
+                  final opacity = (1.0 - (offset / 250)).clamp(0.0, 1.0);
                   return Opacity(
                     opacity: opacity,
-                    child: Transform.translate(
-                      offset: Offset(0, slide),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppText.heading(
-                            widget.package.title,
-                            color: appWhite,
-                            fontWeight: FontWeight.w900,
-                            size: 32,
-                            maxLines: 2,
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on_rounded,
-                                color: warningColor,
-                                size: 18,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: AppText.heading(
+                                widget.package.title,
+                                color: appWhite,
+                                fontWeight: FontWeight.w900,
+                                size: 26,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  widget.package.destinationName,
-                                  style: GoogleFonts.outfit(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                            ),
+                            const SizedBox(width: 12),
+                            RatingBadge(rating: widget.package.averageRating),
+                          ],
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -280,6 +364,8 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
     );
   }
 
+  // ──────────────────────── STICKY HEADER ─────────────────────────────────
+
   Widget _buildStickyHeader(BuildContext context) {
     return Positioned(
       top: 0,
@@ -287,634 +373,445 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
       right: 0,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        height: 93,
-        padding: const EdgeInsets.only(top: 30, left: 10, right: 10),
+        height: 85,
+        padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
         decoration: BoxDecoration(
           color: _showAppBarTitle ? appWhite : Colors.transparent,
           boxShadow: _showAppBarTitle
               ? [
                   BoxShadow(
-                    color: shadowColor,
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 15,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : [],
         ),
         child: Row(
           children: [
+            _circularHeaderButton(
+              icon: Icons.arrow_back,
+              onPressed: () => Navigator.pop(context),
+              isLight: !_showAppBarTitle,
+            ),
             if (_showAppBarTitle)
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.only(left: 12, right: 16),
                   child: AppAnimations.fadeIn(
                     child: AppText.subHeading(
                       widget.package.title,
                       maxLines: 1,
-                      align: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
                       fontWeight: FontWeight.w800,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
               )
             else
               const Spacer(),
-            IconButton(
-              icon: Icon(
-                Icons.share_rounded,
-                color: _showAppBarTitle ? appBlack : appWhite,
-                size: 22,
-              ),
-              onPressed: () {
-                // TODO: Implement Share
-              },
-            ),
+            if (!_showAppBarTitle)
+              _circularHeaderButton(
+                icon: Icons.share_rounded,
+                onPressed: () {},
+                isLight: true,
+              )
+            else
+              const SizedBox(width: 40), // Maintain symmetry
           ],
         ),
       ),
     );
   }
 
-  Widget _buildImageError() {
-    return Container(
-      color: onboardingBlueVeryLight,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.image_not_supported_outlined,
-            color: appGrey,
-            size: 48,
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              "Image not available",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: appGrey,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
+  Widget _circularHeaderButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    bool isLight = false,
+  }) {
+    return IconButton(
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+      icon: Icon(
+        icon,
+        color: isLight ? appWhite : appBlack,
+        size: 24,
+        shadows: isLight
+            ? [
+                const BoxShadow(
+                  color: shadowColor,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
+      onPressed: onPressed,
     );
   }
 
-  Widget _buildQuickInfo() {
+  Widget _imageError() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 5),
+      color: appGreyVeryLight,
+      child: const Icon(Icons.image_not_supported, color: appGrey),
+    );
+  }
+
+  // ──────────────────────── STATS CARD ───────────────────────────────────────
+
+  Widget _buildStatsCard() {
+    final items = [
+      (
+        Icons.timer_outlined,
+        '${widget.package.days}D / ${widget.package.nights}N',
+        'Duration',
+      ),
+      (Icons.group_outlined, '${widget.package.maxGroupSize}', 'Max Group'),
+      (Icons.bar_chart_rounded, widget.package.difficulty, 'Level'),
+      if (widget.package.bestSeason != null)
+        (Icons.wb_sunny_outlined, widget.package.bestSeason!, 'Season'),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: onboardingBlueVeryLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: onboardingBlueDark.withOpacity(0.5),
-          width: 1,
-        ),
+        color: appWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: appGreyLight),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _info(
-            Icons.timer_outlined,
-            '${widget.package.days}D/${widget.package.nights}N',
-            'Duration',
-          ),
-          _info(
-            Icons.people_outline,
-            'Max ${widget.package.maxGroupSize}',
-            'Group',
-          ),
-          _info(Icons.hiking_rounded, widget.package.difficulty, 'Difficulty'),
-          if (widget.package.bestSeason != null)
-            _info(
-              Icons.wb_sunny_outlined,
-              widget.package.bestSeason!,
-              'Best Season',
-            ),
-        ],
-      ),
-    );
-  }
+        children: List.generate(items.length, (index) {
+          final item = items[index];
+          final isLast = index == items.length - 1;
 
-  Widget _info(IconData icon, String value, String label) {
-    return Expanded(
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: primaryBlue.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+          return Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(item.$1, size: 20, color: primaryBlue),
+                      const SizedBox(height: 8),
+                      AppText.small(
+                        item.$2,
+                        fontWeight: FontWeight.w800,
+                        color: appBlack,
+                        size: 13,
+                        align: TextAlign.center,
+                      ),
+                      const SizedBox(height: 2),
+                      AppText.caption(
+                        item.$3,
+                        color: appGrey,
+                        size: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ],
+                  ),
                 ),
+                if (!isLast)
+                  Container(
+                    width: 1,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          appGreyLight.withAlpha(0),
+                          appGreyLight,
+                          appGreyLight.withAlpha(0),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
-            child: Icon(icon, color: primaryBlue, size: 20),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.montserrat(
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-              color: appBlack,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: appBlack,
-              fontSize: 9,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+          );
+        }),
       ),
     );
   }
 
-  Widget _experienceItem(String label, double score, IconData icon) {
+  Widget _buildSectionDivider() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      height: 1,
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.s),
       decoration: BoxDecoration(
-        color: onboardingBlueVeryLight.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: primaryBlue, size: 20),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: score,
-              minHeight: 4,
-              backgroundColor: Colors.white,
-              valueColor: const AlwaysStoppedAnimation(primaryBlue),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: appGreyDark,
-            ),
-          ),
-        ],
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            appGreyLight.withAlpha(0),
+            appGreyLight,
+            appGreyLight,
+            appGreyLight.withAlpha(0),
+          ],
+          stops: const [0.0, 0.2, 0.8, 1.0],
+        ),
       ),
     );
   }
 
-  Widget _buildVisualItinerary() {
-    if (widget.package.itinerary.isEmpty) return const SizedBox.shrink();
+  Widget _buildSectionTitle(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 24,
+          decoration: BoxDecoration(
+            color: primaryBlue,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: AppText.subHeading(
+            title,
+            fontWeight: FontWeight.w800,
+            size: 20,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ────────────────────────── ABOUT ─────────────────────────────────────────
+
+  // ──────────────────────── ITINERARY ───────────────────────────────────────
+
+  Widget _buildItinerary() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "Day by Day Journey",
-              style: GoogleFonts.outfit(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: appBlack,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: primaryBlue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                "${widget.package.itinerary.length} Phases",
-                style: const TextStyle(
-                  color: primaryBlue,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 0),
+        _buildSectionTitle('Day-by-Day Journey'),
+        const SizedBox(height: 24),
         ListView.builder(
           shrinkWrap: true,
+          padding: EdgeInsets.zero,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: widget.package.itinerary.length,
-          itemBuilder: (context, index) {
-            final step = widget.package.itinerary[index];
-            final isLast = index == widget.package.itinerary.length - 1;
+          itemBuilder: (_, i) => _ItineraryTile(
+            step: widget.package.itinerary[i],
+            isLast: i == widget.package.itinerary.length - 1,
+            startDate: widget.package.startDate,
+          ),
+        ),
+      ],
+    );
+  }
 
-            return IntrinsicHeight(
+  // ───────────────────── INCLUSIONS / EXCLUSIONS ────────────────────────────
+
+  Widget _buildInclusionsExclusions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle("What's Included"),
+        const SizedBox(height: 16),
+        _buildIncExcPanel(
+          label: 'Included in Package',
+          icon: Icons.check_circle_rounded,
+          iconColor: primaryBlue,
+          items: widget.package.inclusions,
+          expanded: _inclusionsExpanded,
+          onTap: () =>
+              setState(() => _inclusionsExpanded = !_inclusionsExpanded),
+          positive: true,
+        ),
+        if (widget.package.exclusions.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildIncExcPanel(
+            label: 'Not Included',
+            icon: Icons.cancel_rounded,
+            iconColor: primaryBlue,
+            items: widget.package.exclusions,
+            expanded: _exclusionsExpanded,
+            onTap: () =>
+                setState(() => _exclusionsExpanded = !_exclusionsExpanded),
+            positive: false,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildIncExcPanel({
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+    required List<String> items,
+    required bool expanded,
+    required VoidCallback onTap,
+    required bool positive,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: appWhite,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: expanded ? primaryBlue : appGreyLight),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 children: [
-                  // Timeline Column
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: primaryBlue,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: primaryBlue.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              "${step.day}",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (!isLast)
-                          Expanded(
-                            child: Container(
-                              width: 2,
-                              color: primaryBlue.withOpacity(0.2),
-                            ),
-                          ),
-                      ],
+                  Icon(icon, color: iconColor, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: AppText.body(
+                      label,
+                      fontWeight: FontWeight.w700,
+                      size: 15,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  // Content Column
-                  Expanded(
+                  AnimatedRotation(
+                    turns: expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: const Icon(
+                      Icons.expand_more_rounded,
+                      color: appGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: !expanded
+                ? const SizedBox(width: double.infinity, height: 0)
+                : Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
+                      children: items
+                          .map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    step.title,
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: appBlack,
+                                  Icon(
+                                    positive ? Icons.check : Icons.close,
+                                    size: 14,
+                                    color: positive
+                                        ? onboardingBlueSoft
+                                        : onboardingBlueSoft,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: AppText.body(
+                                      item,
+                                      size: 13,
+                                      color: appGreyDark,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                    Text(
-                                      DateFormat('EEE, d MMM yyyy').format(
-                                        (widget.package.startDate ??
-                                                DateTime.now())
-                                            .add(Duration(days: step.day - 1)),
-                                      ),
-                                      style: const TextStyle(
-                                        color: primaryBlue,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        ...step.activities.map(
-                          (activity) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(top: 6),
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: primaryBlue.withOpacity(0.5),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    activity,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: appGreyDark,
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (!isLast) const SizedBox(height: 32),
-                      ],
+                          )
+                          .toList(),
                     ),
                   ),
-                ],
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSeatsCard() {
-    final filled = widget.package.currentParticipants;
-    final total = widget.package.maxGroupSize;
-    final fraction = total > 0 ? filled / total : 0.0;
-    final remaining = total - filled;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: appBlack,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: appBlack.withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Reservation Status",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    remaining > 0 ? "Few Spots Ready" : "FULLY BOOKED",
-                    style: GoogleFonts.outfit(
-                      color: remaining > 0 ? warningColor : Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Text(
-                  "$remaining left",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Stack(
-            children: [
-              Container(
-                height: 10,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              AnimatedContainer(
-                duration: const Duration(seconds: 1),
-                height: 10,
-                width: fraction * 300, // Approximate
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [primaryBlue, lightBlue],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.people_alt_rounded,
-                color: Colors.white60,
-                size: 14,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                "$filled adventurous travelers already joined",
-                style: const TextStyle(color: Colors.white60, fontSize: 11),
-              ),
-            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailsAccordion() {
-    return Column(
-      children: [
-        _accordionTile("Inclusions", widget.package.inclusions, true),
-        const SizedBox(height: 12),
-        _accordionTile("Exclusions", widget.package.exclusions, false),
-      ],
-    );
-  }
+  // ─────────────────────────── GUIDE CARD ─────────────────────────────────
 
-  Widget _accordionTile(String title, List<String> items, bool isPositive) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: appGreyLight.withOpacity(0.3)),
-      ),
-      child: ExpansionTile(
-        title: Text(
-          title,
-          style: GoogleFonts.outfit(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: appBlack,
-          ),
-        ),
-        leading: Icon(
-          isPositive ? Icons.add_task_rounded : Icons.block_flipped,
-          color: isPositive ? successColor : errorColor,
-          size: 24,
-        ),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        childrenPadding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-        shape: const RoundedRectangleBorder(side: BorderSide.none),
-        children: items
-            .map(
-              (i) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle_rounded,
-                      size: 14,
-                      color: isPositive
-                          ? successColor.withOpacity(0.5)
-                          : errorColor.withOpacity(0.5),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        i,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: appGreyDark,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-
-  Widget _buildMeetGuide() {
+  Widget _buildGuideCard() {
     final org = widget.package.organizer;
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: primaryBlue.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: primaryBlue.withOpacity(0.1)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: primaryBlue,
-                      shape: BoxShape.circle,
-                    ),
-                    child: CircleAvatar(
-                      radius: 35,
-                      backgroundImage: org.profileImage != null
-                          ? NetworkImage(org.profileImage!)
-                          : null,
-                      child: org.profileImage == null
-                          ? Text(
-                              org.name[0],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: successColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.verified,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Meet Your Guide'),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: appWhite,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: appGreyLight),
+            boxShadow: [
+              BoxShadow(
+                color: shadowColor,
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              const SizedBox(width: 20),
+            ],
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundImage: org.profileImage != null
+                    ? NetworkImage(org.profileImage!)
+                    : null,
+                backgroundColor: primaryBlue.withAlpha(15),
+                child: org.profileImage == null
+                    ? const Icon(
+                        Icons.person_rounded,
+                        color: primaryBlue,
+                        size: 30,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Your Guide",
-                      style: TextStyle(
-                        color: primaryBlue,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                      ),
+                    Row(
+                      children: [
+                        AppText.body(
+                          org.name,
+                          fontWeight: FontWeight.w800,
+                          size: 18,
+                        ),
+                        if (org.isVerified)
+                          const Padding(
+                            padding: EdgeInsets.only(left: 6),
+                            child: Icon(
+                              Icons.verified_rounded,
+                              color: primaryBlue,
+                              size: 16,
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      org.name,
-                      style: GoogleFonts.outfit(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: appBlack,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         const Icon(
                           Icons.star_rounded,
                           color: ratingColor,
-                          size: 16,
+                          size: 14,
                         ),
-                        Text(
-                          " ${org.rating} • ${org.tripsHosted} Expeditions",
-                          style: const TextStyle(
-                            color: appGrey,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        const SizedBox(width: 4),
+                        AppText.caption(
+                          org.rating.toStringAsFixed(1),
+                          fontWeight: FontWeight.w700,
+                        ),
+                        const SizedBox(width: 12),
+                        AppText.caption(
+                          '${org.tripsHosted} Trips Hosted',
+                          color: appGrey,
                         ),
                       ],
                     ),
@@ -923,164 +820,479 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: primaryBlue),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+        ),
+      ],
+    );
+  }
+
+  // ──────────────────────── BOOKING BAR ─────────────────────────────────────
+
+  Widget _buildBookingBar(BuildContext context) {
+    final filled = widget.package.currentParticipants;
+    final total = widget.package.maxGroupSize;
+    final remaining = total - filled;
+    final isFull = remaining <= 0;
+
+    return Positioned(
+      bottom: 24,
+      left: 16,
+      right: 16,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: primaryBlue,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AVAILABILITY',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
                     ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isFull ? 'FULLY BOOKED' : '$remaining SPOTS LEFT',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'PER PERSON',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    Text(
+                      '₹${widget.package.price.toInt()}',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: isFull
+                    ? null
+                    : () => BookingFormSheet.show(
+                        context,
+                        packageId: widget.package.id,
+                        packageTitle: widget.package.title,
+                        pricePerPerson: widget.package.price,
+                        availableSeats: remaining,
+                      ),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isFull ? Colors.white24 : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
-                    "Message",
-                    style: TextStyle(
-                      color: primaryBlue,
-                      fontWeight: FontWeight.bold,
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AppText.button(
+                          isFull ? 'BOOKING CLOSED' : 'PROCEED TO BOOKING',
+                          color: isFull ? Colors.white38 : primaryBlue,
+                          size: 14,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                        if (!isFull)
+                          const Padding(
+                            padding: EdgeInsets.only(left: 8),
+                            child: Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: primaryBlue,
+                              size: 14,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    backgroundColor: primaryBlue,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    "View Profile",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ABOUT SECTION
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AboutSection extends StatefulWidget {
+  final String description;
+  const _AboutSection({required this.description});
+
+  @override
+  State<_AboutSection> createState() => _AboutSectionState();
+}
+
+class _AboutSectionState extends State<_AboutSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 4,
+              height: 24,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [primaryBlue, primaryBlue],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Package Details',
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: appBlack,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 350),
+          child: Text(
+            widget.description,
+            maxLines: _expanded ? null : 4,
+            textAlign: TextAlign.justify,
+            overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+            style: GoogleFonts.outfit(
+              color: const Color(
+                0xFF334155,
+              ), // Slate 700 for better readability
+              fontSize: 16,
+              height: 1.8,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        GestureDetector(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _expanded ? 'Show Less' : 'Read More',
+                style: const TextStyle(
+                  color: primaryBlue,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                _expanded
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                color: primaryBlue,
+                size: 20,
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ITINERARY TILE
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ItineraryTile extends StatefulWidget {
+  final ItineraryStep step;
+  final bool isLast;
+  final DateTime? startDate;
+
+  const _ItineraryTile({
+    required this.step,
+    required this.isLast,
+    this.startDate,
+  });
+
+  @override
+  State<_ItineraryTile> createState() => _ItineraryTileState();
+}
+
+class _ItineraryTileState extends State<_ItineraryTile> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = (widget.startDate ?? DateTime.now()).add(
+      Duration(days: widget.step.day - 1),
+    );
+
+    return Container(
+      margin: EdgeInsets.only(bottom: widget.isLast ? 0 : 36),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // 🚢 STRUCTURAL TIMELINE BRIDGE
+          // 🚢 STRUCTURAL TIMELINE BRIDGE
+          if (!widget.isLast)
+            Positioned(
+              top: 32, // Start from the center of the circle
+              bottom: -40, // Extend to the next circle
+              left: 17,
+              child: Container(
+                width: 2.5,
+                decoration: BoxDecoration(
+                  color: primaryBlue.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+
+          // 📄 ELITE NARRATIVE CARD
+          Padding(
+            padding: const EdgeInsets.only(left: 56),
+            child: GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 450),
+                curve: Curves.easeInOutCubic,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: _expanded ? primaryBlue.withAlpha(8) : appWhite,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: _expanded
+                        ? primaryBlue.withOpacity(0.3)
+                        : appGreyLight.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _expanded
+                          ? primaryBlue.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.02),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.step.title,
+                                style: GoogleFonts.outfit(
+                                  color: appBlack,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 19,
+                                  letterSpacing: -0.3,
+                                  height: 1.25,
+                                ),
+                              ),
+                              if (!_expanded)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    '${widget.step.activities.length} Activities planned',
+                                    style: GoogleFonts.outfit(
+                                      color: appGrey,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          DateFormat('d MMM').format(date).toUpperCase(),
+                          style: GoogleFonts.outfit(
+                            color: primaryBlue,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 450),
+                      curve: Curves.fastOutSlowIn,
+                      child: !_expanded
+                          ? const SizedBox(width: double.infinity, height: 0)
+                          : Padding(
+                              padding: const EdgeInsets.only(top: 24),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    height: 1.5,
+                                    width: 40,
+                                    decoration: BoxDecoration(
+                                      color: primaryBlue.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  ...widget.step.activities.map(
+                                    (activity) => _buildActivityItem(activity),
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // 📍 CHRONICLE MARKER (DAY COUNT)
+          Positioned(
+            top: 14, // Matches the center of the title line in the card
+            left: 0,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: _expanded ? primaryBlue : appWhite,
+                shape: BoxShape.circle,
+                border: Border.all(color: primaryBlue, width: 2.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryBlue.withAlpha(20),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  widget.step.day.toString(),
+                  style: GoogleFonts.outfit(
+                    color: _expanded ? appWhite : primaryBlue,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAboutSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Package Details",
-          style: GoogleFonts.outfit(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: appBlack,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          widget.package.description,
-          style: const TextStyle(color: appGreyDark, fontSize: 15, height: 1.7),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFloatingBookingBar(BuildContext context) {
-    final bool isFull = _availableSeats <= 0;
-    return Positioned(
-      bottom: 30,
-      left: 20,
-      right: 20,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: appBlack.withOpacity(0.85),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-            ),
-            child: Row(
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Investment",
-                      style: TextStyle(color: Colors.white60, fontSize: 11),
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "₹${widget.package.price.toInt()}",
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 4, left: 4),
-                          child: Text(
-                            "/person",
-                            style: TextStyle(
-                              color: Colors.white60,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: isFull
-                        ? null
-                        : () => BookingFormSheet.show(
-                            context,
-                            packageId: widget.package.id,
-                            packageTitle: widget.package.title,
-                            pricePerPerson: widget.package.price,
-                            availableSeats: _availableSeats,
-                          ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isFull ? Colors.white24 : Colors.white,
-                      foregroundColor: appBlack,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      isFull ? 'CLOSED' : 'SECURE SPOT',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+  Widget _buildActivityItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 6),
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              color: primaryBlue,
+              shape: BoxShape.circle,
             ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.outfit(
+                color: const Color(0xFF475569),
+                fontSize: 14,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

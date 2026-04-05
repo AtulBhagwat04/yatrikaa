@@ -1,18 +1,19 @@
+﻿import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_assets.dart';
-import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
-import 'package:bhatkanti_app/Frontend/core/services/events_service.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/external_action_card.dart';
-import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
+import 'package:yatrikaa/Frontend/core/models/event_model.dart';
+import 'package:yatrikaa/Frontend/core/services/events_service.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/widgets/external_action_card.dart';
+import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final String eventId;
@@ -29,12 +30,12 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   late Future<EventModel?> _eventFuture;
   final ScrollController _scrollController = ScrollController();
   final PageController _pageController = PageController();
-  int _currentPage = 0;
   bool _showAppBarTitle = false;
   bool _isDescriptionExpanded = false;
   EventModel? _currentEvent;
   bool _isInterestedLoading = false;
   String? _userId;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -64,6 +65,16 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     });
 
     _fetchUserId();
+
+    _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+      final evt = _currentEvent;
+      if (evt != null && evt.images.length > 1 && _pageController.hasClients) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 1000),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   Future<void> _fetchUserId() async {
@@ -76,6 +87,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     _scrollController.dispose();
     _pageController.dispose();
     super.dispose();
@@ -94,7 +106,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
   void _shareEvent(EventModel event) {
     Share.share(
-      'Check out this event: ${event.title}\nDate: ${DateFormat.yMMMd().format(event.date)}\nVenue: ${event.venue}\nDetails on Bhatkanti!',
+      'Check out this event: ${event.title}\nDate: ${DateFormat.yMMMd().format(event.date)}\nVenue: ${event.venue}\nDetails on Yatrikaa!',
     );
   }
 
@@ -333,15 +345,20 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         ),
         child: Row(
           children: [
+            _circularHeaderButton(
+              icon: Icons.arrow_back,
+              onPressed: () => Navigator.pop(context),
+              isLight: !_showAppBarTitle,
+            ),
             if (_showAppBarTitle)
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.only(left: 12, right: 16),
                   child: AppAnimations.fadeIn(
                     child: AppText.subHeading(
                       event.title,
                       maxLines: 1,
-                      align: TextAlign.center,
+                      align: TextAlign.start,
                       overflow: TextOverflow.ellipsis,
                       fontWeight: FontWeight.w800,
                     ),
@@ -407,11 +424,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           children: [
             PageView.builder(
               controller: _pageController,
-              itemCount: images.length,
-              onPageChanged: (index) => setState(() => _currentPage = index),
+              itemCount: images.length <= 1 ? images.length : null,
               itemBuilder: (context, index) {
+                final realIndex = images.isNotEmpty ? index % images.length : 0;
                 return CachedNetworkImage(
-                  imageUrl: images[index],
+                  imageUrl: images[realIndex],
                   fit: BoxFit.cover,
                   placeholder: (context, url) => const ShimmerBox(),
                   errorWidget: (context, url, error) => Container(
@@ -462,7 +479,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             Positioned(
               left: 20,
               right: 20,
-              bottom: 40,
+              bottom: 15,
               child: ListenableBuilder(
                 listenable: _scrollController,
                 builder: (context, child) {
@@ -479,23 +496,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: primaryBlue,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: AppText.caption(
-                              event.category.toUpperCase(),
-                              color: appWhite,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
                           AppText.heading(
                             event.title,
                             color: appWhite,
@@ -510,29 +510,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                 },
               ),
             ),
-            if (images.length > 1)
-              Positioned(
-                bottom: 20,
-                left: 20,
-                right: 20,
-                child: Row(
-                  children: List.generate(
-                    images.length,
-                    (index) => Expanded(
-                      child: Container(
-                        height: 3,
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        decoration: BoxDecoration(
-                          color: index == _currentPage
-                              ? appWhite
-                              : appWhite.withAlpha(80),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),

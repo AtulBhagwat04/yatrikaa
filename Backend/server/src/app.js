@@ -32,7 +32,7 @@ app.use('/api/packages', packageRoutes);
 
 // Base route for health check
 app.get('/', (req, res) => {
-  res.status(200).json({ status: 'UP', message: 'Bhatkanti API is running...' });
+  res.status(200).json({ status: 'UP', message: 'Yatrikaa API is running...' });
 });
 
 app.get('/health', (req, res) => {

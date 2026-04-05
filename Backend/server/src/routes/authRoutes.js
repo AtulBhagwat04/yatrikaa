@@ -6,11 +6,16 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 router.post('/register', (req, res, next) => authController.register(req, res, next));
 router.post('/login', (req, res, next) => authController.login(req, res, next));
 
+const verifyFirebaseToken = require('../middleware/firebaseAuth');
+router.post('/firebase-sync', verifyFirebaseToken, (req, res, next) => authController.firebaseSync(req, res, next));
+
+
 const upload = require('../middleware/uploadMiddleware');
 
 // Protected routes
 router.put('/profile', protect, upload.single('profilePicture'), (req, res, next) => authController.updateProfile(req, res, next));
 router.put('/change-password', protect, (req, res, next) => authController.changePassword(req, res, next));
+router.post('/update-fcm-token', protect, (req, res, next) => authController.updateFcmToken(req, res, next));
 
 // Guide requests logic
 router.post('/request-guide', protect, (req, res, next) => authController.requestGuideRole(req, res, next));
