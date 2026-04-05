@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const postRoutes = require('./routes/postRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const packageRoutes = require('./routes/packageRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const seedAdmins = require('./data/seedAdmin');
 
 const app = express();
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/packages', packageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Base route for health check
 app.get('/', (req, res) => {

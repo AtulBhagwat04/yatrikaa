@@ -328,7 +328,7 @@ const joinPackage = async (req, res, next) => {
       notificationService.sendToToken(req.user.fcmToken, {
         title: 'Booking Successful! ✈️',
         body: `You have successfully joined "${pkg.title}". Get ready for the adventure!`,
-      }, { type: 'booking_success', bookingId: booking._id.toString() }).catch(e => console.error(e));
+      }, { type: 'booking_success', bookingId: booking._id.toString() }, req.user._id).catch(e => console.error(e));
     }
 
     // 2. Notify the Guide (New Booking Alert)
@@ -337,7 +337,7 @@ const joinPackage = async (req, res, next) => {
       notificationService.sendToToken(guide.fcmToken, {
         title: 'New Booking Received! 💰',
         body: `${req.user.name} and ${travelersCount - 1} others joined "${pkg.title}".`,
-      }, { type: 'new_booking', bookingId: booking._id.toString() }).catch(e => console.error(e));
+      }, { type: 'new_booking', bookingId: booking._id.toString() }, guide._id).catch(e => console.error(e));
     }
 
     console.log(`[packages] ${req.user.name} joined "${pkg.title}" (${travelersCount} travelers)`);
@@ -449,7 +449,7 @@ const cancelBooking = async (req, res, next) => {
         }
 
         notificationService.sendToToken(dbUser.fcmToken, { title, body }, 
-          { type: 'booking_cancelled', bookingId: booking._id.toString() }).catch(e => console.error(e));
+          { type: 'booking_cancelled', bookingId: booking._id.toString() }, dbUser._id).catch(e => console.error(e));
       }
     }
 
@@ -496,7 +496,7 @@ const confirmBooking = async (req, res, next) => {
       notificationService.sendToToken(dbUser.fcmToken, {
         title: 'Booking Confirmed! ✅',
         body: `Pack your bags! Your booking for "${pkg.title}" is now confirmed.`,
-      }, { type: 'booking_confirmed', bookingId: booking._id.toString() }).catch(e => console.error(e));
+      }, { type: 'booking_confirmed', bookingId: booking._id.toString() }, dbUser._id).catch(e => console.error(e));
     }
 
     res.status(200).json({ success: true, result: booking, message: 'Booking confirmed successfully' });
