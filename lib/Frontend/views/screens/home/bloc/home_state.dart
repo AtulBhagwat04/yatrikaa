@@ -1,6 +1,6 @@
-import 'package:equatable/equatable.dart';
-import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
-import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
+﻿import 'package:equatable/equatable.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/core/models/event_model.dart';
 
 enum HomeStatus { initial, loading, success, failure }
 

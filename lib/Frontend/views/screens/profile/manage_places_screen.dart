@@ -1,20 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/error_handler.dart';
+import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
-import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
-import 'package:bhatkanti_app/Frontend/core/services/places_service.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/core/services/places_service.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/custom_alert_dialog.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 
 class ManagePlacesScreen extends StatefulWidget {
   const ManagePlacesScreen({super.key});
@@ -129,7 +129,6 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      automaticallyImplyLeading: false,
       floating: true,
       pinned: true,
       backgroundColor: onboardingBlueVeryLight,
@@ -673,10 +672,26 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                 ),
                               GestureDetector(
                                 onTap: () async {
+                                  if (combinedItems.length +
+                                          pickedFiles.length >=
+                                      10) {
+                                    CustomToast.warning(
+                                      context,
+                                      "Maximum 10 images allowed",
+                                      title: "Hold on!",
+                                    );
+                                    return;
+                                  }
                                   final imgs = await _picker.pickMultiImage();
                                   if (imgs.isNotEmpty) {
                                     setSheetState(
-                                      () => pickedFiles.addAll(imgs),
+                                      () => pickedFiles.addAll(
+                                        imgs.take(
+                                          10 -
+                                              (combinedItems.length +
+                                                  pickedFiles.length),
+                                        ),
+                                      ),
                                     );
                                   }
                                 },

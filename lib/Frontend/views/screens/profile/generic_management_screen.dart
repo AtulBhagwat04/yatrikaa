@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 
 class GenericManagementScreen extends StatelessWidget {
   final String title;
@@ -29,7 +29,6 @@ class GenericManagementScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         title: AppText.subHeading(

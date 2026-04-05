@@ -1,20 +1,20 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_state.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/models/event_model.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_state.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const int _kPageSize = 20;
@@ -140,7 +140,6 @@ class _PopularEventsViewState extends State<_PopularEventsView> {
               SliverAppBar(
                 pinned: true,
                 floating: true,
-                automaticallyImplyLeading: false,
                 backgroundColor: onboardingBlueVeryLight,
                 elevation: 0,
                 scrolledUnderElevation: 2,

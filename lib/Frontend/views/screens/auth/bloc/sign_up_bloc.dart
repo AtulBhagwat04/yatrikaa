@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/sign_up_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/sign_up_state.dart';
+import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/bloc/sign_up_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/bloc/sign_up_state.dart';
 
 class SignupBloc extends Bloc<SignupEvent, SignupState> {
   final AuthService _authService = AuthService();

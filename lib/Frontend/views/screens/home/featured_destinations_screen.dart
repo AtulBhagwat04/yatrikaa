@@ -1,20 +1,20 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_state.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/modern/modern_place_card.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/place_nearby_card.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_state.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_place_card.dart';
+import 'package:yatrikaa/Frontend/views/widgets/place_nearby_card.dart';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const int _kPageSize = 20;
@@ -130,7 +130,6 @@ class _FeaturedDestinationsViewState extends State<_FeaturedDestinationsView> {
               SliverAppBar(
                 pinned: true,
                 floating: true,
-                automaticallyImplyLeading: false,
                 backgroundColor: onboardingBlueVeryLight,
                 elevation: 0,
                 scrolledUnderElevation: 2,
@@ -219,7 +218,7 @@ class _FeaturedDestinationsViewState extends State<_FeaturedDestinationsView> {
               Navigator.pushNamed(
                 ctx,
                 RouteNames.placeDetails,
-                arguments: places[i].id,
+                arguments: {'placeId': places[i].id, 'place': places[i]},
               );
             },
           ),
@@ -264,7 +263,7 @@ class _FeaturedDestinationsViewState extends State<_FeaturedDestinationsView> {
                 Navigator.pushNamed(
                   ctx,
                   RouteNames.placeDetails,
-                  arguments: places[i].id,
+                  arguments: {'placeId': places[i].id, 'place': places[i]},
                 );
               },
             ),

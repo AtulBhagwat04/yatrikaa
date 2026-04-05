@@ -1,17 +1,17 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/services/packages_service.dart';
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/services/packages_service.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
 
 /// Screen for guides / admins to create a new travel package.
 /// All data is submitted to the backend via [PackagesService].
@@ -67,6 +67,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
 
   // ── Images ────────────────────────────────────────────────────────────────
   final List<XFile> _pickedImages = [];
+  List<String> _existingImages = [];
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -88,6 +89,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
       _endDate = pkg.endDate;
       _selectedDifficulty = pkg.difficulty;
       _selectedCategory = pkg.category;
+      _existingImages = List.from(pkg.images);
 
       // Inclusions
       _inclusionCtls.clear();
@@ -175,11 +177,21 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
   // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> _pickImages() async {
-    final images = await _picker.pickMultiImage(imageQuality: 80);
-    if (images.isNotEmpty) {
-      setState(() {
-        _pickedImages.addAll(images.take(5 - _pickedImages.length));
-      });
+    if (_existingImages.length + _pickedImages.length >= 10) {
+      _showError('Maximum 10 images allowed');
+      return;
+    }
+    try {
+      final List<XFile> images = await _picker.pickMultiImage(imageQuality: 70);
+      if (images.isNotEmpty) {
+        setState(() {
+          _pickedImages.addAll(
+            images.take(10 - (_existingImages.length + _pickedImages.length)),
+          );
+        });
+      }
+    } catch (e) {
+      debugPrint("Error picking images: $e");
     }
   }
 
@@ -265,8 +277,10 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_pickedImages.isEmpty && widget.package == null) {
-      _showError('Please add at least one cover image.');
+    if (_pickedImages.isEmpty &&
+        _existingImages.isEmpty &&
+        widget.package == null) {
+      _showError('Please add at least one image.');
       return;
     }
 
@@ -304,16 +318,20 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
     };
 
     if (widget.package != null) {
-      context.read<TravelBloc>().add(TravelUpdatePackageRequested(
-            packageId: widget.package!.id,
-            body: body,
-            imageFiles: _pickedImages.map((x) => File(x.path)).toList(),
-          ));
+      context.read<TravelBloc>().add(
+        TravelUpdatePackageRequested(
+          packageId: widget.package!.id,
+          body: {...body, 'images': _existingImages},
+          imageFiles: _pickedImages.map((x) => File(x.path)).toList(),
+        ),
+      );
     } else {
-      context.read<TravelBloc>().add(TravelCreatePackageRequested(
-            body: body,
-            imageFiles: _pickedImages.map((x) => File(x.path)).toList(),
-          ));
+      context.read<TravelBloc>().add(
+        TravelCreatePackageRequested(
+          body: body,
+          imageFiles: _pickedImages.map((x) => File(x.path)).toList(),
+        ),
+      );
     }
   }
 
@@ -354,7 +372,6 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
       child: Scaffold(
         backgroundColor: onboardingBlueVeryLight,
         appBar: AppBar(
-          automaticallyImplyLeading: false,
           title: AppText.subHeading(
             widget.package != null ? 'Edit Package' : 'Create Travel Package',
             fontWeight: FontWeight.w800,
@@ -363,310 +380,321 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
           backgroundColor: onboardingBlueVeryLight,
           elevation: 0,
         ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.ms),
-          children: [
-            // Images
-            _buildSectionCard('Cover Images', Icons.photo_library_rounded, [
-              _buildImagePicker(),
-            ]),
-            const SizedBox(height: 16),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.ms),
+            children: [
+              // Images
+              _buildSectionCard('Cover Images', Icons.photo_library_rounded, [
+                _buildImagePicker(),
+              ]),
+              const SizedBox(height: 16),
 
-            // Basic Info
-            _buildSectionCard('Basic Information', Icons.info_outline_rounded, [
-              _field(
-                'Package Title',
-                'e.g. Lohagad Monsoon Trek',
-                _titleController,
-                validator: _required,
-              ),
-              _field(
-                'Description',
-                'What makes this trip special? Include route, highlights...',
-                _descController,
-                maxLines: 4,
-                validator: _required,
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: _field(
-                      'Price (₹/person)',
-                      '1499',
-                      _priceController,
-                      inputType: TextInputType.number,
-                      validator: _requiredNum,
-                    ),
+              // Basic Info
+              _buildSectionCard(
+                'Basic Information',
+                Icons.info_outline_rounded,
+                [
+                  _field(
+                    'Package Title',
+                    'e.g. Lohagad Monsoon Trek',
+                    _titleController,
+                    validator: _required,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _field(
-                      'Max Group Size',
-                      '20',
-                      _maxGroupController,
-                      inputType: TextInputType.number,
-                      validator: _requiredNum,
-                    ),
+                  _field(
+                    'Description',
+                    'What makes this trip special? Include route, highlights...',
+                    _descController,
+                    maxLines: 4,
+                    validator: _required,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _field(
+                          'Price (₹/person)',
+                          '1499',
+                          _priceController,
+                          inputType: TextInputType.number,
+                          validator: _requiredNum,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _field(
+                          'Max Group Size',
+                          '20',
+                          _maxGroupController,
+                          inputType: TextInputType.number,
+                          validator: _requiredNum,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _datePicker('Start Date', _startDate, (d) {
+                          setState(() => _startDate = d);
+                          _updateDurationFromDates();
+                        }),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _datePicker('End Date', _endDate, (d) {
+                          setState(() => _endDate = d);
+                          _updateDurationFromDates();
+                        }),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _field(
+                          'Days',
+                          '1',
+                          _daysController,
+                          inputType: TextInputType.number,
+                          readOnly: true,
+                          validator: _requiredNum,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _field(
+                          'Nights',
+                          '0',
+                          _nightsController,
+                          inputType: TextInputType.number,
+                          readOnly: true,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  Expanded(
-                    child: _datePicker('Start Date', _startDate, (d) {
-                      setState(() => _startDate = d);
-                      _updateDurationFromDates();
-                    }),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _datePicker('End Date', _endDate, (d) {
-                      setState(() => _endDate = d);
-                      _updateDurationFromDates();
-                    }),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _field(
-                      'Days',
-                      '1',
-                      _daysController,
-                      inputType: TextInputType.number,
-                      readOnly: true,
-                      validator: _requiredNum,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _field(
-                      'Nights',
-                      '0',
-                      _nightsController,
-                      inputType: TextInputType.number,
-                      readOnly: true,
-                    ),
-                  ),
-                ],
-              ),
-            ]),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Destination
-            _buildSectionCard('Destination', Icons.location_on_outlined, [
-              _field(
-                'Place Name',
-                'e.g. Rajmachi, Pune',
-                _destinationController,
-                validator: _required,
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: _field(
-                      'Latitude',
-                      '18.5204',
-                      _latController,
-                      inputType: const TextInputType.numberWithOptions(
-                        decimal: true,
+              // Destination
+              _buildSectionCard('Destination', Icons.location_on_outlined, [
+                _field(
+                  'Place Name',
+                  'e.g. Rajmachi, Pune',
+                  _destinationController,
+                  validator: _required,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _field(
+                        'Latitude',
+                        '18.5204',
+                        _latController,
+                        inputType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _field(
-                      'Longitude',
-                      '73.8567',
-                      _lngController,
-                      inputType: const TextInputType.numberWithOptions(
-                        decimal: true,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _field(
+                        'Longitude',
+                        '73.8567',
+                        _lngController,
+                        inputType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              AppText.body(
-                'Tip: Open Google Maps, long-press a location to copy coordinates.',
-                color: appGrey,
-                size: 11,
-              ),
-            ]),
-            const SizedBox(height: 16),
-
-            // Trip Details
-            _buildSectionCard('Trip Details', Icons.tune_rounded, [
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildDropdown(
-                      'Difficulty',
-                      _difficulties,
-                      _selectedDifficulty,
-                      (v) => setState(() => _selectedDifficulty = v!),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildDropdown(
-                      'Category',
-                      _categories,
-                      _selectedCategory,
-                      (v) => setState(() => _selectedCategory = v!),
-                    ),
-                  ),
-                ],
-              ),
-              _field(
-                'Best Season (optional)',
-                'e.g. Monsoon, Winter',
-                _bestSeasonController,
-              ),
-            ]),
-            const SizedBox(height: 16),
-
-            // Itinerary
-            _buildSectionCard('Itinerary', Icons.route_rounded, [
-              if (_startDate == null || _endDate == null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Center(
-                    child: AppText.body(
-                      'Please select Start and End dates first to generate the itinerary.',
-                      color: appGrey,
-                      align: TextAlign.center,
-                    ),
-                  ),
-                )
-              else
-                ..._itinerary.asMap().entries.map(
-                  (e) => _buildItineraryDayBlock(e.key, e.value),
+                  ],
                 ),
-            ]),
-            const SizedBox(height: 16),
+                AppText.body(
+                  'Tip: Open Google Maps, long-press a location to copy coordinates.',
+                  color: appGrey,
+                  size: 11,
+                ),
+              ]),
+              const SizedBox(height: 16),
 
-            // Inclusions
-            _buildSectionCard(
-              'Inclusions & Exclusions',
-              Icons.checklist_rounded,
-              [
-                AppText.subHeading(
-                  'Included',
-                  color: successColorDark,
-                  size: 13,
-                  fontWeight: FontWeight.w700,
+              // Trip Details
+              _buildSectionCard('Trip Details', Icons.tune_rounded, [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDropdown(
+                        'Difficulty',
+                        _difficulties,
+                        _selectedDifficulty,
+                        (v) => setState(() => _selectedDifficulty = v!),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildDropdown(
+                        'Category',
+                        _categories,
+                        _selectedCategory,
+                        (v) => setState(() => _selectedCategory = v!),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                ..._inclusionCtls.asMap().entries.map(
-                  (e) => _listItem(
-                    e.value,
-                    _inclusionNodes[e.key],
-                    () => setState(() {
-                      if (_inclusionCtls.length > 1) {
-                        _inclusionCtls.removeAt(e.key);
-                        _inclusionNodes[e.key].dispose();
-                        _inclusionNodes.removeAt(e.key);
-                      }
-                    }),
-                    'e.g. Transport, Meals',
-                    successColor,
+                _field(
+                  'Best Season (optional)',
+                  'e.g. Monsoon, Winter',
+                  _bestSeasonController,
+                ),
+              ]),
+              const SizedBox(height: 16),
+
+              // Itinerary
+              _buildSectionCard('Itinerary', Icons.route_rounded, [
+                if (_startDate == null || _endDate == null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: AppText.body(
+                        'Please select Start and End dates first to generate the itinerary.',
+                        color: appGrey,
+                        align: TextAlign.center,
+                      ),
+                    ),
+                  )
+                else
+                  ..._itinerary.asMap().entries.map(
+                    (e) => _buildItineraryDayBlock(e.key, e.value),
                   ),
-                ),
-                TextButton.icon(
-                  onPressed: _addInclusion,
-                  icon: const Icon(
-                    Icons.add,
-                    size: 16,
+              ]),
+              const SizedBox(height: 16),
+
+              // Inclusions
+              _buildSectionCard(
+                'Inclusions & Exclusions',
+                Icons.checklist_rounded,
+                [
+                  AppText.subHeading(
+                    'Included',
                     color: successColorDark,
+                    size: 13,
+                    fontWeight: FontWeight.w700,
                   ),
-                  label: const Text(
-                    'Add Inclusion',
-                    style: TextStyle(color: successColorDark),
-                  ),
-                ),
-                const Divider(),
-                AppText.subHeading(
-                  'Excluded',
-                  color: errorColorDark,
-                  size: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-                const SizedBox(height: 6),
-                ..._exclusionCtls.asMap().entries.map(
-                  (e) => _listItem(
-                    e.value,
-                    _exclusionNodes[e.key],
-                    () => setState(() {
-                      if (_exclusionCtls.length > 1) {
-                        _exclusionCtls.removeAt(e.key);
-                        _exclusionNodes[e.key].dispose();
-                        _exclusionNodes.removeAt(e.key);
-                      }
-                    }),
-                    'e.g. Personal expenses',
-                    errorColor,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _addExclusion,
-                  icon: const Icon(Icons.add, size: 16, color: errorColorDark),
-                  label: const Text(
-                    'Add Exclusion',
-                    style: TextStyle(color: errorColorDark),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-
-            // Submit
-            BlocBuilder<TravelBloc, TravelState>(
-              builder: (context, state) {
-                final isSubmitting = state.actionStatus == BookingActionStatus.loading;
-                return SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isSubmitting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
+                  const SizedBox(height: 6),
+                  ..._inclusionCtls.asMap().entries.map(
+                    (e) => _listItem(
+                      e.value,
+                      _inclusionNodes[e.key],
+                      () => setState(() {
+                        if (_inclusionCtls.length > 1) {
+                          _inclusionCtls.removeAt(e.key);
+                          _inclusionNodes[e.key].dispose();
+                          _inclusionNodes.removeAt(e.key);
+                        }
+                      }),
+                      'e.g. Transport, Meals',
+                      successColor,
                     ),
-                    child: isSubmitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            widget.package != null ? 'Update Package' : 'Preview & Publish',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 32),
-          ],
+                  TextButton.icon(
+                    onPressed: _addInclusion,
+                    icon: const Icon(
+                      Icons.add,
+                      size: 16,
+                      color: successColorDark,
+                    ),
+                    label: const Text(
+                      'Add Inclusion',
+                      style: TextStyle(color: successColorDark),
+                    ),
+                  ),
+                  const Divider(),
+                  AppText.subHeading(
+                    'Excluded',
+                    color: errorColorDark,
+                    size: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  const SizedBox(height: 6),
+                  ..._exclusionCtls.asMap().entries.map(
+                    (e) => _listItem(
+                      e.value,
+                      _exclusionNodes[e.key],
+                      () => setState(() {
+                        if (_exclusionCtls.length > 1) {
+                          _exclusionCtls.removeAt(e.key);
+                          _exclusionNodes[e.key].dispose();
+                          _exclusionNodes.removeAt(e.key);
+                        }
+                      }),
+                      'e.g. Personal expenses',
+                      errorColor,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _addExclusion,
+                    icon: const Icon(
+                      Icons.add,
+                      size: 16,
+                      color: errorColorDark,
+                    ),
+                    label: const Text(
+                      'Add Exclusion',
+                      style: TextStyle(color: errorColorDark),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              // Submit
+              BlocBuilder<TravelBloc, TravelState>(
+                builder: (context, state) {
+                  final isSubmitting =
+                      state.actionStatus == BookingActionStatus.loading;
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isSubmitting ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryBlue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              widget.package != null
+                                  ? 'Update Package'
+                                  : 'Preview & Publish',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // ── Section card wrapper ──────────────────────────────────────────────────
 
@@ -710,23 +738,60 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_pickedImages.isNotEmpty)
+        if (_pickedImages.isNotEmpty || _existingImages.isNotEmpty)
           SizedBox(
             height: 100,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: _pickedImages.length + 1,
+              itemCount: _existingImages.length + _pickedImages.length + 1,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
-                if (i == _pickedImages.length) {
+                if (i == _existingImages.length + _pickedImages.length) {
                   return _addImageBtn();
                 }
+
+                // Show existing images from network
+                if (i < _existingImages.length) {
+                  return Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          _existingImages[i],
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 2,
+                        right: 2,
+                        child: GestureDetector(
+                          onTap: () =>
+                              setState(() => _existingImages.removeAt(i)),
+                          child: const CircleAvatar(
+                            radius: 10,
+                            backgroundColor: Colors.redAccent,
+                            child: Icon(
+                              Icons.close,
+                              size: 10,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                // Show newly picked local images
+                final localIdx = i - _existingImages.length;
                 return Stack(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: Image.file(
-                        File(_pickedImages[i].path),
+                        File(_pickedImages[localIdx].path),
                         width: 90,
                         height: 90,
                         fit: BoxFit.cover,
@@ -736,7 +801,8 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
                       top: 2,
                       right: 2,
                       child: GestureDetector(
-                        onTap: () => setState(() => _pickedImages.removeAt(i)),
+                        onTap: () =>
+                            setState(() => _pickedImages.removeAt(localIdx)),
                         child: const CircleAvatar(
                           radius: 10,
                           backgroundColor: Colors.black54,
@@ -795,7 +861,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
   }
 
   Widget _addImageBtn() {
-    if (_pickedImages.length >= 5) return const SizedBox.shrink();
+    if (_pickedImages.length >= 10) return const SizedBox.shrink();
     return GestureDetector(
       onTap: _pickImages,
       child: Container(

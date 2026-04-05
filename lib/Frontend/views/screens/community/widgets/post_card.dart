@@ -1,18 +1,18 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:bhatkanti_app/Frontend/core/models/post_model.dart';
-import 'package:bhatkanti_app/Frontend/core/services/post_service.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/community/widgets/comments_sheet.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/community/widgets/post_detail_popup.dart';
+import 'package:yatrikaa/Frontend/core/models/post_model.dart';
+import 'package:yatrikaa/Frontend/core/services/post_service.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/views/screens/community/widgets/comments_sheet.dart';
+import 'package:yatrikaa/Frontend/views/screens/community/widgets/post_detail_popup.dart';
 
-import 'package:bhatkanti_app/Frontend/views/screens/community/widgets/edit_post_sheet.dart';
-import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/custom_alert_dialog.dart';
+import 'package:yatrikaa/Frontend/views/screens/community/widgets/edit_post_sheet.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
+import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -86,7 +86,7 @@ class _PostCardState extends State<PostCard> {
 
   void _handleShare() {
     Share.share(
-      'Check out this journey at ${widget.post.location} by ${widget.post.author.name}!\n\n"${widget.post.caption}"\n\nShared via Bhatkanti App',
+      'Check out this journey at ${widget.post.location} by ${widget.post.author.name}!\n\n"${widget.post.caption}"\n\nShared via Yatrikaa App',
     );
   }
 

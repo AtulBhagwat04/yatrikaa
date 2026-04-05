@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 
 class PlaceNearbyCard extends StatelessWidget {
   final PlaceModel place;
@@ -16,7 +16,7 @@ class PlaceNearbyCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: appWhite,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: shadowColorLight,
@@ -29,7 +29,7 @@ class PlaceNearbyCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -37,7 +37,7 @@ class PlaceNearbyCard extends StatelessWidget {
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(13),
                       child: CachedNetworkImage(
                         imageUrl: place.photoUrl,
                         height: 100,

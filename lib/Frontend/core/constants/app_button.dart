@@ -35,19 +35,19 @@ class AppButton extends StatelessWidget {
           duration: const Duration(milliseconds: 250),
           child: isLoading
               ? const SizedBox(
-            key: ValueKey("loader"),
-            height: 22,
-            width: 22,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              color: Colors.white,
-            ),
-          )
+                  key: ValueKey("loader"),
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                )
               : Text(
-            text,
-            key: const ValueKey("text"),
-            style: AppTextStyles.button,
-          ),
+                  text,
+                  key: const ValueKey("text"),
+                  style: AppTextStyles.button,
+                ),
         ),
       ),
     );

@@ -1,16 +1,16 @@
-import 'dart:io';
-import 'package:bhatkanti_app/Frontend/core/utils/error_handler.dart';
-import 'package:bhatkanti_app/Frontend/core/widgets/custom_toast.dart';
+﻿import 'dart:io';
+import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/services/events_service.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/services/events_service.dart';
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -85,10 +85,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
   Future<void> _pickImages() async {
     if (_isPickerActive) return;
 
-    if (_imageFiles.length >= 3) {
+    if (_imageFiles.length >= 10) {
       CustomToast.warning(
         context,
-        'Maximum 3 images allowed',
+        'Maximum 10 images allowed',
         title: "Hold on!",
       );
       return;
@@ -103,7 +103,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       if (pickedFiles.isNotEmpty) {
         setState(() {
           // Take only up to remaining slots
-          int remainingSlots = 3 - _imageFiles.length;
+          int remainingSlots = 10 - _imageFiles.length;
           _imageFiles.addAll(pickedFiles.take(remainingSlots));
         });
       }
@@ -272,7 +272,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            automaticallyImplyLeading: false,
             floating: true,
             pinned: true,
             backgroundColor: onboardingBlueVeryLight,
@@ -581,7 +580,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: _imageFiles.length + (_imageFiles.length < 3 ? 1 : 0),
+        itemCount: _imageFiles.length + (_imageFiles.length < 10 ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == _imageFiles.length) {
             return GestureDetector(

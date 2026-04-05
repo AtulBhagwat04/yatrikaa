@@ -1,7 +1,7 @@
-import 'package:equatable/equatable.dart';
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
-import 'package:bhatkanti_app/Frontend/core/models/booking_model.dart';
-import 'package:bhatkanti_app/Frontend/core/models/guide_request_model.dart';
+﻿import 'package:equatable/equatable.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/core/models/booking_model.dart';
+import 'package:yatrikaa/Frontend/core/models/guide_request_model.dart';
 
 enum TravelStatus { initial, loading, success, failure }
 
@@ -146,10 +146,12 @@ class TravelState extends Equatable {
   }
 
   List<BookingModel> get upcomingBookings => myBookings
-      .where((b) =>
-          b.status == 'Pending' ||
-          b.status == 'Confirmed' ||
-          b.status == 'CancellationRequested')
+      .where(
+        (b) =>
+            b.status == 'Pending' ||
+            b.status == 'Confirmed' ||
+            b.status == 'CancellationRequested',
+      )
       .toList();
 
   List<BookingModel> get completedBookings =>

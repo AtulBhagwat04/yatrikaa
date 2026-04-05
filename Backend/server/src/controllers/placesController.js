@@ -1,13 +1,18 @@
 const Place = require('../models/Place');
 const User = require('../models/User');
 const googlePlacesService = require('../services/placesService');
+const notificationService = require('../services/notificationService');
 
 class PlacesController {
   /**
-   * Get popular places from MongoDB
+   * Get popular places from MongoDB with optional pagination
+   * Query params: category, page (default 1), limit (default 12, 0 = all)
    */
   async getPopularPlaces(req, res, next) {
     const { category } = req.query;
+    const page  = Math.max(1, parseInt(req.query.page  || '1',  10));
+    const limit = Math.max(0, parseInt(req.query.limit || '12', 10));
+
     try {
       let filter = {};
       if (category && category !== 'All') {
@@ -20,11 +25,30 @@ class PlacesController {
         };
       }
 
-      const places = await Place.find(filter).sort({ rating: -1, user_ratings_total: -1 });
-      
+      const baseQuery = Place.find(filter).sort({ rating: -1, user_ratings_total: -1 });
+
+      let places;
+      let totalCount;
+
+      if (limit === 0) {
+        places     = await baseQuery;
+        totalCount = places.length;
+      } else {
+        totalCount = await Place.countDocuments(filter);
+        places     = await baseQuery.skip((page - 1) * limit).limit(limit);
+      }
+
+      const totalPages = limit > 0 ? Math.ceil(totalCount / limit) : 1;
+      const hasMore    = limit > 0 && page < totalPages;
+
       res.status(200).json({
         status: "OK",
-        results: places
+        count: places.length,
+        totalCount,
+        page,
+        totalPages,
+        hasMore,
+        results: places,
       });
     } catch (error) {
       next(error);
@@ -192,7 +216,7 @@ class PlacesController {
 
       // If files are uploaded, upload each to Cloudinary and set as photos
       if (req.files && req.files.length > 0) {
-        const folderName = `Bhatkanti/Places/${(body.name || 'unnamed').replace(/\s+/g, '_')}`;
+        const folderName = `Yatrikaa/Places/${(body.name || 'unnamed').replace(/\s+/g, '_')}`;
         const uploadPromises = req.files.map(file => uploadImage(file, folderName));
         const results = await Promise.all(uploadPromises);
         
@@ -205,6 +229,14 @@ class PlacesController {
       }
 
       const place = await Place.create(body);
+
+      // --- BROADCAST NOTIFICATION ---
+      // Notify all users about the new destination
+      notificationService.sendToTopic('all_users', {
+        title: 'New Destination Alert! 🏰',
+        body: `"${place.name}" is now available in Yatrikaa. Start planning your visit!`,
+      }, { type: 'new_place', placeId: place.place_id }).catch(e => console.error(e));
+
       res.status(201).json({ status: "OK", result: place });
     } catch (error) {
       next(error);
@@ -241,7 +273,7 @@ class PlacesController {
 
       // If files are uploaded, upload each to Cloudinary and append to photos/images
       if (req.files && req.files.length > 0) {
-        const folderName = `Bhatkanti/Places/${(body.name || 'unnamed').replace(/\s+/g, '_')}`;
+        const folderName = `Yatrikaa/Places/${(body.name || 'unnamed').replace(/\s+/g, '_')}`;
         const uploadPromises = req.files.map(file => uploadImage(file, folderName));
         const results = await Promise.all(uploadPromises);
         

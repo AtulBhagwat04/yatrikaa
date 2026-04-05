@@ -1,5 +1,5 @@
-import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_assets.dart';
+﻿import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
 
 class ItineraryStep {
   final int day;
@@ -31,6 +31,7 @@ class OrganizerModel {
   final String role;
   final double rating;
   final int tripsHosted;
+  final bool isVerified;
 
   OrganizerModel({
     required this.id,
@@ -39,16 +40,24 @@ class OrganizerModel {
     required this.role,
     this.rating = 0.0,
     this.tripsHosted = 0,
+    this.isVerified = false,
   });
 
   factory OrganizerModel.fromJson(Map<String, dynamic> json) {
     return OrganizerModel(
       id: json['_id'] ?? '',
-      name: json['name'] ?? 'Bhatkanti Guide',
+      name: json['name'] ?? 'Yatrikaa Guide',
       profileImage: json['profileImage'],
       role: json['role'] ?? 'Guide',
-      rating: (json['rating'] ?? 0.0).toDouble(),
-      tripsHosted: json['tripsHosted'] ?? 0,
+      rating: (json['rating'] ?? json['averageRating'] ?? 0.0).toDouble(),
+      tripsHosted:
+          json['packagesCount'] ??
+          json['tripsCount'] ??
+          json['tripsHosted'] ??
+          0,
+      isVerified:
+          json['isVerified'] == true ||
+          json['guideRequestStatus'] == 'Approved',
     );
   }
 }
@@ -135,15 +144,23 @@ class TravelPackageModel {
       inclusions: List<String>.from(json['inclusions'] ?? []),
       exclusions: List<String>.from(json['exclusions'] ?? []),
       bestSeason: json['bestSeason'],
-      organizer: OrganizerModel.fromJson(json['organizer'] ?? {}),
+      organizer: (() {
+        final Map<String, dynamic> orgJson = Map<String, dynamic>.from(
+          (json['organizer'] is Map) ? json['organizer'] : {},
+        );
+        if (orgJson['rating'] == null && orgJson['averageRating'] == null) {
+          orgJson['rating'] = ratings['average'];
+        }
+        return OrganizerModel.fromJson(orgJson);
+      })(),
       status: json['status'] ?? 'Published',
       isPopular: json['isPopular'] ?? false,
       averageRating: (ratings['average'] ?? 0.0).toDouble(),
       reviewCount: ratings['count'] ?? 0,
-      startDate:
-          json['startDate'] != null ? DateTime.parse(json['startDate']) : null,
-      endDate:
-          json['endDate'] != null ? DateTime.parse(json['endDate']) : null,
+      startDate: json['startDate'] != null
+          ? DateTime.parse(json['startDate'])
+          : null,
+      endDate: json['endDate'] != null ? DateTime.parse(json['endDate']) : null,
     );
   }
 
@@ -225,7 +242,7 @@ class TravelPackageModel {
       'images': images,
       'destination': {
         'name': destinationName,
-        'location': {'lat': lat, 'lng': lng}
+        'location': {'lat': lat, 'lng': lng},
       },
       'duration': {'days': days, 'nights': nights},
       'price': price,
@@ -267,6 +284,7 @@ extension OrganizerModelJson on OrganizerModel {
       'role': role,
       'rating': rating,
       'tripsHosted': tripsHosted,
+      'isVerified': isVerified,
     };
   }
 }

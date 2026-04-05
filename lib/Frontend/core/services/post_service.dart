@@ -1,39 +1,40 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/post_model.dart';
 import '../constants/api_constants.dart';
 import 'auth_service.dart';
 import '../utils/app_cache.dart';
+import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
 
 class PostService {
   final AuthService _authService = AuthService();
 
   Future<List<PostModel>> getAllPosts() async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/posts'),
+      final response = await BackendHealthManager.instance.get(
+        '${ApiConstants.baseUrl}/posts',
       );
 
       if (response.statusCode == 200) {
         final List results = json.decode(response.body);
-        
+
         // Cache the raw results for offline use
         await AppCache.saveRawData(AppCache.keyPosts, results);
-        
+
         return results.map((json) => PostModel.fromJson(json)).toList();
       } else {
         throw Exception("Failed to fetch posts");
       }
     } catch (e) {
       print('Error fetching posts: $e');
-      
+
       // Fallback to cache if network fails
       final cachedData = await AppCache.getRawData(AppCache.keyPosts);
       if (cachedData.isNotEmpty) {
         return cachedData.map((json) => PostModel.fromJson(json)).toList();
       }
-      
+
       return [];
     }
   }
@@ -45,41 +46,42 @@ class PostService {
   }) async {
     try {
       final token = await _authService.getToken();
-      final uri = Uri.parse('${ApiConstants.baseUrl}/posts');
-      var request = http.MultipartRequest('POST', uri);
+      final streamedResponse = await BackendHealthManager.instance.sendMultipart(() async {
+        final uri = Uri.parse('${ApiConstants.baseUrl}/posts');
+        var request = http.MultipartRequest('POST', uri);
 
-      if (token != null) {
-        request.headers['Authorization'] = 'Bearer $token';
-      }
-
-      request.fields['location'] = location;
-      request.fields['caption'] = caption;
-
-      if (imageFiles.isNotEmpty) {
-        for (var imageFile in imageFiles) {
-          final String path = imageFile.path;
-          final String ext = path.split('.').last.toLowerCase();
-
-          MediaType contentType;
-          if (ext == 'png') {
-            contentType = MediaType('image', 'png');
-          } else if (ext == 'webp') {
-            contentType = MediaType('image', 'webp');
-          } else {
-            contentType = MediaType('image', 'jpeg');
-          }
-
-          request.files.add(
-            await http.MultipartFile.fromPath(
-              'images',
-              path,
-              contentType: contentType,
-            ),
-          );
+        if (token != null) {
+          request.headers['Authorization'] = 'Bearer $token';
         }
-      }
 
-      final streamedResponse = await request.send();
+        request.fields['location'] = location;
+        request.fields['caption'] = caption;
+
+        if (imageFiles.isNotEmpty) {
+          for (var imageFile in imageFiles) {
+            final String path = imageFile.path;
+            final String ext = path.split('.').last.toLowerCase();
+
+            MediaType contentType;
+            if (ext == 'png') {
+              contentType = MediaType('image', 'png');
+            } else if (ext == 'webp') {
+              contentType = MediaType('image', 'webp');
+            } else {
+              contentType = MediaType('image', 'jpeg');
+            }
+
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'images',
+                path,
+                contentType: contentType,
+              ),
+            );
+          }
+        }
+        return request;
+      });
       final responseBody = await streamedResponse.stream.bytesToString();
 
       if (streamedResponse.statusCode == 201) {
@@ -97,8 +99,8 @@ class PostService {
   Future<PostModel?> likePost(String postId) async {
     try {
       final token = await _authService.getToken();
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/posts/$postId/like'),
+      final response = await BackendHealthManager.instance.post(
+        '${ApiConstants.baseUrl}/posts/$postId/like',
         headers: {if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -115,8 +117,8 @@ class PostService {
   Future<PostModel?> commentOnPost(String postId, String text) async {
     try {
       final token = await _authService.getToken();
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/posts/$postId/comment'),
+      final response = await BackendHealthManager.instance.post(
+        '${ApiConstants.baseUrl}/posts/$postId/comment',
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
@@ -137,8 +139,8 @@ class PostService {
   Future<PostModel?> deleteComment(String postId, String commentId) async {
     try {
       final token = await _authService.getToken();
-      final response = await http.delete(
-        Uri.parse('${ApiConstants.baseUrl}/posts/$postId/comments/$commentId'),
+      final response = await BackendHealthManager.instance.delete(
+        '${ApiConstants.baseUrl}/posts/$postId/comments/$commentId',
         headers: {if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -152,14 +154,18 @@ class PostService {
     }
   }
 
-  Future<PostModel?> editComment(String postId, String commentId, String text) async {
+  Future<PostModel?> editComment(
+    String postId,
+    String commentId,
+    String text,
+  ) async {
     try {
       final token = await _authService.getToken();
-      final response = await http.put(
-        Uri.parse('${ApiConstants.baseUrl}/posts/$postId/comments/$commentId'),
+      final response = await BackendHealthManager.instance.put(
+        '${ApiConstants.baseUrl}/posts/$postId/comments/$commentId',
         headers: {
           'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token'
+          if (token != null) 'Authorization': 'Bearer $token',
         },
         body: json.encode({'text': text}),
       );
@@ -177,8 +183,8 @@ class PostService {
   Future<bool> deletePost(String postId) async {
     try {
       final token = await _authService.getToken();
-      final response = await http.delete(
-        Uri.parse('${ApiConstants.baseUrl}/posts/$postId'),
+      final response = await BackendHealthManager.instance.delete(
+        '${ApiConstants.baseUrl}/posts/$postId',
         headers: {if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -197,41 +203,42 @@ class PostService {
   }) async {
     try {
       final token = await _authService.getToken();
-      final uri = Uri.parse('${ApiConstants.baseUrl}/posts/$postId');
-      var request = http.MultipartRequest('PUT', uri);
+      final streamedResponse = await BackendHealthManager.instance.sendMultipart(() async {
+        final uri = Uri.parse('${ApiConstants.baseUrl}/posts/$postId');
+        var request = http.MultipartRequest('PUT', uri);
 
-      if (token != null) {
-        request.headers['Authorization'] = 'Bearer $token';
-      }
-
-      request.fields['location'] = location;
-      request.fields['caption'] = caption;
-
-      if (imageFiles.isNotEmpty) {
-        for (var imageFile in imageFiles) {
-          final String path = imageFile.path;
-          final String ext = path.split('.').last.toLowerCase();
-
-          MediaType contentType;
-          if (ext == 'png') {
-            contentType = MediaType('image', 'png');
-          } else if (ext == 'webp') {
-            contentType = MediaType('image', 'webp');
-          } else {
-            contentType = MediaType('image', 'jpeg');
-          }
-
-          request.files.add(
-            await http.MultipartFile.fromPath(
-              'images',
-              path,
-              contentType: contentType,
-            ),
-          );
+        if (token != null) {
+          request.headers['Authorization'] = 'Bearer $token';
         }
-      }
 
-      final streamedResponse = await request.send();
+        request.fields['location'] = location;
+        request.fields['caption'] = caption;
+
+        if (imageFiles.isNotEmpty) {
+          for (var imageFile in imageFiles) {
+            final String path = imageFile.path;
+            final String ext = path.split('.').last.toLowerCase();
+
+            MediaType contentType;
+            if (ext == 'png') {
+              contentType = MediaType('image', 'png');
+            } else if (ext == 'webp') {
+              contentType = MediaType('image', 'webp');
+            } else {
+              contentType = MediaType('image', 'jpeg');
+            }
+
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'images',
+                path,
+                contentType: contentType,
+              ),
+            );
+          }
+        }
+        return request;
+      });
       final responseBody = await streamedResponse.stream.bytesToString();
 
       if (streamedResponse.statusCode == 200) {

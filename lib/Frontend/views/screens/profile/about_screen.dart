@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -11,11 +11,10 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         title: AppText.subHeading(
-          'About Bhatkanti',
+          'About Yatrikaa',
           color: appBlack,
           fontWeight: FontWeight.w800,
         ),
@@ -42,11 +41,11 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.l),
-            AppText.heading('Bhatkanti', size: 28),
+            AppText.heading('Yatrikaa', size: 28),
             AppText.caption('Version 1.0.0 (Stable)', color: Colors.grey),
             const SizedBox(height: AppSpacing.xl),
             AppText.body(
-              'Bhatkanti is your ultimate travel companion, designed to help you discover hidden gems, plan unforgettable trips, and connect with expert local guides. Our mission is to make travel authentic, accessible, and deeply personal for every explorer.',
+              'Yatrikaa is your ultimate travel companion, designed to help you discover hidden gems, plan unforgettable trips, and connect with expert local guides. Our mission is to make travel authentic, accessible, and deeply personal for every explorer.',
               align: TextAlign.center,
               size: 15,
               height: 1.6,
@@ -55,19 +54,19 @@ class AboutScreen extends StatelessWidget {
             _buildInfoTile(
               Icons.language_rounded,
               'Website',
-              'www.bhatkanti.com',
+              'www.yatrikaa.com',
             ),
             _buildInfoTile(
               Icons.mail_outline_rounded,
               'Contact Us',
-              'support@bhatkanti.com',
+              'support@yatrikaa.com',
             ),
-            _buildInfoTile(Icons.share_outlined, 'Follow Us', '@bhatkanti_app'),
+            _buildInfoTile(Icons.share_outlined, 'Follow Us', '@yatrikaa_app'),
             const SizedBox(height: AppSpacing.xl),
             const Divider(),
             const SizedBox(height: AppSpacing.l),
             AppText.small(
-              '© 2026 Bhatkanti. All rights reserved.',
+              '© 2026 Yatrikaa. All rights reserved.',
               color: Colors.grey,
             ),
             const SizedBox(height: AppSpacing.xl),

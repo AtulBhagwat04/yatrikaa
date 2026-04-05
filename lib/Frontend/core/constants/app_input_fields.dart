@@ -41,12 +41,34 @@ class _AppInputFieldState extends State<AppInputField> {
   void initState() {
     super.initState();
     _obscureText = widget.isObscure;
+    _addFocusListener();
+  }
 
-    widget.focusNode?.addListener(() {
+  @override
+  void didUpdateWidget(AppInputField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focusNode != oldWidget.focusNode) {
+      oldWidget.focusNode?.removeListener(_onFocusChange);
+      _addFocusListener();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode?.removeListener(_onFocusChange);
+    super.dispose();
+  }
+
+  void _addFocusListener() {
+    widget.focusNode?.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (mounted) {
       setState(() {
-        _isFocused = widget.focusNode!.hasFocus;
+        _isFocused = widget.focusNode?.hasFocus ?? false;
       });
-    });
+    }
   }
 
   @override
@@ -107,11 +129,9 @@ class _AppInputFieldState extends State<AppInputField> {
           filled: true,
           fillColor: primaryWhite,
 
-          contentPadding: widget.contentPadding ??
-              const EdgeInsets.symmetric(
-                vertical: 14,
-                horizontal: 16,
-              ),
+          contentPadding:
+              widget.contentPadding ??
+              const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
 
           /// Default Border
           border: OutlineInputBorder(
@@ -150,4 +170,5 @@ class _AppInputFieldState extends State<AppInputField> {
     );
   }
 }
+
 // git hub login

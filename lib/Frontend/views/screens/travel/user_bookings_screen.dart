@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/models/booking_model.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_state.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/custom_alert_dialog.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/models/booking_model.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 
 class UserBookingsScreen extends StatefulWidget {
   const UserBookingsScreen({super.key});
@@ -46,7 +46,6 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
           appBar: AppBar(
             backgroundColor: onboardingBlueVeryLight,
             elevation: 0,
-            automaticallyImplyLeading: false,
             title: AppText.subHeading(
               'My Trips',
               fontWeight: FontWeight.w800,
@@ -364,8 +363,8 @@ class _BookingCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      booking.status == 'CancellationRequested' 
-                          ? 'Cancellation Requested' 
+                      booking.status == 'CancellationRequested'
+                          ? 'Cancellation Requested'
                           : booking.status,
                       style: TextStyle(
                         color: _statusColor,
@@ -477,7 +476,9 @@ class _BookingCard extends StatelessWidget {
                           child: TextButton(
                             onPressed: onCancel,
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),

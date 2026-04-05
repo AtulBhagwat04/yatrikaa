@@ -1,20 +1,20 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
-import 'package:bhatkanti_app/Frontend/core/services/places_service.dart';
-import 'package:bhatkanti_app/Frontend/core/services/events_service.dart';
-import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
+import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/core/services/places_service.dart';
+import 'package:yatrikaa/Frontend/core/services/events_service.dart';
+import 'package:yatrikaa/Frontend/core/models/event_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:io';
 
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_state.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_cache.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_state.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_cache.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final PlacesService _placesService = PlacesService();
@@ -152,9 +152,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             nearbyPlaces: nearby,
             popularEvents: events,
             currentLocation: location ?? state.currentLocation,
-            isLoadingRecommended: false,
-            isLoadingNearby: false,
-            isLoadingEvents: false,
+            // Keep loading flags ACTIVE — fresh fetch is already running in
+            // parallel. The UI will stay in its loading/shimmer state and
+            // only settle once the network response comes back.
+            // This prevents the jarring flash: stale data → real data.
             isLoadingLocation: location == null,
           ),
         );

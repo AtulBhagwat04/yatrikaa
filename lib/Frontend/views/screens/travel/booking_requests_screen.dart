@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/models/booking_model.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/models/booking_model.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
 
 class BookingRequestsScreen extends StatefulWidget {
   final String? packageId;
@@ -77,7 +77,6 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen>
         appBar: AppBar(
           backgroundColor: onboardingBlueVeryLight,
           elevation: 0,
-          automaticallyImplyLeading: false,
           title: AppText.subHeading(
             widget.packageId != null ? 'Package Bookings' : 'All Bookings',
             fontWeight: FontWeight.w900,
@@ -386,7 +385,7 @@ class _BookingCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           AppText.body(
-                            booking.userName ?? 'Bhatkanti Traveler',
+                            booking.userName ?? 'Yatrikaa Traveler',
                             fontWeight: FontWeight.w800,
                           ),
                           const SizedBox(height: 2),

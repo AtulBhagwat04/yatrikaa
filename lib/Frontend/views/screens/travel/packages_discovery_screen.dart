@@ -1,21 +1,24 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_state.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/category_chip.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
+import 'package:yatrikaa/Frontend/core/services/packages_service.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/widgets/category_chip.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+
+// ── Lazy loading constants ───────────────────────────────────────────────────
+const int _kPackagesPageSize = 10;
 
 class PackagesDiscoveryScreen extends StatefulWidget {
   const PackagesDiscoveryScreen({super.key});
@@ -38,61 +41,192 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
     ('Cultural', Icons.museum_rounded),
   ];
 
+  // ── Lazy-load state ─────────────────────────────────────────────────────────
+  final PackagesService _service = PackagesService();
+  final ScrollController _scrollController = ScrollController();
+  final List<TravelPackageModel> _packages = [];
+  int _currentPage = 1;
+  bool _isLoadingInitial = true;
+  bool _isLoadingMore = false;
+  bool _hasMore = false;
+  bool _hasError = false;
+  String _selectedCategory = 'All';
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+    _fetchPage(1, reset: true);
+    // Keep bloc in sync for home screen preview
     context.read<TravelBloc>().add(const TravelPackagesRequested());
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  // ── Scroll listener ─────────────────────────────────────────────────────────
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final current = _scrollController.offset;
+    // Trigger when within 250px of bottom
+    if (current >= maxScroll - 250 && _hasMore && !_isLoadingMore) {
+      _fetchPage(_currentPage + 1);
+    }
+  }
+
+  // ── Data fetcher ────────────────────────────────────────────────────────────
+  Future<void> _fetchPage(int page, {bool reset = false}) async {
+    if (reset) {
+      setState(() {
+        _isLoadingInitial = true;
+        _hasError = false;
+        _packages.clear();
+        _currentPage = 1;
+        _hasMore = false;
+      });
+    } else {
+      if (_isLoadingMore || !_hasMore) return;
+      setState(() => _isLoadingMore = true);
+    }
+
+    try {
+      final result = await _service.getPackagesPaginated(
+        category: _selectedCategory == 'All' ? null : _selectedCategory,
+        page: page,
+        limit: _kPackagesPageSize,
+      );
+
+      final newPackages = result['packages'] as List<TravelPackageModel>;
+      final hasMore = result['hasMore'] as bool;
+
+      if (mounted) {
+        setState(() {
+          if (reset) _packages.clear();
+          _packages.addAll(newPackages);
+          _currentPage = page;
+          _hasMore = hasMore;
+          _isLoadingInitial = false;
+          _isLoadingMore = false;
+          _hasError = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingInitial = false;
+          _isLoadingMore = false;
+          _hasError = reset; // only show error on initial load failure
+        });
+      }
+    }
+  }
+
+  void _onCategoryChanged(String category) {
+    if (category == _selectedCategory) return;
+    setState(() => _selectedCategory = category);
+    // Also update bloc for the category chips UI
+    context.read<TravelBloc>().add(TravelCategoryChanged(category));
+    _fetchPage(1, reset: true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
-      body: BlocBuilder<TravelBloc, TravelState>(
-        builder: (ctx, state) {
-          return SafeArea(
-            child: RefreshIndicator(
-              color: primaryBlue,
-              displacement: 120,
-              onRefresh: () async {
-                ctx.read<TravelBloc>().add(const TravelPackagesRequested());
-                await Future.delayed(const Duration(milliseconds: 700));
-              },
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                slivers: [
-                  // ── Modern Header ─────────────────────────────
-                  _buildHeader(ctx),
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: primaryBlue,
+          displacement: 120,
+          onRefresh: () => _fetchPage(1, reset: true),
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              // ── Modern Header ─────────────────────────────────────────────
+              _buildHeader(context),
 
-                  // ── Category chips ───────────────────────────────────────────
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10, bottom: 4),
-                      child: _buildTabRow(ctx, state),
+              // ── Category chips ────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10, bottom: 4),
+                  child: _buildTabRow(context),
+                ),
+              ),
+
+              // ── Package list info ──────────────────────────────────────────
+              if (!_isLoadingInitial && _packages.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        AppText.body(
+                          '${_packages.length} Package${_packages.length != 1 ? 's' : ''} Loaded',
+                          color: appBlack,
+                          size: 14,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                        ),
+                        if (_selectedCategory != 'All')
+                          GestureDetector(
+                            onTap: () => _onCategoryChanged('All'),
+                            child: AppText.caption(
+                              'Clear All',
+                              color: primaryBlue,
+                              fontWeight: FontWeight.w600,
+                              size: 12,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
+                ),
 
-                  // ── Package list / shimmer / empty ───────────────────────────
-                  SliverToBoxAdapter(child: _buildBody(ctx, state)),
+              // ── Main Content ──────────────────────────────────────────────
+              if (_isLoadingInitial)
+                _buildShimmerList()
+              else if (_hasError)
+                SliverToBoxAdapter(child: _buildError(context))
+              else if (_packages.isEmpty)
+                SliverToBoxAdapter(child: _buildEmpty(context))
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) {
+                        return AppAnimations.fadeIn(
+                          duration: Duration(
+                            milliseconds: 300 + (i.clamp(0, 10) * 60),
+                          ),
+                          child: _PackageCard(package: _packages[i]),
+                        );
+                      },
+                      childCount: _packages.length,
+                    ),
+                  ),
+                ),
 
-                  const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
-                ],
-              ),
-            ),
-          );
-        },
+              // ── "Load more" shimmer at bottom ──────────────────────────────
+              if (_isLoadingMore) _buildLoadMoreShimmer(),
+
+              const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  // ── Modern header matching other screens ──────────────────────────────────────
+  // ── Modern header ───────────────────────────────────────────────────────────
   Widget _buildHeader(BuildContext context) {
     final authState = context.watch<AuthBloc>().state;
     final isOrganizer =
@@ -138,9 +272,9 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
   }
 
   // ── Category chips ──────────────────────────────────────────────────────────
-  Widget _buildTabRow(BuildContext ctx, TravelState state) {
+  Widget _buildTabRow(BuildContext context) {
     return SizedBox(
-      height: 50, // Slightly taller for breatheability
+      height: 50,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -152,196 +286,84 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
           return CategoryChip(
             label: label,
             icon: icon,
-            isSelected: state.selectedCategory == label,
-            onTap: () =>
-                ctx.read<TravelBloc>().add(TravelCategoryChanged(label)),
+            isSelected: _selectedCategory == label,
+            onTap: () => _onCategoryChanged(label),
           );
         },
       ),
     );
   }
 
-  // ── Body dispatch ────────────────────────────────────────────────────────────
-  Widget _buildBody(BuildContext ctx, TravelState state) {
-    if (state.packagesStatus == TravelStatus.loading ||
-        state.packagesStatus == TravelStatus.initial) {
-      return _buildShimmerList();
-    }
-
-    if (state.packagesStatus == TravelStatus.failure) {
-      return _buildError(ctx);
-    }
-
-    final packages = state.displayPackages;
-
-    if (packages.isEmpty) {
-      return _buildEmpty(ctx);
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              AppText.body(
-                '${packages.length} Packages Found',
-                color: appBlack,
-                size: 14,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.2,
-              ),
-              if (state.selectedCategory != 'All')
-                GestureDetector(
-                  onTap: () {
-                    ctx.read<TravelBloc>()
-                      ..add(const TravelSearchChanged(''))
-                      ..add(const TravelCategoryChanged('All'));
-                  },
-                  child: AppText.caption(
-                    'Clear All',
-                    color: primaryBlue,
-                    fontWeight: FontWeight.w600,
-                    size: 12,
-                  ),
-                ),
-            ],
-          ),
-        ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: packages.length,
-          itemBuilder: (_, i) {
-            return AppAnimations.fadeIn(
-              duration: Duration(milliseconds: 300 + (i * 100)),
-              child: _PackageCard(package: packages[i]),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  // ── Shimmer skeletons ────────────────────────────────────────────────────────
-  Widget _buildShimmerList() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-      child: Column(
-        children: List.generate(
-          3,
-          (_) => Container(
+  // ── Slivers ─────────────────────────────────────────────────────────────────
+  
+  Widget _buildLoadMoreShimmer() {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (_, __) => Container(
             margin: const EdgeInsets.only(bottom: 16),
             height: 270,
-            child: const ShimmerBox(radius: 18),
+            child: const ShimmerBox(radius: 16),
           ),
+          childCount: 2,
         ),
       ),
     );
   }
 
-  // ── Empty state ──────────────────────────────────────────────────────────────
-  Widget _buildEmpty(BuildContext ctx) {
-    return Container(
-      margin: const EdgeInsets.all(24),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+  Widget _buildShimmerList() {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (_, __) => Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            height: 270,
+            child: const ShimmerBox(radius: 16),
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.08),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.luggage_rounded,
-              color: primaryBlue,
-              size: 48,
-            ),
-          ),
-          const SizedBox(height: 20),
-          AppText.heading(
-            'No Packages Found',
-            size: 20,
-            fontWeight: FontWeight.w900,
-          ),
-          const SizedBox(height: 8),
-          AppText.body(
-            'Try a different category or search term.',
-            align: TextAlign.center,
-            color: appGrey,
-            size: 13,
-          ),
-          const SizedBox(height: 28),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                ctx.read<TravelBloc>()
-                  ..add(const TravelSearchChanged(''))
-                  ..add(const TravelCategoryChanged('All'));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue,
-                foregroundColor: Colors.white,
-                elevation: 6,
-                shadowColor: primaryBlue.withOpacity(0.3),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: const Text(
-                'Clear Filters',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
-            ),
-          ),
-        ],
+          childCount: 3,
+        ),
       ),
     );
   }
 
-  // ── Error state ──────────────────────────────────────────────────────────────
+  Widget _buildEmpty(BuildContext ctx) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.luggage_rounded, color: primaryBlue, size: 48),
+            const SizedBox(height: 20),
+            AppText.heading('No Packages Found', size: 20),
+            const SizedBox(height: 8),
+            AppText.body('Try a different category.', color: appGrey),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildError(BuildContext ctx) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 80),
-      child: Center(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 80),
         child: Column(
           children: [
             const Icon(Icons.wifi_off_rounded, size: 56, color: appGreyLight),
             const SizedBox(height: 16),
-            AppText.subHeading(
-              'Could not load packages',
-              size: 15,
-              fontWeight: FontWeight.w700,
-              color: appGrey,
-            ),
+            AppText.body('Could not load packages', color: appGrey),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () =>
-                  ctx.read<TravelBloc>().add(const TravelPackagesRequested()),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue,
-                foregroundColor: Colors.white,
-              ),
+            ElevatedButton(
+              onPressed: () => _fetchPage(1, reset: true),
+              child: const Text('Retry'),
             ),
           ],
         ),
@@ -350,9 +372,6 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Package Card
-// ─────────────────────────────────────────────────────────────────────────────
 class _PackageCard extends StatelessWidget {
   final TravelPackageModel package;
   const _PackageCard({required this.package});
@@ -367,7 +386,7 @@ class _PackageCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -377,7 +396,7 @@ class _PackageCard extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -392,45 +411,20 @@ class _PackageCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Cover image ──────────────────────────────────────────────
                 Stack(
                   children: [
                     CachedNetworkImage(
                       imageUrl: package.mainPhotoUrl,
-                      height: 180, // Slightly shorter
+                      height: 180,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       placeholder: (_, __) => const ShimmerBox(height: 180),
                       errorWidget: (_, __, ___) => Container(
                         height: 180,
                         color: onboardingBlueVeryLight,
-                        child: const Center(
-                          child: Icon(
-                            Icons.image_not_supported_outlined,
-                            color: appGreyLight,
-                            size: 40,
-                          ),
-                        ),
+                        child: const Icon(Icons.image_not_supported_outlined),
                       ),
                     ),
-
-                    // Simple bottom gradient for readability
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.center,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.4),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // ── Seats left pill (bottom-right) ────────
                     Positioned(
                       bottom: 10,
                       right: 10,
@@ -457,104 +451,36 @@ class _PackageCard extends StatelessWidget {
                     ),
                   ],
                 ),
-
-                // ── Card body ────────────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title + price
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  package.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1A1A2E),
-                                    letterSpacing: -0.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                // Location & Rating
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.location_on_rounded,
-                                      color: appGrey,
-                                      size: 11,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: AppText.caption(
-                                        package.destinationName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        color: appGrey,
-                                        size: 11,
-                                      ),
-                                    ),
-                                    if (package.averageRating > 0) ...[
-                                      const SizedBox(width: 8),
-                                      const Icon(
-                                        Icons.star_rounded,
-                                        color: ratingColor,
-                                        size: 12,
-                                      ),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        package.averageRating.toStringAsFixed(
-                                          1,
-                                        ),
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: appGreyDark,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
+                            child: Text(
+                              package.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '₹${package.price.toInt()}',
-                                style: const TextStyle(
-                                  color: primaryBlue,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const Text(
-                                'per person',
-                                style: TextStyle(
-                                  color: appGrey,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            '₹${package.price.toInt()}',
+                            style: const TextStyle(
+                              color: primaryBlue,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 10),
-
-                      // Stats Row
                       Row(
                         children: [
                           _InfoChip(
@@ -566,12 +492,6 @@ class _PackageCard extends StatelessWidget {
                             icon: Icons.bar_chart_rounded,
                             label: package.difficulty,
                             color: diffColor,
-                          ),
-                          const Spacer(),
-                          const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 11,
-                            color: appGreyLight,
                           ),
                         ],
                       ),
@@ -588,22 +508,14 @@ class _PackageCard extends StatelessWidget {
 
   Color _difficultyColor(String d) {
     switch (d) {
-      case 'Easy':
-        return const Color(0xFF2DC653);
-      case 'Moderate':
-        return const Color(0xFFE9A21B);
-      case 'Hard':
-        return const Color(0xFFFF6B35);
-      case 'Very Hard':
-      case 'Expert':
-        return const Color(0xFFE83A5A);
-      default:
-        return appGrey;
+      case 'Easy': return const Color(0xFF2DC653);
+      case 'Moderate': return const Color(0xFFE9A21B);
+      case 'Hard': return const Color(0xFFFF6B35);
+      default: return appGrey;
     }
   }
 }
 
-// Stat chip for difficulty / group size
 class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -617,22 +529,22 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: color),
-          const SizedBox(width: 5),
+          const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
               color: color,
-              fontWeight: FontWeight.w600,
               fontSize: 11,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -656,19 +568,18 @@ class _HeaderAction extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isPrimary ? primaryBlue : appWhite,
-          borderRadius: BorderRadius.circular(16),
+          color: isPrimary ? primaryBlue : Colors.white,
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: (isPrimary ? primaryBlue : appBlack).withOpacity(0.12),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Icon(icon, color: isPrimary ? appWhite : primaryBlue, size: 24),
+        child: Icon(icon, color: isPrimary ? Colors.white : primaryBlue),
       ),
     );
   }

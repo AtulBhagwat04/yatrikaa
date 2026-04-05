@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
-import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 
 class ReviewModerationScreen extends StatefulWidget {
   const ReviewModerationScreen({super.key});
@@ -72,7 +72,6 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         title: AppText.subHeading(

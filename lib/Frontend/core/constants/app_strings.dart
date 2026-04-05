@@ -1,6 +1,6 @@
 class AppStrings {
   // ================= GENERAL =================
-  static const String appName = "Bhatkanti";
+  static const String appName = "Yatrikaa";
   static const String refresh = "Refresh";
   static const String loading = "Loading...";
   static const String error = "Something went wrong";
@@ -80,7 +80,7 @@ class AppStrings {
 
   // ================= AUTH =================
   static const String welcomeBack = "Welcome back";
-  static const String loginSubtitle = "Login to continue your journey with us.";
+  static const String loginSubtitle = "Continue your journey with Yatrikaa";
   static const String emailHint = "Email";
   static const String passwordHint = "Password";
   static const String forgotPassword = "Forgot password?";
@@ -89,7 +89,7 @@ class AppStrings {
   static const String signupLink = "Sign Up";
 
   static const String createAccount = "Create Account";
-  static const String signupSubtitle = "Start your journey with us.";
+  static const String signupSubtitle = "Start your journey with Yatrikaa !";
   static const String fullNameHint = "Full Name";
   static const String signupBtn = "SIGN UP";
   static const String signupSuccessMsg = "Account created successfully";
@@ -98,9 +98,9 @@ class AppStrings {
   static const String pdRetry = "Retry";
   static const String pdExperience = "Description";
   static const String pdReadLess = "Read less";
-  static const String pdReadFullStory = "Read full story";
+  static const String pdReadFullStory = "Read More";
   static const String pdTravelGuide = "Travel Guide";
-  static const String pdBestTime = "Best Time";
+  static const String pdBestTime = "Best Season";
   static const String pdEntryFee = "Entry Fee";
   static const String pdTimings = "Timings";
   static const String pdDifficulty = "Difficulty";
@@ -127,7 +127,7 @@ class AppStrings {
   static const String pdStartingTripPrefix = "Starting trip to ";
   static const String pdStartingTripSuffix = "...";
   static const String pdShareMsgPrefix = "Check out ";
-  static const String pdShareMsgMid = " on Bhatkanti!\n";
+  static const String pdShareMsgMid = " on Yatrikaa!\n";
 
   // ================= ERRORS & FALLBACKS =================
   static const String errPlaceDetails = "Could not find place details";

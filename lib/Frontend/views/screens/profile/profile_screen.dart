@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/core/services/packages_service.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/custom_alert_dialog.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/core/services/packages_service.dart';
+import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 // ─── Role configuration model ───────────────────────────────────
@@ -30,8 +30,9 @@ _RoleConfig _roleConfig(String role) {
   final r = role.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
   switch (r) {
     case 'admin':
-      return const _RoleConfig(
-        label: 'Admin',
+    case 'superadmin':
+      return _RoleConfig(
+        label: r == 'admin' ? 'Admin' : 'Super Admin',
         icon: Icons.admin_panel_settings_rounded,
         color: adminColor,
       );
@@ -206,7 +207,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       _SectionItem(
                         icon: Icons.info_outline_rounded,
-                        label: 'About Bhatkanti',
+                        label: 'About Yatrikaa',
                         color: supportSectionColor,
                         onTap: () =>
                             Navigator.pushNamed(context, RouteNames.about),
@@ -301,7 +302,7 @@ class ProfileScreen extends StatelessWidget {
       );
     }
 
-    if (r == 'admin') {
+    if (r == 'admin' || r == 'superadmin') {
       out.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
       out.add(
         SliverToBoxAdapter(
@@ -356,7 +357,7 @@ class ProfileScreen extends StatelessWidget {
     CustomAlertDialog.show(
       context,
       title: 'Sign Out',
-      message: 'Are you sure you want to sign out of Bhatkanti?',
+      message: 'Are you sure you want to sign out of Yatrikaa?',
       confirmLabel: 'Sign Out',
       cancelLabel: 'Cancel',
       type: CustomAlertType.error,

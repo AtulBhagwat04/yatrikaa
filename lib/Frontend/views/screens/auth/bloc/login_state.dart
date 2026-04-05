@@ -56,3 +56,14 @@ class LoginFailure extends LoginState {
   @override
   List<Object?> get props => [message];
 }
+
+class ForgotPasswordLoading extends LoginState {}
+
+class ForgotPasswordSuccess extends LoginState {
+  final String message;
+
+  const ForgotPasswordSuccess(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

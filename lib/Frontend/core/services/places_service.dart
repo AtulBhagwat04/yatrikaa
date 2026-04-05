@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/place_model.dart';
@@ -6,36 +6,56 @@ import '../constants/api_constants.dart';
 import '../constants/app_strings.dart';
 import 'auth_service.dart';
 import '../utils/app_cache.dart';
+import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
 
 class PlacesService {
   final AuthService _authService = AuthService();
 
   Future<List<PlaceModel>> getFamousMaharashtraPlaces({
     String? category,
+    int page = 1,
+    int limit = 12,
   }) async {
     try {
-      String url = ApiConstants.getPopularPlacesUrl();
+      String url = ApiConstants.getPopularPlacesUrl(page: page, limit: limit);
       if (category != null && category != AppStrings.catAll) {
-        url += "?category=${Uri.encodeComponent(category)}";
+        url += "&category=${Uri.encodeComponent(category)}";
       }
 
-      final response = await http.get(Uri.parse(url));
+      final response = await BackendHealthManager.instance.get(url);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final List results = data['results'] ?? [];
+        List results = data['results'] ?? [];
 
-        // Save to cache for offline support
-        if (category == null || category == AppStrings.catAll) {
+        // ── Client-side Slicing Fallback ────────────────────────────────────
+        if (data['hasMore'] == null && results.length > limit) {
+          final int start = (page - 1) * limit;
+          final int end = start + limit;
+          final List fullList = List.from(results);
+          
+          if (start < fullList.length) {
+            results = fullList.sublist(
+              start,
+              end < fullList.length ? end : fullList.length,
+            );
+          } else {
+            results = [];
+          }
+        }
+
+        // Save to cache for offline support (only first page, all-category)
+        if (page == 1 && (category == null || category == AppStrings.catAll)) {
           await AppCache.saveRawData(AppCache.keyExplore, results);
           await AppCache.saveRawData(AppCache.keyRecommended, results);
         }
 
-        List<PlaceModel> places =
-            results.map((json) => PlaceModel.fromJson(json)).toList();
+        List<PlaceModel> places = results
+            .map((json) => PlaceModel.fromJson(json))
+            .toList();
 
-        // SHUFFLE the results so the order is different on every refresh
-        places.shuffle();
+        // Shuffle only the first page so the home preview varies
+        if (page == 1) places.shuffle();
 
         return places;
       } else {
@@ -44,12 +64,13 @@ class PlacesService {
     } catch (e) {
       print('Error fetching popular places from DB: $e');
 
-      // Try falling back to cache
-      if (category == null || category == AppStrings.catAll) {
+      // Fall back to cache on first page only
+      if (page == 1 && (category == null || category == AppStrings.catAll)) {
         final cachedData = await AppCache.getRawData(AppCache.keyExplore);
         if (cachedData.isNotEmpty) {
-          final places =
-              cachedData.map((json) => PlaceModel.fromJson(json)).toList();
+          final places = cachedData
+              .map((json) => PlaceModel.fromJson(json))
+              .toList();
           places.shuffle();
           return places;
         }
@@ -63,13 +84,11 @@ class PlacesService {
     try {
       // Use textSearch for better discovery of "Famous" places over a large 50km radius
       // as nearbySearch is often limited to smaller clusters.
-      final response = await http.get(
-        Uri.parse(
-          ApiConstants.getSearchPlacesUrl(
-            AppStrings.pdDiscoveryQuery,
-            lat: lat,
-            lng: lng,
-          ),
+      final response = await BackendHealthManager.instance.get(
+        ApiConstants.getSearchPlacesUrl(
+          AppStrings.pdDiscoveryQuery,
+          lat: lat,
+          lng: lng,
         ),
       );
 
@@ -98,8 +117,8 @@ class PlacesService {
     double? lng,
   ) async {
     try {
-      final response = await http.get(
-        Uri.parse(ApiConstants.getSearchPlacesUrl(query, lat: lat, lng: lng)),
+      final response = await BackendHealthManager.instance.get(
+        ApiConstants.getSearchPlacesUrl(query, lat: lat, lng: lng),
       );
 
       if (response.statusCode == 200) {
@@ -121,9 +140,8 @@ class PlacesService {
 
   Future<PlaceModel?> getPlaceDetails(String placeId) async {
     try {
-      final response = await http.get(
-        Uri.parse(ApiConstants.getPlaceDetailsUrl(placeId)),
-      );
+      final response = await BackendHealthManager.instance
+          .get(ApiConstants.getPlaceDetailsUrl(placeId));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -164,48 +182,49 @@ class PlacesService {
   Future<bool> addPlace(Map<String, dynamic> body, {List? imageFiles}) async {
     try {
       final token = await _authService.getToken();
-      final uri = Uri.parse('${ApiConstants.baseUrl}/places');
-      var request = http.MultipartRequest('POST', uri);
+      final streamedResponse = await BackendHealthManager.instance.sendMultipart(() async {
+        final uri = Uri.parse('${ApiConstants.baseUrl}/places');
+        var request = http.MultipartRequest('POST', uri);
 
-      if (token != null) {
-        request.headers['Authorization'] = 'Bearer $token';
-      }
-
-      // Add all fields from body (handle nested objects as JSON strings)
-      body.forEach((key, value) {
-        if (value is Map || value is List) {
-          request.fields[key] = json.encode(value);
-        } else {
-          request.fields[key] = value.toString();
+        if (token != null) {
+          request.headers['Authorization'] = 'Bearer $token';
         }
-      });
 
-      if (imageFiles != null && imageFiles.isNotEmpty) {
-        for (var i = 0; i < imageFiles.length; i++) {
-          final dynamic imageFile = imageFiles[i];
-          final String path = imageFile.path;
-          final String ext = path.split('.').last.toLowerCase();
-
-          MediaType contentType;
-          if (ext == 'png') {
-            contentType = MediaType('image', 'png');
-          } else if (ext == 'webp') {
-            contentType = MediaType('image', 'webp');
+        // Add all fields from body (handle nested objects as JSON strings)
+        body.forEach((key, value) {
+          if (value is Map || value is List) {
+            request.fields[key] = json.encode(value);
           } else {
-            contentType = MediaType('image', 'jpeg');
+            request.fields[key] = value.toString();
           }
+        });
 
-          request.files.add(
-            await http.MultipartFile.fromPath(
-              'images',
-              path,
-              contentType: contentType,
-            ),
-          );
+        if (imageFiles != null && imageFiles.isNotEmpty) {
+          for (var i = 0; i < imageFiles.length; i++) {
+            final dynamic imageFile = imageFiles[i];
+            final String path = imageFile.path;
+            final String ext = path.split('.').last.toLowerCase();
+
+            MediaType contentType;
+            if (ext == 'png') {
+              contentType = MediaType('image', 'png');
+            } else if (ext == 'webp') {
+              contentType = MediaType('image', 'webp');
+            } else {
+              contentType = MediaType('image', 'jpeg');
+            }
+
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'images',
+                path,
+                contentType: contentType,
+              ),
+            );
+          }
         }
-      }
-
-      final streamedResponse = await request.send();
+        return request;
+      });
       final responseBody = await streamedResponse.stream.bytesToString();
 
       if (streamedResponse.statusCode == 201) return true;
@@ -218,7 +237,11 @@ class PlacesService {
     }
   }
 
-  Future<bool> updatePlace(String id, Map<String, dynamic> body, {List? imageFiles}) async {
+  Future<bool> updatePlace(
+    String id,
+    Map<String, dynamic> body, {
+    List? imageFiles,
+  }) async {
     try {
       final token = await _authService.getToken();
       final uri = Uri.parse('${ApiConstants.baseUrl}/places/$id');
@@ -278,8 +301,8 @@ class PlacesService {
   Future<List<PlaceModel>> getFavoritePlaces() async {
     try {
       final token = await _authService.getToken();
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/places/favorites'),
+      final response = await BackendHealthManager.instance.get(
+        '${ApiConstants.baseUrl}/places/favorites',
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -316,8 +339,8 @@ class PlacesService {
         if (place != null) 'placeData': place.toJson(),
       };
 
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/places/toggle-favorite'),
+      final response = await BackendHealthManager.instance.post(
+        '${ApiConstants.baseUrl}/places/toggle-favorite',
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

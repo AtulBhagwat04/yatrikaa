@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/models/place_model.dart';
-import 'package:bhatkanti_app/Frontend/core/services/places_service.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/core/services/places_service.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
 
 class FavoritesScreen extends StatefulWidget {
   final bool showBackButton;
@@ -78,7 +78,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         scrolledUnderElevation: 2,
-        automaticallyImplyLeading: false,
         title: AppText.heading(
           'Liked Places',
           fontWeight: FontWeight.w900,
@@ -192,7 +191,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               await Navigator.pushNamed(
                 context,
                 RouteNames.placeDetails,
-                arguments: place.id,
+                arguments: {'placeId': place.id, 'place': place},
               );
               _fetchLikedPlaces();
             },

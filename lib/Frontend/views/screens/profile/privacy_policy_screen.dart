@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -11,7 +11,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         title: AppText.subHeading(
@@ -38,7 +37,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             _buildSection(
               '2. How We Use Your Data',
-              'Your data is used to provide and improve Bhatkanti services, customize your travel recommendations, and facilitate interactions with guides and other travelers.',
+              'Your data is used to provide and improve Yatrikaa services, customize your travel recommendations, and facilitate interactions with guides and other travelers.',
             ),
             _buildSection(
               '3. Data Security',

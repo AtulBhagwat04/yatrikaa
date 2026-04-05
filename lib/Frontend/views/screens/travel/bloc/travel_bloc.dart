@@ -1,10 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/services/packages_service.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_state.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_cache.dart';
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/core/services/packages_service.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_cache.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
 
 class TravelBloc extends Bloc<TravelEvent, TravelState> {
   final PackagesService _service = PackagesService();
@@ -418,19 +418,24 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
       if (success) {
         // Refresh my packages list
         final packages = await _service.getMyPackages();
-        emit(state.copyWith(
-          actionStatus: BookingActionStatus.success,
-          actionSuccessMessage: 'Package created! It will go live after review. 🎉',
-          myPackages: packages,
-        ));
+        emit(
+          state.copyWith(
+            actionStatus: BookingActionStatus.success,
+            actionSuccessMessage:
+                'Package created! It will go live after review. 🎉',
+            myPackages: packages,
+          ),
+        );
       } else {
         throw Exception('Failed to create package');
       }
     } catch (e) {
-      emit(state.copyWith(
-        actionStatus: BookingActionStatus.failure,
-        actionError: e.toString().replaceAll('Exception: ', ''),
-      ));
+      emit(
+        state.copyWith(
+          actionStatus: BookingActionStatus.failure,
+          actionError: e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -441,10 +446,12 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     emit(state.copyWith(guideBookingsStatus: TravelStatus.loading));
     try {
       final bookings = await _service.getPackageParticipants(event.packageId);
-      emit(state.copyWith(
-        guideBookingsStatus: TravelStatus.success,
-        guideBookings: bookings,
-      ));
+      emit(
+        state.copyWith(
+          guideBookingsStatus: TravelStatus.success,
+          guideBookings: bookings,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(guideBookingsStatus: TravelStatus.failure));
     }
@@ -457,10 +464,12 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     emit(state.copyWith(guideBookingsStatus: TravelStatus.loading));
     try {
       final bookings = await _service.getGuideAllBookings();
-      emit(state.copyWith(
-        guideBookingsStatus: TravelStatus.success,
-        guideBookings: bookings,
-      ));
+      emit(
+        state.copyWith(
+          guideBookingsStatus: TravelStatus.success,
+          guideBookings: bookings,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(guideBookingsStatus: TravelStatus.failure));
     }
@@ -472,18 +481,25 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
   ) async {
     emit(state.copyWith(actionStatus: BookingActionStatus.loading));
     try {
-      final success = await _service.handleBooking(event.bookingId, event.action);
+      final success = await _service.handleBooking(
+        event.bookingId,
+        event.action,
+      );
       if (success) {
-        emit(state.copyWith(
-          actionStatus: BookingActionStatus.success,
-          actionSuccessMessage: 'Booking status updated to ${event.action}',
-        ));
+        emit(
+          state.copyWith(
+            actionStatus: BookingActionStatus.success,
+            actionSuccessMessage: 'Booking status updated to ${event.action}',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        actionStatus: BookingActionStatus.failure,
-        actionError: e.toString().replaceAll('Exception: ', ''),
-      ));
+      emit(
+        state.copyWith(
+          actionStatus: BookingActionStatus.failure,
+          actionError: e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 }

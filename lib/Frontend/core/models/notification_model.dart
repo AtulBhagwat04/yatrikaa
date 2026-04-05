@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum NotificationType {
-  info,
-  success,
-  warning,
-  error,
-  event,
-  place,
-  trip,
-}
+enum NotificationType { info, success, warning, error, event, place, trip }
 
 class NotificationModel {
   final String id;
@@ -31,9 +23,7 @@ class NotificationModel {
     this.arguments,
   });
 
-  NotificationModel copyWith({
-    bool? isRead,
-  }) {
+  NotificationModel copyWith({bool? isRead}) {
     return NotificationModel(
       id: id,
       title: title,

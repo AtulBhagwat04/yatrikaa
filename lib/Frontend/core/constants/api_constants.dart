@@ -1,48 +1,25 @@
-import 'dart:async';
-import 'package:http/http.dart' as http;
+﻿import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
 
 class ApiConstants {
-  // Local Backend URL
-  static const String localUrl = 'http://10.63.28.64:3000/api';
+  // Local Backend URL (uses the current system IP for device testing)
+  static const String localUrl = 'http://10.197.55.64:3000/api';
 
-  // Render Deployed Backend URL
-  static const String liveUrl =
+  // Render (primary) and Railway (fallback) backend URLs
+  static const String renderUrl =
       'https://bhatkanti-backend-8msl.onrender.com/api';
+  static const String railwayUrl =
+      'https://bhatkanti-backend.up.railway.app/api';
 
-  static String baseUrl = liveUrl;
+  /// Always returns the currently active backend base URL.
+  /// Automatically picks Render (primary) or Railway (fallback) based on
+  /// the BackendHealthManager's live state.
+  static String get baseUrl => BackendHealthManager.instance.currentBaseUrl;
 
   // ── Auth & Users
   static String getGuideRequestsUrl() => '$baseUrl/auth/guide-requests';
   static String getHandleGuideRequestUrl() =>
       '$baseUrl/auth/guide-requests/handle';
   static String getRequestGuideRoleUrl() => '$baseUrl/auth/request-guide';
-
-  // Automatic Fallback Logic
-  static Future<void> checkServerAvailability() async {
-    // Health check hits /health directly, NOT /api/health
-    // localUrl is 'http://10.15.157.64:3000/api', so we remove '/api' for the health check
-    final localHealthUrl = localUrl.replaceAll('/api', '') + '/health';
-    try {
-      print('Checking local backend at $localHealthUrl...');
-      final response = await http
-          .get(Uri.parse(localHealthUrl))
-          .timeout(
-            const Duration(milliseconds: 1500),
-            onTimeout: () => http.Response('Timeout', 408),
-          );
-
-      if (response.statusCode == 200) {
-        baseUrl = localUrl;
-        print('Local backend is running. Using: $baseUrl');
-      } else {
-        baseUrl = liveUrl;
-        print('Local backend returned error. Falling back to Render: $baseUrl');
-      }
-    } catch (e) {
-      baseUrl = liveUrl;
-      print('Local backend not reachable. Falling back to Render: $baseUrl');
-    }
-  }
 
   static String getNearbyPlacesUrl(
     double lat,
@@ -66,8 +43,8 @@ class ApiConstants {
     return '$baseUrl/places/details/$placeId';
   }
 
-  static String getPopularPlacesUrl() {
-    return '$baseUrl/places/popular';
+  static String getPopularPlacesUrl({int page = 1, int limit = 12}) {
+    return '$baseUrl/places/popular?page=$page&limit=$limit';
   }
 
   static String getPhotoUrl(String photoReference) {
@@ -103,16 +80,21 @@ class ApiConstants {
   };
 
   // ── Travel Packages ────────────────────────────────────────────────────────
-  static String getPackagesUrl({String? category, String? search}) {
+  static String getPackagesUrl({
+    String? category,
+    String? search,
+    int page = 1,
+    int limit = 10,
+  }) {
     String url = '$baseUrl/packages';
-    final List<String> params = [];
+    final List<String> params = ['page=$page', 'limit=$limit'];
     if (category != null && category != 'All') {
       params.add('category=${Uri.encodeComponent(category)}');
     }
     if (search != null && search.isNotEmpty) {
       params.add('search=${Uri.encodeComponent(search)}');
     }
-    if (params.isNotEmpty) url += '?${params.join('&')}';
+    url += '?${params.join('&')}';
     return url;
   }
 
@@ -120,7 +102,8 @@ class ApiConstants {
   static String getMyPackagesUrl() => '$baseUrl/packages/my';
   static String getJoinPackageUrl(String id) => '$baseUrl/packages/$id/join';
   static String getMyBookingsUrl() => '$baseUrl/packages/bookings/mine';
-  static String getGuideAllBookingsUrl() => '$baseUrl/packages/bookings/organizer';
+  static String getGuideAllBookingsUrl() =>
+      '$baseUrl/packages/bookings/organizer';
   static String getCancelBookingUrl(String bookingId) =>
       '$baseUrl/packages/bookings/$bookingId/cancel';
   static String getConfirmBookingUrl(String bookingId) =>

@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 
 class TripsScreen extends StatelessWidget {
   const TripsScreen({super.key});
@@ -10,7 +10,6 @@ class TripsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: onboardingBlueVeryLight,
         elevation: 0,
         title: AppText.subHeading(

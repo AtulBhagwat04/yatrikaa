@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const notificationService = require('../services/notificationService');
 const config = require('../config');
 
 const generateToken = (user) => {
@@ -54,6 +55,64 @@ class AuthController {
         token: generateToken(user)
       });
     } catch (error) {
+      next(error);
+    }
+  }
+
+  async firebaseSync(req, res, next) {
+    const { name, email, uid, profilePicture } = req.firebaseUser;
+    const { role } = req.body;
+    try {
+      let user = await User.findOne({ 
+        $or: [ { firebaseUid: uid }, { email: email.toLowerCase() } ] 
+      });
+
+      if (!user) {
+        let finalRole = role || 'user';
+        let guideStatus = 'None';
+
+        if (finalRole === 'guide') {
+          finalRole = 'user';
+          guideStatus = 'Pending';
+        }
+
+        // Create new user if they don't exist
+        user = await User.create({
+          name: name || email.split('@')[0],
+          email: email.toLowerCase(),
+          firebaseUid: uid,
+          profilePicture: profilePicture || '',
+          role: finalRole,
+          guideRequestStatus: guideStatus
+        });
+      } else if (!user.firebaseUid) {
+
+        // Link firebase UID to existing email account
+        user.firebaseUid = uid;
+        if (profilePicture && !user.profilePicture) {
+          user.profilePicture = profilePicture;
+        }
+        await user.save();
+      }
+
+      res.status(200).json({
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        guideRequestStatus: user.guideRequestStatus,
+        tripsCount: user.tripsCount,
+        savedCount: user.savedCount,
+        reviewsCount: user.reviewsCount,
+        postsCount: user.postsCount,
+        phoneNumber: user.phoneNumber,
+        gender: user.gender,
+        profilePicture: user.profilePicture,
+        token: generateToken(user),
+        isNewUser: user.createdAt === user.updatedAt
+      });
+    } catch (error) {
+      console.error('[auth] firebaseSync error:', error.message);
       next(error);
     }
   }
@@ -113,7 +172,7 @@ class AuthController {
           }
 
           // Upload new profile picture to a folder unique to this user
-          const folderName = `Bhatkanti/Users/${user._id}/Profile`;
+          const folderName = `Yatrikaa/Users/${user._id}/Profile`;
           const result = await uploadImage(req.file, folderName);
           user.profilePicture = result.secure_url;
         }
@@ -170,9 +229,74 @@ class AuthController {
 
   async deleteUser(req, res, next) {
     try {
-      const user = await User.findByIdAndDelete(req.params.id);
+      const user = await User.findById(req.params.id);
       if (!user) return res.status(404).json({ error: 'User not found' });
-      res.json({ message: 'User deleted successfully' });
+
+      // Helper to safely extract Cloudinary public_id
+      const getPublicIdFromUrl = (url) => {
+        if (!url || !url.includes('cloudinary.com')) return null;
+        const urlParts = url.split('/');
+        const uploadIndex = urlParts.indexOf('upload');
+        if (uploadIndex !== -1) {
+          const publicIdWithExt = urlParts.slice(uploadIndex + 2).join('/');
+          return publicIdWithExt.split('.')[0];
+        }
+        return null;
+      };
+
+      // 1. Delete user profile picture from Cloudinary
+      if (user.profilePicture) {
+        const publicId = getPublicIdFromUrl(user.profilePicture);
+        if (publicId) await deleteImage(publicId).catch(e => console.error('Cloudinary Profile Pic error:', e.message));
+      }
+
+      // 2. Delete all Travel Packages by this user & their Cloudinary images
+      const TravelPackage = require('../models/TravelPackage');
+      const packages = await TravelPackage.find({ organizer: user._id });
+      for (const pkg of packages) {
+        if (pkg.images && pkg.images.length > 0) {
+          for (const imgUrl of pkg.images) {
+            const publicId = getPublicIdFromUrl(imgUrl);
+            if (publicId) await deleteImage(publicId).catch(e => console.error('Cloudinary Package Image error:', e.message));
+          }
+        }
+      }
+      await TravelPackage.deleteMany({ organizer: user._id });
+
+      // 3. Delete all Posts by this user & their Cloudinary images
+      const Post = require('../models/Post');
+      const posts = await Post.find({ author: user._id });
+      for (const post of posts) {
+        if (post.images && post.images.length > 0) {
+          for (const imgUrl of post.images) {
+            const publicId = getPublicIdFromUrl(imgUrl);
+            if (publicId) await deleteImage(publicId).catch(e => console.error('Cloudinary Post Image error:', e.message));
+          }
+        }
+      }
+      await Post.deleteMany({ author: user._id });
+
+      // 4. Delete all Bookings made by this user
+      const Booking = require('../models/Booking');
+      await Booking.deleteMany({ user: user._id });
+
+      // 5. Remove user from Post likes and comments globally
+      await Post.updateMany(
+        {},
+        { $pull: { likes: user._id, comments: { user: user._id } } }
+      );
+
+      // 6. Delete reviews from Places (Assume Place match by author_name matching user.name)
+      const Place = require('../models/Place');
+      await Place.updateMany(
+        { 'reviews.author_name': user.name },
+        { $pull: { reviews: { author_name: user.name } } }
+      );
+
+      // Finally, delete the user document
+      await User.findByIdAndDelete(user._id);
+
+      res.json({ message: 'User and all associated data permanently deleted successfully' });
     } catch (error) {
       next(error);
     }
@@ -206,6 +330,22 @@ class AuthController {
       await user.save();
       console.log(`[auth] Guide Request ${action}d for ${user.email}`);
 
+      // SEND NOTIFICATION TO THE USER
+      if (user.fcmToken) {
+        const notification = {
+          title: `Guide Request Update`,
+          body: `Your request to become a guide has been ${action}d!`,
+        };
+        const data = {
+          type: 'guide_request',
+          status: user.guideRequestStatus,
+          timestamp: new Date().toISOString()
+        };
+
+        notificationService.sendToToken(user.fcmToken, notification, data)
+          .catch(err => console.error('[auth] Failed to send guide request notification:', err.message));
+      }
+
       res.json({ 
         success: true, 
         message: `Guide request ${action}d successfully`,
@@ -216,6 +356,28 @@ class AuthController {
         }
       });
     } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateFcmToken(req, res, next) {
+    const { fcmToken } = req.body;
+    try {
+      if (!fcmToken) {
+        return res.status(400).json({ error: 'FCM token is required' });
+      }
+
+      const user = await User.findById(req.user._id);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      user.fcmToken = fcmToken;
+      await user.save();
+
+      res.status(200).json({ success: true, message: 'FCM token updated successfully' });
+    } catch (error) {
+      console.error('[auth] updateFcmToken error:', error.message);
       next(error);
     }
   }

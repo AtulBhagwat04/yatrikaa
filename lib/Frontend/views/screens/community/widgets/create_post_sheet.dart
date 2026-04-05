@@ -1,15 +1,15 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/services/post_service.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/services/post_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
 import '../../../../core/widgets/custom_toast.dart';
 
 class CreatePostSheet extends StatefulWidget {

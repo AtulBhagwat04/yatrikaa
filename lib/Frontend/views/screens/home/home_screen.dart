@@ -1,40 +1,40 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_state.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/core/utils/app_animations.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/bloc/home_state.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/bloc/travel_state.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/explore/explore_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/community/community_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/packages_discovery_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/profile_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/shimmer_box.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/app_bottom_nav.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/event_horizontal_card.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/place_nearby_card.dart';
-import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
-import 'package:bhatkanti_app/Frontend/core/services/notification_service.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/bloc/home_state.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/views/screens/explore/explore_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/community/community_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/packages_discovery_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/profile_screen.dart';
+import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/widgets/app_bottom_nav.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/widgets/event_horizontal_card.dart';
+import 'package:yatrikaa/Frontend/views/widgets/place_nearby_card.dart';
+import 'package:yatrikaa/Frontend/core/models/event_model.dart';
+import 'package:yatrikaa/Frontend/core/services/notification_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 // Modern Widgets
-import 'package:bhatkanti_app/Frontend/views/widgets/modern/modern_home_header.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/modern/modern_search_bar.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/modern/modern_section_title.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/modern/modern_place_card.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_home_header.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_section_title.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_place_card.dart';
 
 // ─── HomeScreen — StatefulWidget shell with local tab index ─────────────────
 class HomeScreen extends StatefulWidget {
@@ -48,8 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   late final HomeBloc _homeBloc;
   DateTime? _lastBackPressTime;
-  bool _showOnlineBanner = false;
-  Timer? _onlineBannerTimer;
 
   Future<void> _handlePop(bool didPop) async {
     if (didPop) return;
@@ -96,7 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _homeBloc.close();
-    _onlineBannerTimer?.cancel();
     super.dispose();
   }
 
@@ -112,53 +109,18 @@ class _HomeScreenState extends State<HomeScreen> {
       child: BlocListener<HomeBloc, HomeState>(
         listenWhen: (p, c) => p.isOffline != c.isOffline,
         listener: (context, state) {
-          // Force apply status bar color change (PhonePe style)
-          SystemChrome.setSystemUIOverlayStyle(
-            state.isOffline
-                ? SystemUiOverlayStyle.light.copyWith(
-                    statusBarColor: const Color(0xFFE11B22),
-                    statusBarIconBrightness: Brightness.light,
-                  )
-                : _showOnlineBanner
-                ? SystemUiOverlayStyle.light.copyWith(
-                    statusBarColor: const Color(0xFF2E7D32),
-                    statusBarIconBrightness: Brightness.light,
-                  )
-                : SystemUiOverlayStyle.dark.copyWith(
-                    statusBarColor: Colors.transparent,
-                    statusBarIconBrightness: Brightness.dark,
-                  ),
-          );
-
-          // Handle transition to Online
+          // Re-load logic when coming back online
           if (!state.isOffline) {
-            _onlineBannerTimer?.cancel();
-            setState(() => _showOnlineBanner = true);
-            _onlineBannerTimer = Timer(const Duration(seconds: 3), () {
-              if (mounted) setState(() => _showOnlineBanner = false);
-            });
-          } else {
-            // If we go offline, hide the online banner immediately
-            setState(() => _showOnlineBanner = false);
+            // ... load data
           }
         },
         child: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, state) {
             return AnnotatedRegion<SystemUiOverlayStyle>(
-              value: state.isOffline
-                  ? SystemUiOverlayStyle.light.copyWith(
-                      statusBarColor: const Color(0xFFE11B22),
-                      statusBarIconBrightness: Brightness.light,
-                    )
-                  : _showOnlineBanner
-                  ? SystemUiOverlayStyle.light.copyWith(
-                      statusBarColor: const Color(0xFF2E7D32),
-                      statusBarIconBrightness: Brightness.light,
-                    )
-                  : SystemUiOverlayStyle.dark.copyWith(
-                      statusBarColor: Colors.transparent,
-                      statusBarIconBrightness: Brightness.dark,
-                    ),
+              value: SystemUiOverlayStyle.dark.copyWith(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+              ),
               child: PopScope(
                 canPop: false,
                 onPopInvokedWithResult: (didPop, result) => _handlePop(didPop),
@@ -181,93 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           const ProfileScreen(showBackButton: false),
                         ],
                       ),
-
-                      // 2. PhonePe Style Red Status Bar & Offline Message
-                      // 2. PhonePe Style Red Status Bar & Offline Message
-                      if (state.isOffline)
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: Column(
-                            children: [
-                              Container(
-                                height: MediaQuery.of(context).padding.top,
-                                color: const Color(0xFFE11B22),
-                              ),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                                color: const Color(0xFFE11B22),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.wifi_off_rounded,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "No Internet Connection",
-                                      style: GoogleFonts.montserrat(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      // 2.5 Green Online Banner (Transient)
-                      if (!state.isOffline && _showOnlineBanner)
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: Column(
-                            children: [
-                              Container(
-                                height: MediaQuery.of(context).padding.top,
-                                color: const Color(0xFF2E7D32),
-                              ),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                                color: const Color(0xFF2E7D32),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.wifi_rounded,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "You Are Online",
-                                      style: GoogleFonts.montserrat(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                     ],
                   ),
                   bottomNavigationBar: AppBottomNav(
@@ -480,29 +355,30 @@ class _HomeTabState extends State<_HomeTab> {
           itemCount: 3,
           itemBuilder: (_, i) => Container(
             width: 240,
-            margin: const EdgeInsets.only(right: 16),
-            child: const ShimmerBox(radius: 28),
+            margin: const EdgeInsets.only(right: AppSpacing.m),
+            child: const ShimmerBox(radius: 16),
           ),
         ),
       );
     }
     if (state.recommendedPlaces.isEmpty) return const SizedBox();
     return SizedBox(
-      height: 250,
+      height: 300,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: state.recommendedPlaces.take(15).length,
+        itemCount: state.recommendedPlaces.take(12).length,
         itemBuilder: (context, i) {
-          final place = state.recommendedPlaces.take(15).toList()[i];
+          final place = state.recommendedPlaces.take(12).toList()[i];
           return ModernPlaceCard(
             place: place,
-            width: 250,
-            height: 250,
+            width: 240,
+            height: 300,
+            radius: 16,
             onTap: () => Navigator.pushNamed(
               context,
               RouteNames.placeDetails,
-              arguments: place.id,
+              arguments: {'placeId': place.id, 'place': place},
             ),
           );
         },
@@ -513,14 +389,16 @@ class _HomeTabState extends State<_HomeTab> {
   Widget _buildEventsHorizontalCards(BuildContext context, HomeState state) {
     if (state.isLoadingEvents) {
       return SizedBox(
-        height: 240,
+        height: 300,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: 3,
           itemBuilder: (_, i) => Container(
-            width: 190,
+            width: 240, // Matches Featured Destinations width
             margin: EdgeInsets.only(right: i < 2 ? AppSpacing.m : 0),
-            child: const ShimmerBox(radius: 28),
+            child: const ShimmerBox(
+              radius: 16,
+            ), // Matches EventHorizontalCard default radius
           ),
         ),
       );
@@ -530,7 +408,7 @@ class _HomeTabState extends State<_HomeTab> {
         height: 180,
         decoration: BoxDecoration(
           color: appWhite,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
           child: Column(
@@ -545,31 +423,27 @@ class _HomeTabState extends State<_HomeTab> {
       );
     }
     return SizedBox(
-      height: 250,
+      height: 300, // Matched with shimmer height
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: state.popularEvents.take(10).length,
+        itemCount: state.popularEvents.take(5).length,
         itemBuilder: (context, i) {
-          final events = state.popularEvents.take(10).toList();
+          final events = state.popularEvents.take(5).toList();
           final event = events[i];
-          return Padding(
-            padding: EdgeInsets.only(
-              right: i < events.length - 1 ? AppSpacing.m : 0,
-            ),
-            child: EventHorizontalCard(
-              event: event,
-              onTap: () async {
-                final result = await Navigator.pushNamed(
-                  context,
-                  RouteNames.eventDetails,
-                  arguments: {'id': event.id, 'event': event},
-                );
-                if (result is EventModel && context.mounted) {
-                  context.read<HomeBloc>().add(HomeEventUpdateEvent(result));
-                }
-              },
-            ),
+          return EventHorizontalCard(
+            event: event,
+            width: 240, // Matches Featured Destinations width
+            onTap: () async {
+              final result = await Navigator.pushNamed(
+                context,
+                RouteNames.eventDetails,
+                arguments: {'id': event.id, 'event': event},
+              );
+              if (result is EventModel && context.mounted) {
+                context.read<HomeBloc>().add(HomeEventUpdateEvent(result));
+              }
+            },
           );
         },
       ),
@@ -659,8 +533,8 @@ class _HomeTabState extends State<_HomeTab> {
           3,
           (i) => Container(
             margin: const EdgeInsets.only(bottom: AppSpacing.m),
-            height: 110,
-            child: const ShimmerBox(radius: 24),
+            height: 124, // Matches actual PlaceNearbyCard height
+            child: const ShimmerBox(radius: 16),
           ),
         ),
       );
@@ -686,7 +560,7 @@ class _HomeTabState extends State<_HomeTab> {
                 onTap: () => Navigator.pushNamed(
                   context,
                   RouteNames.placeDetails,
-                  arguments: place.id,
+                  arguments: {'placeId': place.id, 'place': place},
                 ),
               ),
             ),
@@ -709,13 +583,13 @@ class _HomeTabState extends State<_HomeTab> {
               itemCount: 3,
               itemBuilder: (_, i) => Container(
                 width: 280,
-                margin: const EdgeInsets.only(right: 16),
-                child: const ShimmerBox(radius: 24),
+                margin: const EdgeInsets.only(right: AppSpacing.m),
+                child: const ShimmerBox(radius: 16),
               ),
             ),
           );
         }
-        final preview = state.packages.take(4).toList();
+        final preview = state.packages.take(5).toList();
         if (preview.isEmpty) {
           return GestureDetector(
             onTap: widget.onGoPackages,
@@ -777,20 +651,20 @@ class _HomeTabState extends State<_HomeTab> {
           );
         }
         return SizedBox(
-          height: 230,
+          height: 200, // Matched with shimmer height
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: preview.length,
             itemBuilder: (ctx, i) {
               final pkg = preview[i];
-              const double cardRadius = 12; // Standardized radius
+              const double cardRadius = 16; // Matched with shimmer radius
               return Container(
-                width: 300,
+                width: 280, // Matched with shimmer width
                 margin: EdgeInsets.only(
-                  right: i == preview.length - 1 ? 0 : 16,
-                  bottom: 12,
-                  top: 8,
+                  right: i == preview.length - 1 ? 0 : AppSpacing.m,
+                  bottom: 8,
+                  top: 4,
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(cardRadius),

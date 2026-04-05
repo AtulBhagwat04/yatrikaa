@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
-import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
-import 'package:bhatkanti_app/Frontend/views/widgets/custom_alert_dialog.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class UserManagementScreen extends StatefulWidget {
@@ -86,7 +86,6 @@ class _UserManagementScreenState extends State<UserManagementScreen>
             SliverAppBar(
               pinned: true,
               floating: true,
-              automaticallyImplyLeading: false,
               backgroundColor: onboardingBlueVeryLight,
               elevation: 0,
               scrolledUnderElevation: 2,

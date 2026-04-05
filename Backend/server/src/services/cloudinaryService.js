@@ -7,7 +7,7 @@ cloudinary.config({
   api_secret: config.CLOUDINARY.API_SECRET
 });
 
-const uploadImage = async (file, folder = 'Bhatkanti/General') => {
+const uploadImage = async (file, folder = 'Yatrikaa/General') => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader.upload_stream({
       folder: folder

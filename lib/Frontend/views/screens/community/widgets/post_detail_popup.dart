@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:bhatkanti_app/Frontend/core/models/post_model.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/models/post_model.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 
 class PostDetailPopUp extends StatefulWidget {
   final PostModel post;

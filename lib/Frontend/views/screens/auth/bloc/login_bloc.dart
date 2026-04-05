@@ -1,13 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_state.dart';
+import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/bloc/login_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/bloc/login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final AuthService _authService = AuthService();
 
   LoginBloc() : super(LoginInitial()) {
     on<LoginSubmitted>(_onLoginSubmitted);
+    on<ForgotPasswordRequested>(_onForgotPasswordRequested);
   }
 
   Future<void> _onLoginSubmitted(
@@ -35,4 +36,18 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       emit(LoginFailure(e.toString().replaceAll('Exception: ', '')));
     }
   }
+
+  Future<void> _onForgotPasswordRequested(
+    ForgotPasswordRequested event,
+    Emitter<LoginState> emit,
+  ) async {
+    emit(ForgotPasswordLoading());
+    try {
+      await _authService.sendPasswordResetEmail(event.email);
+      emit(const ForgotPasswordSuccess('Password reset link sent to your email.'));
+    } catch (e) {
+      emit(LoginFailure(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
 }
+

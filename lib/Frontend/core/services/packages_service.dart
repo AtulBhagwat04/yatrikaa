@@ -1,14 +1,15 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
-import 'package:bhatkanti_app/Frontend/core/models/booking_model.dart';
-import 'package:bhatkanti_app/Frontend/core/models/guide_request_model.dart';
-import 'package:bhatkanti_app/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/core/models/booking_model.dart';
+import 'package:yatrikaa/Frontend/core/models/guide_request_model.dart';
+import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 
-import 'package:bhatkanti_app/Frontend/core/utils/app_cache.dart';
+import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
+import 'package:yatrikaa/Frontend/core/utils/app_cache.dart';
 
 class PackagesService {
   final AuthService _authService = AuthService();
@@ -24,47 +25,124 @@ class PackagesService {
 
   // ── Packages ───────────────────────────────────────────────────────────────
 
-  Future<List<TravelPackageModel>> getPackages({
+  Future<Map<String, dynamic>> getPackagesPaginated({
     String? category,
     String? search,
+    int page = 1,
+    int limit = 10,
   }) async {
     try {
       final url = ApiConstants.getPackagesUrl(
         category: category,
         search: search,
+        page: page,
+        limit: limit,
       );
-      final response = await http.get(Uri.parse(url));
+      final response = await BackendHealthManager.instance.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final List results = data['results'] ?? [];
+        List results = data['results'] ?? [];
+        bool hasMore = data['hasMore'] ?? false;
 
-        // Save to cache for offline support if it's a general request
-        if (category == null && search == null) {
+        // ── Pagination Metadata Fallback ────────────────────────────────────
+        if (data['hasMore'] == null) {
+          if (results.length > limit) {
+            // Case A: Server returned everything (non-paginated). We slice it.
+            final int start = (page - 1) * limit;
+            final int end = start + limit;
+            final List fullList = List.from(results);
+
+            if (start < fullList.length) {
+              results = fullList.sublist(
+                start,
+                end < fullList.length ? end : fullList.length,
+              );
+              hasMore = end < fullList.length;
+            } else {
+              results = [];
+              hasMore = false;
+            }
+          } else if (results.length == limit) {
+            // Case B: Server might be paginating but omitted 'hasMore'.
+            // Assume there's more until we get a shorter page.
+            hasMore = true;
+          } else {
+            // Case C: Result count is less than limit, definitely no more.
+            hasMore = false;
+          }
+        }
+
+        // Save to cache for offline support if it's a general request (page 1)
+        if (page == 1 && category == null && search == null) {
           await AppCache.saveRawData(AppCache.keyPackages, results);
         }
 
+        return {
+          'packages': results
+              .map((j) => TravelPackageModel.fromJson(j))
+              .toList(),
+          'hasMore': hasMore,
+        };
+      }
+      throw Exception('Failed to fetch packages');
+    } catch (e) {
+      print('PackagesService.getPackagesPaginated: $e');
+
+      // Try falling back to cache (first page only)
+      if (page == 1 && category == null && search == null) {
+        final cachedData = await AppCache.getRawData(AppCache.keyPackages);
+        if (cachedData.isNotEmpty) {
+          return {
+            'packages': cachedData
+                .map((j) => TravelPackageModel.fromJson(j))
+                .toList(),
+            'hasMore': false,
+          };
+        }
+      }
+
+      return {'packages': <TravelPackageModel>[], 'hasMore': false};
+    }
+  }
+
+  Future<List<TravelPackageModel>> getPackages({
+    String? category,
+    String? search,
+  }) async {
+    // Legacy method – fetches everything (limit=0) for admin/guided use-cases
+    try {
+      final url = ApiConstants.getPackagesUrl(
+        category: category,
+        search: search,
+        limit:
+            50, // server might not like 0, use a reasonable high limit for preview
+      );
+      final response = await BackendHealthManager.instance.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        if (category == null && search == null) {
+          await AppCache.saveRawData(AppCache.keyPackages, results);
+        }
         return results.map((j) => TravelPackageModel.fromJson(j)).toList();
       }
       throw Exception('Failed to fetch packages');
     } catch (e) {
       print('PackagesService.getPackages: $e');
-
-      // Try falling back to cache
       if (category == null && search == null) {
         final cachedData = await AppCache.getRawData(AppCache.keyPackages);
         if (cachedData.isNotEmpty) {
           return cachedData.map((j) => TravelPackageModel.fromJson(j)).toList();
         }
       }
-
       return [];
     }
   }
 
   Future<TravelPackageModel?> getPackageDetails(String id) async {
     try {
-      final response = await http.get(
-        Uri.parse(ApiConstants.getPackageDetailUrl(id)),
+      final response = await BackendHealthManager.instance.get(
+        ApiConstants.getPackageDetailUrl(id),
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -80,8 +158,8 @@ class PackagesService {
   Future<List<TravelPackageModel>> getMyPackages() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse(ApiConstants.getMyPackagesUrl()),
+      final response = await BackendHealthManager.instance.get(
+        ApiConstants.getMyPackagesUrl(),
         headers: headers,
       );
       if (response.statusCode == 200) {
@@ -103,34 +181,38 @@ class PackagesService {
   }) async {
     try {
       final token = await _authService.getToken();
-      final uri = Uri.parse('${ApiConstants.baseUrl}/packages');
-      final request = http.MultipartRequest('POST', uri);
+      final streamed = await BackendHealthManager.instance.sendMultipart(
+        () async {
+          final uri = Uri.parse('${ApiConstants.baseUrl}/packages');
+          final request = http.MultipartRequest('POST', uri);
 
-      if (token != null) {
-        request.headers['Authorization'] = 'Bearer $token';
-      }
+          if (token != null) {
+            request.headers['Authorization'] = 'Bearer $token';
+          }
 
-      // Encode nested objects as JSON strings
-      body.forEach((key, value) {
-        if (value is Map || value is List) {
-          request.fields[key] = json.encode(value);
-        } else {
-          request.fields[key] = value.toString();
-        }
-      });
+          // Encode nested objects as JSON strings
+          body.forEach((key, value) {
+            if (value is Map || value is List) {
+              request.fields[key] = json.encode(value);
+            } else {
+              request.fields[key] = value.toString();
+            }
+          });
 
-      for (final file in imageFiles) {
-        final ext = file.path.split('.').last.toLowerCase();
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'images',
-            file.path,
-            contentType: MediaType('image', ext == 'png' ? 'png' : 'jpeg'),
-          ),
-        );
-      }
+          for (final file in imageFiles) {
+            final ext = file.path.split('.').last.toLowerCase();
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'images',
+                file.path,
+                contentType: MediaType('image', ext == 'png' ? 'png' : 'jpeg'),
+              ),
+            );
+          }
+          return request;
+        },
+      );
 
-      final streamed = await request.send();
       if (streamed.statusCode == 201) return true;
 
       final res = await http.Response.fromStream(streamed);
@@ -192,8 +274,8 @@ class PackagesService {
   Future<bool> deletePackage(String id) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.delete(
-        Uri.parse('${ApiConstants.baseUrl}/packages/$id'),
+      final response = await BackendHealthManager.instance.delete(
+        '${ApiConstants.baseUrl}/packages/$id',
         headers: headers,
       );
       if (response.statusCode == 200) return true;
@@ -222,8 +304,8 @@ class PackagesService {
         'contactNumber': contactNumber,
         if (notes != null) 'notes': notes,
       };
-      final response = await http.post(
-        Uri.parse(ApiConstants.getJoinPackageUrl(packageId)),
+      final response = await BackendHealthManager.instance.post(
+        ApiConstants.getJoinPackageUrl(packageId),
         headers: headers,
         body: json.encode(body),
       );
@@ -242,8 +324,8 @@ class PackagesService {
   Future<List<BookingModel>> getMyBookings() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse(ApiConstants.getMyBookingsUrl()),
+      final response = await BackendHealthManager.instance.get(
+        ApiConstants.getMyBookingsUrl(),
         headers: headers,
       );
       if (response.statusCode == 200) {
@@ -261,8 +343,8 @@ class PackagesService {
   Future<String> cancelBooking(String bookingId) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.patch(
-        Uri.parse(ApiConstants.getCancelBookingUrl(bookingId)),
+      final response = await BackendHealthManager.instance.patch(
+        ApiConstants.getCancelBookingUrl(bookingId),
         headers: headers,
         body: json.encode({}),
       );
@@ -281,8 +363,8 @@ class PackagesService {
   Future<List<BookingModel>> getPackageParticipants(String packageId) async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse(ApiConstants.getPackageParticipantsUrl(packageId)),
+      final response = await BackendHealthManager.instance.get(
+        ApiConstants.getPackageParticipantsUrl(packageId),
         headers: headers,
       );
       if (response.statusCode == 200) {
@@ -300,8 +382,8 @@ class PackagesService {
   Future<List<BookingModel>> getGuideAllBookings() async {
     try {
       final headers = await _authHeaders();
-      final response = await http.get(
-        Uri.parse(ApiConstants.getGuideAllBookingsUrl()),
+      final response = await BackendHealthManager.instance.get(
+        ApiConstants.getGuideAllBookingsUrl(),
         headers: headers,
       );
       if (response.statusCode == 200) {

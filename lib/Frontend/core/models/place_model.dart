@@ -1,6 +1,6 @@
-import 'package:bhatkanti_app/Frontend/core/constants/api_constants.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_assets.dart';
+﻿import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
 
 class ReviewModel {
   final String authorName;
@@ -182,7 +182,7 @@ class PlaceModel {
           // Google's weekday_text usually leads with Monday (index 0).
           // DateTime.weekday is 1 (Mon) to 7 (Sun).
           int todayIndex = DateTime.now().weekday - 1; // 0 for Mon, 6 for Sun
-          
+
           if (todayIndex >= 0 && todayIndex < weekdayText.length) {
             timings = weekdayText[todayIndex];
           } else {

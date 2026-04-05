@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "47075741345",
+    "project_id": "yatrikaa-app",
+    "storage_bucket": "yatrikaa-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:47075741345:android:2cdac205e98cf841fa2ae0",
+        "android_client_info": {
+          "package_name": "com.yatrikaa.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "47075741345-d59llo4d2dlok4ivgu52fqhm7eu1f1vm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yatrikaa.app",
+            "certificate_hash": "eb483b18e3745df17cc378a364b4d9e5730b8d62"
+          }
+        },
+        {
+          "client_id": "47075741345-0l6m1dhghhl1f82ancujtr8eg05h8qu5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8dy2O9R7CEHhVFdZ0iRl44VZY15tVdOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "47075741345-0l6m1dhghhl1f82ancujtr8eg05h8qu5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "47075741345-7kj1llbhocfmhs9i6idbe4iv5j53dqu7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.yatrikaa.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

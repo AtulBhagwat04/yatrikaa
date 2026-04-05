@@ -1,45 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 
-import 'package:bhatkanti_app/Frontend/views/screens/onboarding/onboarding_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/login_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/sign_up_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/home_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/profile_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/edit_profile_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/change_password_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/notifications_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/help_center_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/privacy_policy_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/about_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/favorites_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/reviews_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/manage_places_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/review_moderation_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/user_management_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/generic_management_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/add_place_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/my_posts_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/splash/splash_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/admin/add_event_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/admin/admin_approval_queue_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/events/event_details_screen.dart';
-import 'package:bhatkanti_app/Frontend/core/models/event_model.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/profile/manage_events_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/place_details/place_details_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/featured_destinations_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/home/popular_events_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/packages_discovery_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/package_details_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/create_package_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/my_packages_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/user_bookings_screen.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/travel/booking_requests_screen.dart';
-import 'package:bhatkanti_app/Frontend/core/models/travel_package_model.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/search/search_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/onboarding/onboarding_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/login_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/sign_up_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/home_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/profile_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/edit_profile_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/change_password_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/notifications_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/help_center_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/privacy_policy_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/about_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/favorites_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/reviews_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/manage_places_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/review_moderation_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/user_management_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/generic_management_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/add_place_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/my_posts_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/splash/splash_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/admin/add_event_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/admin/admin_approval_queue_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/events/event_details_screen.dart';
+import 'package:yatrikaa/Frontend/core/models/event_model.dart';
+import 'package:yatrikaa/Frontend/views/screens/profile/manage_events_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/bloc/login_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/place_details/place_details_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/featured_destinations_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/home/popular_events_screen.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/packages_discovery_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/package_details_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/create_package_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/my_packages_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/user_bookings_screen.dart';
+import 'package:yatrikaa/Frontend/views/screens/travel/booking_requests_screen.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/views/screens/search/search_screen.dart';
 
 class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -71,8 +72,16 @@ class AppRoutes {
         return _fadeRoute(const PopularEventsScreen());
 
       case RouteNames.placeDetails:
-        final placeId = settings.arguments as String?;
-        return _fadeRoute(PlaceDetailsScreen(placeId: placeId ?? ''));
+        final args = settings.arguments;
+        if (args is Map<String, dynamic>) {
+          return _fadeRoute(
+            PlaceDetailsScreen(
+              placeId: args['placeId'] ?? '',
+              initialPlace: args['place'] as PlaceModel?,
+            ),
+          );
+        }
+        return _fadeRoute(PlaceDetailsScreen(placeId: (args as String?) ?? ''));
 
       case RouteNames.eventDetails:
         final args = settings.arguments;
@@ -207,9 +216,27 @@ class AppRoutes {
   static PageRouteBuilder _fadeRoute(Widget page) {
     return PageRouteBuilder(
       pageBuilder: (_, __, ___) => page,
-      transitionDuration: const Duration(milliseconds: 300),
-      transitionsBuilder: (_, animation, __, child) {
-        return FadeTransition(opacity: animation, child: child);
+      transitionDuration: const Duration(milliseconds: 800),
+      transitionsBuilder: (_, animation, secondaryAnimation, child) {
+        // Smooth Fade
+        final fadeAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOutQuart,
+        );
+
+        // Subtle Slide Up
+        final slideAnimation =
+            Tween<Offset>(
+              begin: const Offset(0.0, 0.05),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutQuart),
+            );
+
+        return FadeTransition(
+          opacity: fadeAnimation,
+          child: SlideTransition(position: slideAnimation, child: child),
+        );
       },
     );
   }

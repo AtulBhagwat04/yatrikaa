@@ -1,6 +1,6 @@
-# bhatkanti_app
+# Yatrikaa
 
-A new Flutter project.
+Your Travel Companion — a Flutter application to discover hidden gems, plan unforgettable trips, and connect with expert local guides.
 
 ## Getting Started
 
@@ -14,20 +14,3 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
-
-
-
-some basic git command
-git switch fet1
-git add .
-git commit -m"msg"
-git push 
-
-git checkout -b"branchName" to create new branch
-git status 
-git info
-git pull    to clone the remote code
-
-
-for cloning the projects from github
-git clone https//link 

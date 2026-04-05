@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:bhatkanti_app/Frontend/core/constants/app_colors.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/spacing.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_text.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_button.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_input_fields.dart';
-import 'package:bhatkanti_app/Frontend/core/constants/app_strings.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_bloc.dart';
-import 'package:bhatkanti_app/Frontend/core/bloc/auth/auth_event.dart';
-import 'package:bhatkanti_app/Frontend/views/Routes/route_names.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_bloc.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_event.dart';
-import 'package:bhatkanti_app/Frontend/views/screens/auth/bloc/login_state.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
+import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_button.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_input_fields.dart';
+import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
+import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/bloc/login_bloc.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/bloc/login_event.dart';
+import 'package:yatrikaa/Frontend/views/screens/auth/bloc/login_state.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   final _loginBloc = LoginBloc();
   final _formKey = GlobalKey<FormState>();
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -70,6 +71,10 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _submit() {
+    setState(() {
+      _autoValidateMode = AutovalidateMode.always;
+    });
+
     if (_formKey.currentState?.validate() ?? false) {
       FocusScope.of(context).unfocus();
       _loginBloc.add(
@@ -79,6 +84,112 @@ class _LoginScreenState extends State<LoginScreen>
         ),
       );
     }
+  }
+
+  void _showForgotPasswordDialog() {
+    final emailController = TextEditingController(text: _emailController.text);
+    final dialogFormKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => BlocProvider.value(
+        value: _loginBloc,
+        child: BlocConsumer<LoginBloc, LoginState>(
+          listener: (context, state) {
+            if (state is ForgotPasswordSuccess) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: successColor,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            return Center(
+              child: SingleChildScrollView(
+                child: Dialog(
+                  insetPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 24,
+                  ),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  elevation: 4,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.m),
+                      child: Form(
+                        key: dialogFormKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(height: AppSpacing.m),
+                            AppText.heading(
+                              "Reset Password",
+                              fontWeight: FontWeight.w800,
+                            ),
+                            const SizedBox(height: AppSpacing.s),
+
+                            AppText.body(
+                              "Enter your email to receive a password reset link.",
+                              color: Colors.grey.shade600,
+                              size: 14,
+                            ),
+                            const SizedBox(height: AppSpacing.m),
+                            AppInputField(
+                              controller: emailController,
+                              hint: 'Email Address',
+                              prefixIcon: Icons.email_rounded,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty)
+                                  return 'Email is required';
+                                if (!RegExp(
+                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                ).hasMatch(value))
+                                  return 'Enter a valid email';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.l),
+                            AppButton(
+                              text: 'Send Reset Link',
+                              isLoading: state is ForgotPasswordLoading,
+                              onPressed: () {
+                                if (dialogFormKey.currentState?.validate() ??
+                                    false) {
+                                  _loginBloc.add(
+                                    ForgotPasswordRequested(
+                                      emailController.text.trim(),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -112,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen>
                   position: _slideAnimation,
                   child: Form(
                     key: _formKey,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    autovalidateMode: _autoValidateMode,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -142,12 +253,11 @@ class _LoginScreenState extends State<LoginScreen>
                             if (email.isEmpty) {
                               return 'Please enter your email';
                             }
-                            // Stricter regex to prevent overly simple/invalid emails like a@h.com
                             final regex = RegExp(
                               r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$',
                             );
                             if (!regex.hasMatch(email)) {
-                              return 'Please enter a valid email address';
+                              return 'Please enter a valid email';
                             }
                             return null;
                           },
@@ -165,6 +275,9 @@ class _LoginScreenState extends State<LoginScreen>
                             if (value == null || value.isEmpty) {
                               return 'Please enter your password';
                             }
+                            if (value.length < 6) {
+                              return 'Password must be at least 6 characters';
+                            }
                             return null;
                           },
                         ),
@@ -172,10 +285,11 @@ class _LoginScreenState extends State<LoginScreen>
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: _showForgotPasswordDialog,
                             child: AppText.caption(
                               AppStrings.forgotPassword,
                               color: primaryBlue,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -183,10 +297,50 @@ class _LoginScreenState extends State<LoginScreen>
                         BlocConsumer<LoginBloc, LoginState>(
                           listener: (context, state) {
                             if (state is LoginFailure) {
+                              ScaffoldMessenger.of(
+                                context,
+                              ).hideCurrentSnackBar();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          state.message,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  backgroundColor: errorColorDark,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  margin: const EdgeInsets.all(AppSpacing.m),
+                                  duration: const Duration(seconds: 4),
+                                ),
+                              );
+                            }
+
+                            if (state is ForgotPasswordSuccess &&
+                                ModalRoute.of(context)?.isCurrent == true) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(state.message),
-                                  backgroundColor: errorColor,
+                                  backgroundColor: successColor,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
                               );
                             }
