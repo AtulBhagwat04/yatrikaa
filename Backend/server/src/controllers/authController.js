@@ -219,10 +219,41 @@ class AuthController {
   }
 
   async getAllUsers(req, res, next) {
+    const { role, page, limit } = req.query;
+    const pageNum  = Math.max(1, parseInt(page  || '1',  10));
+    const limitNum = Math.max(1, parseInt(limit || '12', 10));
+    const skip = (pageNum - 1) * limitNum;
+
     try {
-      const users = await User.find({}).select('-password');
-      res.json(users);
+      console.log(`[auth] getAllUsers request: role=${role}, page=${pageNum}, limit=${limitNum}`);
+      
+      let filter = {};
+      if (role) {
+        const normalizedRole = role.toLowerCase();
+        if (normalizedRole === 'user') {
+          // Include users with 'user' role OR no role (legacy/migrated)
+          filter = { role: { $in: ['user', null, undefined, ''] } };
+        } else {
+          filter = { role: normalizedRole };
+        }
+      }
+
+      const totalCount = await User.countDocuments(filter);
+      const users = await User.find(filter)
+        .select('-password')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum);
+
+      console.log(`[auth] Successfully fetched ${users.length}/${totalCount} users for role: ${role}`);
+
+      res.json({
+        results: users,
+        totalCount,
+        hasMore: (skip + users.length) < totalCount
+      });
     } catch (error) {
+      console.error('[auth] getAllUsers error:', error.message);
       next(error);
     }
   }

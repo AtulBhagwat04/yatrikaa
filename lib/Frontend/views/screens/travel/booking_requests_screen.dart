@@ -402,6 +402,154 @@ class _BookingCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                // ────────────────── TRAVELERS LIST (EXPANDABLE) ──────────────────
+                Theme(
+                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: EdgeInsets.zero,
+                    collapsedIconColor: primaryBlue,
+                    iconColor: primaryBlue,
+                    title: Row(
+                      children: [
+                        Text(
+                          'TRAVELERS',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1,
+                            color: appGrey.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primaryBlue.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: AppText.small(
+                            '${booking.travelers.length}',
+                            color: primaryBlue,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                    children: [
+                      const SizedBox(height: 8),
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: booking.travelers.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, i) {
+                          final t = booking.travelers[i];
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: onboardingBlueVeryLight.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: primaryBlue.withOpacity(0.05),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: primaryBlue.withOpacity(0.1),
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: AppText.small(
+                                      '${i + 1}',
+                                      color: primaryBlue,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      AppText.small(
+                                        t.name.toUpperCase(),
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.3,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            t.gender.toLowerCase() == 'male'
+                                                ? Icons.male_rounded
+                                                : t.gender.toLowerCase() == 'female'
+                                                ? Icons.female_rounded
+                                                : Icons.person_outline_rounded,
+                                            size: 12,
+                                            color: appGrey,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          AppText.caption(
+                                            '${t.gender} • ${t.age} yrs',
+                                            color: appGrey,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (t.status == 'Pending' && booking.status != 'CancellationRequested') ...[
+                                  IconButton(
+                                    icon: const Icon(Icons.close_rounded, color: errorColor, size: 20),
+                                    onPressed: () => _handleTraveler(context, t.id, 'Cancelled'),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: const Icon(Icons.check_rounded, color: successColorDark, size: 20),
+                                    onPressed: () => _handleTraveler(context, t.id, 'Confirmed'),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ] else ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: (t.status == 'Confirmed' ? successColorDark : errorColorDark).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: AppText.caption(
+                                      t.status,
+                                      color: t.status == 'Confirmed' ? successColorDark : errorColorDark,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
                 if (booking.notes != null && booking.notes!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Container(
@@ -483,6 +631,16 @@ class _BookingCard extends StatelessWidget {
   void _handleBooking(BuildContext context, String action) {
     context.read<TravelBloc>().add(
       TravelHandleBookingRequested(bookingId: booking.id, action: action),
+    );
+  }
+
+  void _handleTraveler(BuildContext context, String travelerId, String status) {
+    context.read<TravelBloc>().add(
+      TravelHandleTravelerStatusRequested(
+        bookingId: booking.id,
+        travelerId: travelerId,
+        status: status,
+      ),
     );
   }
 

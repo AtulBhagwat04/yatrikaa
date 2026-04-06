@@ -142,6 +142,7 @@ class _PackageApprovalQueue extends StatelessWidget {
         final drafts = state.adminPackages
             .where((p) => p.status == 'Draft')
             .toList();
+        final hasMore = state.adminPackagesHasMore;
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -166,12 +167,36 @@ class _PackageApprovalQueue extends StatelessWidget {
               : ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(AppSpacing.ms),
-                  itemCount: drafts.length,
+                  itemCount: drafts.length + (hasMore ? 1 : 0),
                   separatorBuilder: (_, _) => const SizedBox(height: 16),
-                  itemBuilder: (_, i) => _PackageReviewCard(package: drafts[i]),
+                  itemBuilder: (_, i) {
+                    if (i == drafts.length) {
+                      return _buildLoadMore(context);
+                    }
+                    return _PackageReviewCard(package: drafts[i]);
+                  },
                 ),
         );
       },
+    );
+  }
+
+  Widget _buildLoadMore(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: OutlinedButton.icon(
+        onPressed: () => context.read<TravelBloc>().add(
+              const TravelLoadMoreAdminPackages(status: 'Draft'),
+            ),
+        icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+        label: AppText.body("Show More Packages", fontWeight: FontWeight.bold),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryBlue,
+          side: BorderSide(color: primaryBlue.withOpacity(0.3)),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
     );
   }
 }

@@ -936,6 +936,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                         context,
                         packageId: widget.package.id,
                         packageTitle: widget.package.title,
+                        guideName: widget.package.organizer.name,
                         pricePerPerson: widget.package.price,
                         availableSeats: remaining,
                       ),

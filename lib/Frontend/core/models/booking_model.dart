@@ -1,4 +1,4 @@
-﻿import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
 
 /// Lightweight booking model returned by the API.
 /// A booking links a User → TravelPackage with traveler details and status.
@@ -10,6 +10,7 @@ class BookingModel {
   final String contactNumber;
   final String? notes;
   final DateTime bookingDate;
+  final List<TravelerModel> travelers;
 
   // Populated package reference (partial)
   final TravelPackageModel? package;
@@ -30,6 +31,7 @@ class BookingModel {
     required this.contactNumber,
     this.notes,
     required this.bookingDate,
+    required this.travelers,
     this.package,
     required this.packageId,
     required this.packageTitle,
@@ -59,11 +61,18 @@ class BookingModel {
       } catch (_) {
         pkgId = rawPkg['_id']?.toString() ?? '';
         pkgTitle = rawPkg['title'] ?? '';
-        destName = rawPkg['destination']?['name'] ?? '';
+        destName = (rawPkg['destination'] is Map)
+            ? (rawPkg['destination']['name'] ?? '')
+            : '';
       }
     } else if (rawPkg is String) {
       pkgId = rawPkg;
     }
+
+    final travelersJson = json['travelers'] as List? ?? [];
+    final travelers = travelersJson
+        .map<TravelerModel>((t) => TravelerModel.fromJson(t as Map<String, dynamic>))
+        .toList();
 
     return BookingModel(
       id: (json['_id'] ?? json['id'] ?? '').toString(),
@@ -75,6 +84,7 @@ class BookingModel {
       bookingDate: json['bookingDate'] != null
           ? DateTime.tryParse(json['bookingDate']) ?? DateTime.now()
           : DateTime.now(),
+      travelers: travelers,
       package: pkg,
       packageId: pkgId,
       packageTitle: pkgTitle,
@@ -82,6 +92,32 @@ class BookingModel {
       destinationName: destName,
       organiserName: orgName,
       userName: json['user'] is Map ? json['user']['name'] : json['userName'],
+    );
+  }
+}
+
+class TravelerModel {
+  final String id;
+  final String name;
+  final int age;
+  final String gender;
+  final String status;
+
+  TravelerModel({
+    required this.id,
+    required this.name,
+    required this.age,
+    required this.gender,
+    required this.status,
+  });
+
+  factory TravelerModel.fromJson(Map<String, dynamic> json) {
+    return TravelerModel(
+      id: (json['_id'] ?? json['id'] ?? '').toString(),
+      name: json['name'] ?? '',
+      age: json['age'] is num ? (json['age'] as num).toInt() : 18,
+      gender: json['gender'] ?? 'Other',
+      status: json['status'] ?? 'Pending',
     );
   }
 }

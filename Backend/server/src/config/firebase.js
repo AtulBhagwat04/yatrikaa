@@ -25,7 +25,6 @@ try {
     };
   }
 }
-
 if (serviceAccount && (serviceAccount.privateKey || serviceAccount.private_key)) {
   if (!admin.apps.length) {
     admin.initializeApp({
@@ -36,5 +35,4 @@ if (serviceAccount && (serviceAccount.privateKey || serviceAccount.private_key))
 } else {
   console.error('CRITICAL: Firebase Admin SDK NOT initialized. Missing credentials (JSON file or environment variables).');
 }
-
 module.exports = admin;

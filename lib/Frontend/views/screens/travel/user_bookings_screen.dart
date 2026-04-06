@@ -414,12 +414,121 @@ class _BookingCard extends StatelessWidget {
                     Icons.calendar_today_outlined,
                     _formatDate(booking.bookingDate),
                   ),
-                  if (booking.organiserName.isNotEmpty)
                     _row(
                       Icons.person_outline_rounded,
                       'By ${booking.organiserName}',
                     ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
+                  // ────────────────── TRAVELERS LIST ──────────────────
+                  Theme(
+                    data: Theme.of(context).copyWith(
+                      dividerColor: Colors.transparent,
+                    ),
+                    child: ExpansionTile(
+                      dense: true,
+                      visualDensity: VisualDensity.compact,
+                      tilePadding: EdgeInsets.zero,
+                      title: Row(
+                        children: [
+                          Icon(
+                            Icons.people_outline_rounded,
+                            size: 14,
+                            color: appGrey,
+                          ),
+                          const SizedBox(width: 8),
+                          AppText.small(
+                            '${booking.travelers.length} Traveler(s)',
+                            color: appGrey,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ],
+                      ),
+                      children: [
+                        const SizedBox(height: 4),
+                        ...booking.travelers.asMap().entries.map((entry) {
+                          final i = entry.key;
+                          final t = entry.value;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: onboardingBlueVeryLight.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: primaryBlue.withOpacity(0.05),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: primaryBlue.withOpacity(0.1),
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: AppText.small(
+                                      '${i + 1}',
+                                      color: primaryBlue,
+                                      fontWeight: FontWeight.w900,
+                                      size: 10,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      AppText.small(
+                                        t.name.toUpperCase(),
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.3,
+                                      ),
+                                      AppText.caption(
+                                        '${t.gender} • ${t.age} years',
+                                        color: appGrey,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: (t.status == 'Confirmed' 
+                                      ? successColorDark 
+                                      : t.status == 'Cancelled' 
+                                        ? errorColorDark 
+                                        : Colors.orange).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: AppText.small(
+                                    t.status,
+                                    size: 10,
+                                    color: t.status == 'Confirmed' 
+                                      ? successColorDark 
+                                      : t.status == 'Cancelled' 
+                                        ? errorColorDark 
+                                        : Colors.orange,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(

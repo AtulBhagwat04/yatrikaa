@@ -18,7 +18,7 @@ import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
 
 // ── Lazy loading constants ───────────────────────────────────────────────────
-const int _kPackagesPageSize = 10;
+const int _kPackagesPageSize = 12;
 
 class PackagesDiscoveryScreen extends StatefulWidget {
   const PackagesDiscoveryScreen({super.key});

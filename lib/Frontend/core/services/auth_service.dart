@@ -4,8 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
@@ -28,10 +26,8 @@ class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      // 1. Try to sign in with Firebase
       UserCredential? userCredential;
       try {
         userCredential = await _auth.signInWithEmailAndPassword(
@@ -39,17 +35,12 @@ class AuthService {
           password: password,
         );
       } on FirebaseAuthException catch (fe) {
-        // Log the error code for debugging
         debugPrint('[AuthService] Firebase login failed with code: ${fe.code}');
-        
-        // 2. Fallback to MongoDB authentication if Firebase fails for any reason (account missing, password mismatch, etc.)
-        // This ensures Admin accounts or legacy users can always get back into the app.
         try {
           debugPrint('[AuthService] Attempting legacy MongoDB fallback for $email...');
           return await _handleLegacyLogin(email, password);
         } catch (legacyError) {
           debugPrint('[AuthService] Legacy fallback also failed: $legacyError');
-          // If both fail, rethrow the original Firebase error which is more user-friendly
           rethrow;
         }
       }
@@ -58,16 +49,12 @@ class AuthService {
         throw Exception('Login failed: User not found after Firebase sign-in');
       }
 
-      // 3. Get ID Token
       String? idToken = await userCredential.user!.getIdToken();
       if (idToken == null) {
         throw Exception('Login failed: Could not retrieve Firebase ID token');
       }
 
-      // 4. Sync with Backend
       final result = await syncWithBackend(idToken);
-      
-      // 5. Update FCM Token
       NotificationService().updateToken();
       
       return result;
@@ -83,9 +70,7 @@ class AuthService {
     }
   }
 
-  /// Handles users who exist in MongoDB but not yet in Firebase
   Future<Map<String, dynamic>> _handleLegacyLogin(String email, String password) async {
-    // 1. Call the old manual login endpoint
     final response = await BackendHealthManager.instance.post(
       '${ApiConstants.baseUrl}/auth/login',
       headers: {'Content-Type': 'application/json'},
@@ -97,7 +82,6 @@ class AuthService {
       try {
         UserCredential? userCredential;
         try {
-          // 2. Try to create the Firebase account to migrate them
           userCredential = await _auth.createUserWithEmailAndPassword(
             email: email,
             password: password,
@@ -105,7 +89,6 @@ class AuthService {
           debugPrint('[AuthService] Auto-migrated legacy user to Firebase: $email');
         } on FirebaseAuthException catch (fe) {
           if (fe.code == 'email-already-in-use') {
-            debugPrint('[AuthService] User already in Firebase, attempting sign-in to sync session...');
             try {
               userCredential = await _auth.signInWithEmailAndPassword(
                 email: email,
@@ -114,8 +97,6 @@ class AuthService {
             } catch (se) {
               debugPrint('[AuthService] Firebase sign-in failed during sync: $se');
             }
-          } else {
-            debugPrint('[AuthService] Firebase migration failed with code: ${fe.code}');
           }
         }
 
@@ -123,13 +104,10 @@ class AuthService {
           await userCredential!.user!.updateDisplayName(data['name'] ?? 'Traveler');
           String? idToken = await userCredential.user!.getIdToken();
           if (idToken != null) {
-            // 3. Sync with backend to link the new Firebase UID to their existing MongoDB ID
             return await syncWithBackend(idToken);
           }
         }
         
-        // If we reach here, we have a valid Mongo account but Firebase session is unavailable.
-        // We MUST save the Mongo token to give them access!
         await _saveAuthDataFromResponse(data);
         return data; 
       } catch (e) {
@@ -142,8 +120,6 @@ class AuthService {
     }
   }
 
-
-  /// Helper to map common response data to SharedPreferences
   Future<void> _saveAuthDataFromResponse(Map<String, dynamic> data) async {
     await _saveAuthData(
       token: data['token'] ?? '',
@@ -162,8 +138,6 @@ class AuthService {
     );
   }
 
-
-
   Future<Map<String, dynamic>> register(
     String name,
     String email,
@@ -171,7 +145,6 @@ class AuthService {
     String role,
   ) async {
     try {
-      // 1. Register with Firebase
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -181,19 +154,14 @@ class AuthService {
         throw Exception('Registration failed: User not created in Firebase');
       }
 
-      // Update Firebase display name
       await userCredential.user!.updateDisplayName(name);
 
-      // 2. Get ID Token
       String? idToken = await userCredential.user!.getIdToken();
       if (idToken == null) {
         throw Exception('Registration failed: Could not retrieve Firebase ID token');
       }
 
-      // 3. Sync with Backend (will handle creating user in MongoDB)
       final result = await syncWithBackend(idToken, role);
-      
-      // 4. Update FCM Token
       NotificationService().updateToken();
       
       return result;
@@ -217,7 +185,6 @@ class AuthService {
       },
       body: role != null ? jsonEncode({'role': role}) : null,
     );
-
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final data = jsonDecode(response.body);
@@ -246,7 +213,6 @@ class AuthService {
   Future<void> sendPasswordResetEmail(String email) async {
     await _auth.sendPasswordResetEmail(email: email);
   }
-
 
   Future<Map<String, dynamic>> updateProfile({
     required String name,
@@ -466,9 +432,42 @@ class AuthService {
     await _auth.signOut();
   }
 
-
   Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null;
+  }
+
+  Future<Map<String, dynamic>> getUsersPaginated({String? role, int page = 1, int limit = 12}) async {
+    try {
+      final token = await getToken();
+      String url = '${ApiConstants.baseUrl}/auth/users?page=$page&limit=$limit';
+      if (role != null) url += '&role=$role';
+
+      final response = await BackendHealthManager.instance.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('[AuthService] getUsersPaginated status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        debugPrint('[AuthService] Found ${data['results']?.length} users');
+        return data;
+      } else {
+        debugPrint('[AuthService] Error response: ${response.body}');
+        try {
+          final error = jsonDecode(response.body);
+          throw Exception(error['error'] ?? 'Failed to fetch users: ${response.statusCode}');
+        } catch (_) {
+          throw Exception('Failed to fetch users: ${response.statusCode}');
+        }
+      }
+    } catch (e) {
+      debugPrint('[AuthService] getUsersPaginated local error: $e');
+      rethrow;
+    }
   }
 }

@@ -135,8 +135,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     try {
       List<PlaceModel> results = await _placesService.searchPlaces(
         trimmedQuery,
-        null,
-        null,
       );
 
       // SMART SEARCH for Locations
@@ -145,8 +143,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
         if (isLikelyLocation) {
           final attractions = await _placesService.searchPlaces(
             "$trimmedQuery famous tourist attractions",
-            null,
-            null,
           );
 
           final existingIds = results.map((p) => p.id).toSet();

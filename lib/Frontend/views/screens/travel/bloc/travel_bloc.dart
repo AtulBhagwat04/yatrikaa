@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yatrikaa/Frontend/core/services/packages_service.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
@@ -16,10 +16,12 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     on<TravelSearchChanged>(_onSearchChanged);
     on<TravelPackageDetailRequested>(_onPackageDetailRequested);
     on<TravelMyPackagesRequested>(_onMyPackagesRequested);
+    on<TravelLoadMoreMyPackages>(_onLoadMoreMyPackages);
     on<TravelMyBookingsRequested>(_onMyBookingsRequested);
     on<TravelJoinRequested>(_onJoinRequested);
     on<TravelCancelBookingRequested>(_onCancelBookingRequested);
     on<TravelAdminReviewRequested>(_onAdminReviewRequested);
+    on<TravelLoadMoreAdminPackages>(_onLoadMoreAdminPackages);
     on<TravelPublishPackageRequested>(_onPublishPackageRequested);
     on<TravelGuideRequestsRequested>(_onGuideRequestsRequested);
     on<TravelHandleGuideRequested>(_onHandleGuideRequested);
@@ -29,6 +31,7 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     on<TravelPackageParticipantsRequested>(_onPackageParticipantsRequested);
     on<TravelAllGuideBookingsRequested>(_onAllGuideBookingsRequested);
     on<TravelHandleBookingRequested>(_onHandleBookingRequested);
+    on<TravelHandleTravelerStatusRequested>(_onHandleTravelerStatusRequested);
     on<TravelStatusReset>(_onStatusReset);
   }
 
@@ -126,15 +129,43 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
   ) async {
     emit(state.copyWith(myPackagesStatus: TravelStatus.loading));
     try {
-      final packages = await _service.getMyPackages();
+      final result = await _service.getMyPackages(page: 1, limit: 12);
       emit(
         state.copyWith(
           myPackagesStatus: TravelStatus.success,
-          myPackages: packages,
+          myPackages: result['packages'] as List<TravelPackageModel>,
+          myPackagesHasMore: result['hasMore'] as bool,
+          myPackagesPage: 1,
         ),
       );
     } catch (e) {
       emit(state.copyWith(myPackagesStatus: TravelStatus.failure));
+    }
+  }
+
+  Future<void> _onLoadMoreMyPackages(
+    TravelLoadMoreMyPackages event,
+    Emitter<TravelState> emit,
+  ) async {
+    if (!state.myPackagesHasMore ||
+        state.myPackagesStatus == TravelStatus.loading) return;
+
+    try {
+      final nextPage = state.myPackagesPage + 1;
+      final result = await _service.getMyPackages(page: nextPage, limit: 12);
+
+      final newPackages = List<TravelPackageModel>.from(state.myPackages);
+      newPackages.addAll(result['packages'] as List<TravelPackageModel>);
+
+      emit(
+        state.copyWith(
+          myPackages: newPackages,
+          myPackagesHasMore: result['hasMore'] as bool,
+          myPackagesPage: nextPage,
+        ),
+      );
+    } catch (e) {
+      print('TravelBloc._onLoadMoreMyPackages: $e');
     }
   }
 
@@ -177,7 +208,8 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         emit(
           state.copyWith(
             actionStatus: BookingActionStatus.success,
-            actionSuccessMessage: 'Booking request sent successfully! 🎉',
+            actionSuccessMessage:
+                'Booking request sent! ⏳ Please wait for ${event.guideName} to approve your booking.',
           ),
         );
       } else {
@@ -239,15 +271,51 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
   ) async {
     emit(state.copyWith(adminPackagesStatus: TravelStatus.loading));
     try {
-      final packages = await _service.getAdminPackages(status: event.status);
+      final result = await _service.getAdminPackages(
+        status: event.status,
+        page: 1,
+        limit: 12,
+      );
       emit(
         state.copyWith(
           adminPackagesStatus: TravelStatus.success,
-          adminPackages: packages,
+          adminPackages: result['packages'] as List<TravelPackageModel>,
+          adminPackagesHasMore: result['hasMore'] as bool,
+          adminPackagesPage: 1,
         ),
       );
     } catch (e) {
       emit(state.copyWith(adminPackagesStatus: TravelStatus.failure));
+    }
+  }
+
+  Future<void> _onLoadMoreAdminPackages(
+    TravelLoadMoreAdminPackages event,
+    Emitter<TravelState> emit,
+  ) async {
+    if (!state.adminPackagesHasMore ||
+        state.adminPackagesStatus == TravelStatus.loading) return;
+
+    try {
+      final nextPage = state.adminPackagesPage + 1;
+      final result = await _service.getAdminPackages(
+        status: event.status,
+        page: nextPage,
+        limit: 12,
+      );
+
+      final newPackages = List<TravelPackageModel>.from(state.adminPackages);
+      newPackages.addAll(result['packages'] as List<TravelPackageModel>);
+
+      emit(
+        state.copyWith(
+          adminPackages: newPackages,
+          adminPackagesHasMore: result['hasMore'] as bool,
+          adminPackagesPage: nextPage,
+        ),
+      );
+    } catch (e) {
+      print('TravelBloc._onLoadMoreAdminPackages: $e');
     }
   }
 
@@ -383,13 +451,15 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         imageFiles: event.imageFiles,
       );
       if (success) {
-        // Refresh my packages list
-        final packages = await _service.getMyPackages();
+        // Refresh my packages list (first page)
+        final result = await _service.getMyPackages(page: 1, limit: 12);
         emit(
           state.copyWith(
             actionStatus: BookingActionStatus.success,
             actionSuccessMessage: 'Package updated successfully! ✨',
-            myPackages: packages,
+            myPackages: result['packages'] as List<TravelPackageModel>,
+            myPackagesHasMore: result['hasMore'] as bool,
+            myPackagesPage: 1,
           ),
         );
       } else {
@@ -416,14 +486,16 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         imageFiles: event.imageFiles,
       );
       if (success) {
-        // Refresh my packages list
-        final packages = await _service.getMyPackages();
+        // Refresh my packages list (first page)
+        final result = await _service.getMyPackages(page: 1, limit: 12);
         emit(
           state.copyWith(
             actionStatus: BookingActionStatus.success,
             actionSuccessMessage:
                 'Package created! It will go live after review. 🎉',
-            myPackages: packages,
+            myPackages: result['packages'] as List<TravelPackageModel>,
+            myPackagesHasMore: result['hasMore'] as bool,
+            myPackagesPage: 1,
           ),
         );
       } else {
@@ -490,6 +562,35 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
           state.copyWith(
             actionStatus: BookingActionStatus.success,
             actionSuccessMessage: 'Booking status updated to ${event.action}',
+          ),
+        );
+      }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          actionStatus: BookingActionStatus.failure,
+          actionError: e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onHandleTravelerStatusRequested(
+    TravelHandleTravelerStatusRequested event,
+    Emitter<TravelState> emit,
+  ) async {
+    emit(state.copyWith(actionStatus: BookingActionStatus.loading));
+    try {
+      final success = await _service.handleTravelerStatus(
+        bookingId: event.bookingId,
+        travelerId: event.travelerId,
+        status: event.status,
+      );
+      if (success) {
+        emit(
+          state.copyWith(
+            actionStatus: BookingActionStatus.success,
+            actionSuccessMessage: 'Traveler status updated to ${event.status}',
           ),
         );
       }

@@ -261,15 +261,41 @@ const deletePackage = async (req, res, next) => {
 };
 
 // @desc  Get packages created by the logged-in guide
-// @route GET /api/packages/my
+// @route GET /api/packages/my?page=1&limit=12
 // @access Private (Guide, Admin)
 const getMyPackages = async (req, res, next) => {
   try {
-    const packages = await TravelPackage.find({ organizer: req.user._id })
+    const page  = Math.max(1, parseInt(req.query.page  || '1',  10));
+    const limit = Math.max(0, parseInt(req.query.limit || '12', 10));
+
+    const filter = { organizer: req.user._id };
+    const baseQuery = TravelPackage.find(filter)
       .populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus')
       .sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, count: packages.length, results: packages });
+    let packages;
+    let totalCount;
+
+    if (limit === 0) {
+      packages   = await baseQuery;
+      totalCount = packages.length;
+    } else {
+      totalCount = await TravelPackage.countDocuments(filter);
+      packages   = await baseQuery.skip((page - 1) * limit).limit(limit);
+    }
+
+    const totalPages = limit > 0 ? Math.ceil(totalCount / limit) : 1;
+    const hasMore    = limit > 0 && page < totalPages;
+
+    res.status(200).json({
+      success: true,
+      count: packages.length,
+      totalCount,
+      page,
+      totalPages,
+      hasMore,
+      results: packages
+    });
   } catch (err) {
     next(err);
   }
@@ -303,8 +329,6 @@ const joinPackage = async (req, res, next) => {
       });
     }
 
-    // Double booking prevention removed to allow multiple group bookings by same user
-
     const booking = await Booking.create({
       package: pkg._id,
       user: req.user._id,
@@ -323,20 +347,22 @@ const joinPackage = async (req, res, next) => {
     await booking.populate('package', 'title images destination duration price');
 
     // --- AUTOMATED NOTIFICATIONS ---
-    // 1. Notify the User (Booking Success)
+    const guide = await User.findById(pkg.organizer);
+
+    // 1. Notify the User (Booking Pending)
     if (req.user.fcmToken) {
+      const guideName = guide ? guide.name : 'the guide';
       notificationService.sendToToken(req.user.fcmToken, {
-        title: 'Booking Successful! ✈️',
-        body: `You have successfully joined "${pkg.title}". Get ready for the adventure!`,
-      }, { type: 'booking_success', bookingId: booking._id.toString() }, req.user._id).catch(e => console.error(e));
+        title: 'Booking Request Sent! ⏳',
+        body: `Your request to join "${pkg.title}" has been sent. Please wait for ${guideName} to approve your booking.`,
+      }, { type: 'booking_pending', bookingId: booking._id.toString() }, req.user._id).catch(e => console.error(e));
     }
 
     // 2. Notify the Guide (New Booking Alert)
-    const guide = await User.findById(pkg.organizer);
     if (guide && guide.fcmToken) {
       notificationService.sendToToken(guide.fcmToken, {
-        title: 'New Booking Received! 💰',
-        body: `${req.user.name} and ${travelersCount - 1} others joined "${pkg.title}".`,
+        title: 'New Booking Request Received! ⏳',
+        body: `${req.user.name} joined "${pkg.title}". Please review and approve the request from your dashboard.`,
       }, { type: 'new_booking', bookingId: booking._id.toString() }, guide._id).catch(e => console.error(e));
     }
 
@@ -382,19 +408,8 @@ const cancelBooking = async (req, res, next) => {
     const userRole = req.user.role ? req.user.role.toLowerCase().trim() : 'user';
     const isAdmin = userRole === 'admin';
 
-    console.log(`[CancelBooking] LOGS:
-      BookingID: ${booking._id}
-      CurrentStatus: ${booking.status}
-      TravelerID: ${booking.user}
-      RequestUserID: ${req.user._id}
-      RequestUserRole: ${userRole}
-      isUser: ${isUser}
-      isPackageOwner: ${isPackageOwner}
-      isAdmin: ${isAdmin}`);
-
     if (!isUser && !isPackageOwner && !isAdmin) {
-      console.log(`[CancelBooking] Denied: User is neither traveler, owner, nor admin.`);
-      return res.status(403).json({ success: false, error: 'Not authorised to cancel this booking' });
+      return res.status(403).json({ success: false, error: 'Not authorised' });
     }
 
     if (booking.status === 'Cancelled') {
@@ -403,61 +418,71 @@ const cancelBooking = async (req, res, next) => {
 
     const oldStatus = booking.status;
 
-    // Logic: If regular user tries to cancel, it becomes a "Request"
-    // If Organiser or Admin tries to cancel, it becomes "Cancelled" (Approved)
-    // IMPORTANT: Guide/Organiser role users are still treated as "User" if they book someone else's trip
-    // Logic: If regular user tries to cancel someone else's package, it becomes a "Request"
-    // If Package Owner or Admin tries to cancel, it becomes "Cancelled" immediately
     if (isUser && !isPackageOwner && !isAdmin) {
       if (booking.status === 'CancellationRequested') {
-        return res.status(400).json({ success: false, error: 'Cancellation request already sent' });
+        return res.status(400).json({ success: false, error: 'Request already sent' });
       }
       booking.status = 'CancellationRequested';
       await booking.save();
-      console.log(`[CancelBooking] Success: User ${req.user._id} requested cancellation.`);
-      return res.status(200).json({ 
-        success: true, 
-        result: booking, 
-        message: 'Cancellation request submitted to admin for approval' 
-      });
+
+      // Notify the Guide about the cancellation request
+      const guide = await User.findById(pkg.organizer);
+      if (guide && guide.fcmToken) {
+        notificationService.sendToToken(guide.fcmToken, {
+          title: 'Cancellation Requested! ⚠️',
+          body: `${req.user.name} has requested to cancel their booking for "${pkg.title}". Please review it.`,
+        }, { type: 'cancellation_request', bookingId: booking._id.toString() }, guide._id).catch(e => console.error(e));
+      }
+
+      return res.status(200).json({ success: true, result: booking, message: 'Cancellation requested' });
     }
 
-    // If we reach here, it's a privileged user cancelling or approving a request
-    booking.status = 'Cancelled';
+    // Bulk Reject (Guide/Admin side): 
+    // Only reject the travelers that are currently 'Pending'.
+    // Preserve 'Confirmed' ones as per user request.
+    let seatsToRelease = 0;
+    booking.travelers.forEach(t => {
+      if (t.status === 'Pending') {
+        t.status = 'Cancelled';
+        seatsToRelease++;
+      }
+    });
+
+    // Update overall booking status: 
+    // If someone is still confirmed, the booking stays Confirmed.
+    // If everyone is now cancelled, it becomes Cancelled.
+    const anyConfirmed = booking.travelers.some(t => t.status === 'Confirmed');
+    booking.status = anyConfirmed ? 'Confirmed' : 'Cancelled';
+    
     await booking.save();
-    console.log(`[CancelBooking] Success: Booking ${booking._id} set to Cancelled by privileged user ${req.user._id}.`);
 
-    // Decrement participant count if it was Pending, Confirmed, or CancellationRequested
-    if (oldStatus !== 'Cancelled') {
-      const dec = booking.travelers?.length || 1;
-      await TravelPackage.findByIdAndUpdate(pkg._id, {
-        $inc: { currentParticipants: -dec },
-      });
+    // Release seats for the travelers we just cancelled
+    if (seatsToRelease > 0) {
+      await TravelPackage.updateOne(
+        { _id: pkg._id, currentParticipants: { $gte: seatsToRelease } },
+        { $inc: { currentParticipants: -seatsToRelease } }
+      );
     }
 
-    // --- AUTOMATED NOTIFICATIONS ---
-    // Notify the user about the cancellation/rejection
+    // --- NOTIFICATION ---
     if (booking.user) {
       const dbUser = await User.findById(booking.user);
       if (dbUser && dbUser.fcmToken) {
-        let title = 'Booking Cancelled';
-        let body = `Your booking for "${pkg.title}" has been cancelled.`;
-        
-        if (booking.status === 'CancellationRequested') {
-          title = 'Cancellation Requested';
-          body = `Your request to cancel "${pkg.title}" has been submitted.`;
+        // Collect names of newly rejected travelers
+        const newlyRejectedNames = booking.travelers.filter(t => t.status === 'Cancelled').map(t => t.name);
+        let body = `Booking update for "${pkg.title}": ${booking.status}.`;
+        if (newlyRejectedNames.length > 0) {
+          body += ` Cancelled travelers: ${newlyRejectedNames.join(', ')}.`;
         }
 
-        notificationService.sendToToken(dbUser.fcmToken, { title, body }, 
-          { type: 'booking_cancelled', bookingId: booking._id.toString() }, dbUser._id).catch(e => console.error(e));
+        notificationService.sendToToken(dbUser.fcmToken, {
+          title: 'Booking Status Update',
+          body: body
+        }, { type: 'booking_cancelled', bookingId: booking._id.toString() }, dbUser._id).catch(e => console.error(e));
       }
     }
 
-    res.status(200).json({ 
-      success: true, 
-      result: booking, 
-      message: isPackageOwner || isAdmin ? 'Booking cancelled/approved' : 'Booking cancelled' 
-    });
+    res.status(200).json({ success: true, result: booking });
   } catch (err) {
     next(err);
   }
@@ -475,37 +500,57 @@ const confirmBooking = async (req, res, next) => {
     if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
 
     const isOrganiser = pkg.organizer.toString() === req.user._id.toString();
-    const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
-    const isAdmin = userRole === 'admin';
+    const isAdmin = req.user.role === 'admin';
 
     if (!isOrganiser && !isAdmin) {
-      return res.status(403).json({ success: false, error: 'Not authorised to confirm bookings for this package' });
+      return res.status(403).json({ success: false, error: 'Not authorised' });
     }
 
     if (booking.status === 'Confirmed') {
-      return res.status(400).json({ success: false, error: 'Booking is already confirmed' });
+      const allDone = booking.travelers.every(t => t.status !== 'Pending');
+      if (allDone) return res.status(400).json({ success: false, error: 'Already fully processed' });
     }
 
-    booking.status = 'Confirmed';
+    // Track newly confirmed names for notification
+    const newlyConfirmedNames = [];
+    booking.travelers.forEach(t => {
+      if (t.status === 'Pending') {
+        t.status = 'Confirmed';
+        newlyConfirmedNames.push(t.name);
+      }
+    });
+
+    // Update overall booking status
+    const anyConfirmed = booking.travelers.some(t => t.status === 'Confirmed');
+    booking.status = anyConfirmed ? 'Confirmed' : 'Cancelled';
+    
     await booking.save();
 
-    // --- AUTOMATED NOTIFICATIONS ---
-    // Notify user that booking is confirmed
     const dbUser = await User.findById(booking.user);
     if (dbUser && dbUser.fcmToken) {
+      let body = `Your booking for "${pkg.title}" update:`;
+      if (newlyConfirmedNames.length > 0) {
+        body += ` Confirmed: ${newlyConfirmedNames.join(', ')}.`;
+      }
+      
+      const cancelledNames = booking.travelers.filter(t => t.status === 'Cancelled').map(t => t.name);
+      if (cancelledNames.length > 0) {
+        body += ` Cancelled: ${cancelledNames.join(', ')}.`;
+      }
+
       notificationService.sendToToken(dbUser.fcmToken, {
         title: 'Booking Confirmed! ✅',
-        body: `Pack your bags! Your booking for "${pkg.title}" is now confirmed.`,
+        body: body,
       }, { type: 'booking_confirmed', bookingId: booking._id.toString() }, dbUser._id).catch(e => console.error(e));
     }
 
-    res.status(200).json({ success: true, result: booking, message: 'Booking confirmed successfully' });
+    res.status(200).json({ success: true, result: booking });
   } catch (err) {
     next(err);
   }
 };
 
-// @desc  Get participants list for a package (organiser/admin only)
+// @desc  Get participants list for a package
 // @route GET /api/packages/:id/participants
 // @access Private (Owner Guide, Admin)
 const getPackageParticipants = async (req, res, next) => {
@@ -514,11 +559,8 @@ const getPackageParticipants = async (req, res, next) => {
     if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
 
     const isOwner = pkg.organizer.toString() === req.user._id.toString();
-    const userRole = req.user.role ? req.user.role.toLowerCase().replace(/[^a-z]/g, '') : '';
-    const isAdmin = userRole === 'admin';
-    if (!isOwner && !isAdmin) {
-      return res.status(403).json({ success: false, error: 'Not authorised' });
-    }
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) return res.status(403).json({ success: false, error: 'Not authorised' });
 
     const bookings = await Booking.find({ package: req.params.id })
       .populate('user', 'name email profileImage contactNumber')
@@ -530,18 +572,44 @@ const getPackageParticipants = async (req, res, next) => {
   }
 };
 
-/**
- * @desc  Get all bookings for all packages organized by the logged-in guide
- * @route GET /api/packages/bookings/organizer
- * @access Private (Guide, Admin)
- */
+// @desc  Admin: get all packages
+const getAllPackagesAdmin = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const page  = Math.max(1, parseInt(req.query.page  || '1',  10));
+    const limit = Math.max(0, parseInt(req.query.limit || '12', 10));
+
+    const filter = status ? { status } : {};
+    const baseQuery = TravelPackage.find(filter)
+      .populate('organizer', 'name email profileImage role tripsCount packagesCount isVerified guideRequestStatus')
+      .sort({ createdAt: -1 });
+
+    let packages;
+    let totalCount;
+
+    if (limit === 0) {
+      packages   = await baseQuery;
+      totalCount = packages.length;
+    } else {
+      totalCount = await TravelPackage.countDocuments(filter);
+      packages   = await baseQuery.skip((page - 1) * limit).limit(limit);
+    }
+
+    const totalPages = limit > 0 ? Math.ceil(totalCount / limit) : 1;
+    const hasMore    = limit > 0 && page < totalPages;
+
+    res.status(200).json({ success: true, count: packages.length, totalCount, page, totalPages, hasMore, results: packages });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc  Get all bookings for a guide's packages
 const getGuideBookings = async (req, res, next) => {
   try {
-    // 1. Find all packages by this guide
     const packages = await TravelPackage.find({ organizer: req.user._id }).select('_id');
     const packageIds = packages.map(p => p._id);
 
-    // 2. Find all bookings for these packages
     const bookings = await Booking.find({ package: { $in: packageIds } })
       .populate('user', 'name email profileImage contactNumber')
       .populate('package', 'title images destination duration price')
@@ -553,18 +621,74 @@ const getGuideBookings = async (req, res, next) => {
   }
 };
 
-// @desc  Admin: get all packages (including Draft)
-// @route GET /api/packages/admin/all
-// @access Private (Admin)
-const getAllPackagesAdmin = async (req, res, next) => {
+// @desc  Handle individual traveler status
+// @route PATCH /api/packages/bookings/:id/travelers/:travelerId
+const handleTravelerStatus = async (req, res, next) => {
   try {
-    const { status } = req.query;
-    const filter = status ? { status } : {};
-    const packages = await TravelPackage.find(filter)
-      .populate('organizer', 'name email profileImage role tripsCount packagesCount isVerified guideRequestStatus')
-      .sort({ createdAt: -1 });
+    const { status } = req.body;
+    if (!['Confirmed', 'Cancelled'].includes(status)) return res.status(400).json({ success: false, error: 'Invalid status' });
 
-    res.status(200).json({ success: true, count: packages.length, results: packages });
+    const booking = await Booking.findById(req.params.id).populate('package');
+    if (!booking) return res.status(404).json({ success: false, error: 'Booking not found' });
+
+    const pkg = booking.package;
+    if (!pkg) return res.status(404).json({ success: false, error: 'Package broken' });
+
+    const isOwner = pkg.organizer.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) return res.status(403).json({ success: false, error: 'Not authorised' });
+
+    const travelerIndex = booking.travelers.findIndex(t => t._id.toString() === req.params.travelerId);
+    if (travelerIndex === -1) return res.status(404).json({ success: false, error: 'Traveler not found' });
+
+    // Track status change for seat count update
+    const prevTravelerStatus = booking.travelers[travelerIndex].status;
+    booking.travelers[travelerIndex].status = status;
+
+    const allProcessed = booking.travelers.every(t => t.status !== 'Pending');
+    if (allProcessed) {
+      const anyConfirmed = booking.travelers.some(t => t.status === 'Confirmed');
+      booking.status = anyConfirmed ? 'Confirmed' : 'Cancelled';
+    }
+
+    await booking.save();
+
+    // Update seat count on the package if status changed
+    if (prevTravelerStatus !== 'Cancelled' && status === 'Cancelled') {
+      // Reverted/Rejected: decrement participant count but ensure it never goes below zero
+      await TravelPackage.updateOne(
+        { _id: pkg._id, currentParticipants: { $gt: 0 } },
+        { $inc: { currentParticipants: -1 } }
+      );
+    } else if (prevTravelerStatus === 'Cancelled' && status === 'Confirmed') {
+      // Re-confirmed: increment participant count back
+      await TravelPackage.findByIdAndUpdate(pkg._id, { $inc: { currentParticipants: 1 } });
+    }
+
+    // --- NOTIFICATION ---
+    let body;
+    const pkgTitle = pkg.title;
+    const travelerName = booking.travelers[travelerIndex].name;
+
+    if (booking.travelers.length === 1) {
+      body = `Your request to join "${pkgTitle}" has been ${status === 'Confirmed' ? 'confirmed' : 'rejected'}.`;
+    } else {
+      const statusText = status === 'Confirmed' ? 'confirmed' : 'cancelled';
+      body = `${travelerName}'s spot for "${pkgTitle}" has been ${statusText}.`;
+
+      const cancelledNames = booking.travelers.filter(t => t.status === 'Cancelled').map(t => t.name);
+      if (cancelledNames.length > 0) {
+        body += ` Cancelled: ${cancelledNames.join(', ')}.`;
+      }
+    }
+
+    const dbUser = await User.findById(booking.user);
+    if (dbUser && dbUser.fcmToken) {
+      notificationService.sendToToken(dbUser.fcmToken, { title: `Trip Update: ${pkgTitle}`, body: body }, 
+        { type: 'booking_confirmed', bookingId: booking._id.toString() }, dbUser._id).catch(e => console.error(e));
+    }
+
+    res.status(200).json({ success: true, result: booking });
   } catch (err) {
     next(err);
   }
@@ -585,4 +709,5 @@ module.exports = {
   getPackageParticipants,
   getAllPackagesAdmin,
   getGuideBookings,
+  handleTravelerStatus,
 };

@@ -15,6 +15,7 @@ const bookingSchema = new mongoose.Schema({
     name: { type: String, required: true },
     age: { type: Number, required: true },
     gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
+    status: { type: String, enum: ['Pending', 'Confirmed', 'Cancelled'], default: 'Pending' },
   }],
   totalAmount: {
     type: Number,

@@ -52,7 +52,7 @@
 		<key>NSMicrophoneUsageDescription</key>
 		<string>This app needs access to your microphone (if needed for videos in journeys).</string>
 		<key>UIStatusBarHidden</key>
-		<true/>
+		<false/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
 	</dict>

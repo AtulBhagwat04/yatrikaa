@@ -35,6 +35,8 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
   List<EventModel> _filteredEvents = [];
   bool _isLoading = true;
   String? _error;
+  int _currentPage = 1;
+  bool _hasMore = false;
 
   @override
   void initState() {
@@ -48,22 +50,40 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchEvents() async {
+  Future<void> _fetchEvents({bool refresh = true}) async {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = null;
+      if (refresh) {
+        _currentPage = 1;
+      }
     });
 
     try {
-      final events = await _eventsService.getEvents();
-      // Sort by date ascending (closest events first)
-      events.sort((a, b) => a.date.compareTo(b.date));
+      final res = await _eventsService.getEventsPaginated(
+        page: _currentPage,
+        limit: 12,
+      );
+      final List<EventModel> events = res['events'] ?? [];
+      final bool hasMore = res['hasMore'] ?? false;
 
       if (!mounted) return;
       setState(() {
-        _allEvents = events;
-        _filteredEvents = events;
+        if (refresh) {
+          _allEvents = events;
+        } else {
+          // Avoid duplicates if any
+          for (var e in events) {
+            if (!_allEvents.any((existing) => existing.id == e.id)) {
+              _allEvents.add(e);
+            }
+          }
+        }
+        // Sort by date ascending (closest events first)
+        _allEvents.sort((a, b) => a.date.compareTo(b.date));
+        _filteredEvents = _allEvents;
+        _hasMore = hasMore;
         _isLoading = false;
       });
     } catch (e) {
@@ -72,6 +92,15 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         _error = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  void _loadMore() {
+    if (_hasMore && !_isLoading) {
+      setState(() {
+        _currentPage++;
+      });
+      _fetchEvents(refresh: false);
     }
   }
 
@@ -160,7 +189,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -243,8 +272,41 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (context, index) => _buildEventCard(_filteredEvents[index]),
-          childCount: _filteredEvents.length,
+          (context, index) {
+            if (index == _filteredEvents.length) {
+              return _buildLoadMoreButton();
+            }
+            return _buildEventCard(_filteredEvents[index]);
+          },
+          childCount: _filteredEvents.length + (_hasMore ? 1 : 0),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreButton() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24, top: 8),
+      child: OutlinedButton.icon(
+        onPressed: _loadMore,
+        icon: _isLoading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.add_circle_outline_rounded, size: 20),
+        label: AppText.body(
+          _isLoading ? "Loading..." : "Show More Events",
+          fontWeight: FontWeight.bold,
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryBlue,
+          side: BorderSide(color: primaryBlue.withValues(alpha: 0.2)),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );
@@ -278,7 +340,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -460,11 +522,11 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isDestructive ? Colors.white : Colors.black.withOpacity(0.6),
+            color: isDestructive ? Colors.white : Colors.black.withValues(alpha: 0.6),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -725,7 +787,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                       color: onboardingBlueVeryLight,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: primaryBlue.withOpacity(0.3),
+                                        color: primaryBlue.withValues(alpha: 0.08),
                                       ),
                                     ),
                                     child: Column(

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
@@ -231,8 +231,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
         final googlePlaces = await _placesService.searchPlaces(
           searchQuery,
-          null,
-          null,
         );
 
         final existingIds = places.map((p) => p.id).toSet();
@@ -429,8 +427,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
         final googlePlaces = await _placesService.searchPlaces(
           searchQuery,
-          null,
-          null,
         );
 
         final existingIds = places.map((p) => p.id).toSet();
@@ -513,8 +509,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     try {
       final results = await _placesService.searchPlaces(
         event.query,
-        _currentPosition?.latitude,
-        _currentPosition?.longitude,
+        lat: _currentPosition?.latitude,
+        lng: _currentPosition?.longitude,
       );
 
       if (!isClosed) {

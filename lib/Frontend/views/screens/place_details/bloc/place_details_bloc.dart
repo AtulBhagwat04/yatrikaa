@@ -1,4 +1,4 @@
-﻿import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/services/places_service.dart';
@@ -159,8 +159,10 @@ class PlaceDetailsBloc extends Bloc<PlaceDetailsEvent, PlaceDetailsState> {
 
       // Slow path: getCurrentPosition (shorter timeout for UI performance)
       return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 3),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 3),
+        ),
       );
     } catch (e) {
       return null;

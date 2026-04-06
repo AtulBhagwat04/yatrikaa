@@ -118,13 +118,11 @@ class _SearchScreenState extends State<SearchScreen>
         if (results.isEmpty) {
           results = await _placesService.searchPlaces(
             "$trimmedQuery Maharashtra",
-            null,
-            null,
           );
         }
       } else {
         // Standard text search for user input
-        results = await _placesService.searchPlaces(trimmedQuery, null, null);
+        results = await _placesService.searchPlaces(trimmedQuery);
 
         // SMART SEARCH: If query is specific (like a city/state name),
         // fetch related attractions to show "Related Results"
@@ -133,8 +131,6 @@ class _SearchScreenState extends State<SearchScreen>
           if (isLikelyLocation) {
             final attractions = await _placesService.searchPlaces(
               "$trimmedQuery famous tourist attractions",
-              null,
-              null,
             );
 
             // Merge and deduplicate by ID

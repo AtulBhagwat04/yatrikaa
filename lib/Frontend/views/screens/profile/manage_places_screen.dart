@@ -3,7 +3,6 @@ import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
@@ -11,6 +10,7 @@ import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 import 'package:yatrikaa/Frontend/core/services/places_service.dart';
+import 'package:yatrikaa/Frontend/core/models/place_model.dart';
 import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
@@ -24,14 +24,20 @@ class ManagePlacesScreen extends StatefulWidget {
 }
 
 class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
-  List<dynamic> _allPlaces = [];
-  List<dynamic> _filteredPlaces = [];
+  List<PlaceModel> _allPlaces = [];
+  List<PlaceModel> _filteredPlaces = [];
   bool _isLoading = true;
   String? _error;
   final TextEditingController _searchController = TextEditingController();
   final AuthService _authService = AuthService();
   final PlacesService _placesService = PlacesService();
   final ImagePicker _picker = ImagePicker();
+
+  // Pagination state
+  int _currentPage = 1;
+  static const int _pageSize = 12;
+  bool _hasMore = false;
+  bool _isMoreLoading = false;
 
   @override
   void initState() {
@@ -45,32 +51,51 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchPlaces() async {
+  Future<void> _fetchPlaces({bool refresh = true}) async {
     if (!mounted) return;
+    
     setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/places/popular'),
-      );
-      if (!mounted) return;
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _allPlaces = data['results'] ?? [];
-          _filteredPlaces = _allPlaces;
-          _isLoading = false;
-        });
+      if (refresh) {
+        _isLoading = true;
+        _error = null;
+        _currentPage = 1;
       } else {
-        throw Exception('Failed to load places');
+        _isMoreLoading = true;
       }
+    });
+
+    try {
+      final result = await _placesService.getPlacesPaginated(
+        page: refresh ? 1 : _currentPage + 1,
+        limit: _pageSize,
+      );
+
+      if (!mounted) return;
+      
+      final List<PlaceModel> places = result['places'] ?? [];
+      final bool hasMore = result['hasMore'] ?? false;
+
+      setState(() {
+        if (refresh) {
+          _allPlaces = places;
+          _currentPage = 1;
+        } else {
+          _allPlaces.addAll(places);
+          _currentPage++;
+        }
+        _hasMore = hasMore;
+        _filteredPlaces = _allPlaces;
+        _isLoading = false;
+        _isMoreLoading = false;
+        _error = null; // Clear any previous errors
+      });
     } catch (e) {
       if (!mounted) return;
+      print('[ManagePlaces] Error: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;
+        _isMoreLoading = false;
       });
     }
   }
@@ -78,8 +103,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   void _filterPlaces(String query) {
     setState(() {
       _filteredPlaces = _allPlaces.where((place) {
-        final name = (place['name'] ?? '').toLowerCase();
-        final address = (place['formatted_address'] ?? '').toLowerCase();
+        final name = place.name.toLowerCase();
+        final address = place.formattedAddress.toLowerCase();
         return name.contains(query.toLowerCase()) ||
             address.contains(query.toLowerCase());
       }).toList();
@@ -102,6 +127,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
             _buildAppBar(),
             _buildSearchBox(),
             _buildList(),
+            if (_hasMore) _buildLoadMore(),
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
@@ -164,7 +190,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -255,11 +281,35 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     );
   }
 
-  Widget _buildPlaceCard(dynamic place) {
+  Widget _buildLoadMore() {
+    return SliverToBoxAdapter(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: _isMoreLoading
+              ? const CircularProgressIndicator(color: primaryBlue, strokeWidth: 3)
+              : TextButton.icon(
+                  onPressed: () => _fetchPlaces(refresh: false),
+                  icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+                  label: AppText.body("Show More Places", fontWeight: FontWeight.bold),
+                  style: TextButton.styleFrom(
+                    foregroundColor: primaryBlue,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: primaryBlue.withValues(alpha: 0.2)),
+                    ),
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceCard(PlaceModel place) {
     final photoRef = _getPlacePhotoReference(place);
-    final categoryList = place['types'] as List?;
-    final category = (categoryList != null && categoryList.isNotEmpty)
-        ? categoryList.first
+    final category = (place.types != null && place.types!.isNotEmpty)
+        ? place.types!.first
         : 'Place';
 
     return Container(
@@ -344,7 +394,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 4,
                         ),
                       ],
@@ -368,7 +418,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         AppText.subHeading(
-                          place['name'] ?? 'Unknown Place',
+                          place.name ?? 'Unknown Place',
                           size: 16,
                           fontWeight: FontWeight.w800,
                         ),
@@ -383,7 +433,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                             const SizedBox(width: 4),
                             Expanded(
                               child: AppText.caption(
-                                place['formatted_address'] ??
+                                place.formattedAddress ??
                                     'No address available',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -417,11 +467,11 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isDestructive ? Colors.white : Colors.black.withOpacity(0.6),
+            color: isDestructive ? Colors.white : Colors.black.withValues(alpha: 0.6),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -437,24 +487,17 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     );
   }
 
-  void _editPlace(dynamic place) {
-    final nameController = TextEditingController(text: place['name']);
+  void _editPlace(PlaceModel place) {
+    final nameController = TextEditingController(text: place.name);
     final addressController = TextEditingController(
-      text: place['formatted_address'],
+      text: place.formattedAddress,
     );
     final descriptionController = TextEditingController(
-      text:
-          place['editorial_summary']?['overview'] ?? place['description'] ?? '',
+      text: place.description ?? '',
     );
 
-    // Manage list of existing photos/images
-    List<dynamic> existingPhotos = List.from(place['photos'] ?? []);
-    List<String> existingImages = List.from(
-      (place['images'] as List?)?.map((e) => e.toString()) ?? [],
-    );
+    List<String> currentUrls = List.from(place.images);
 
-    // Tracking locally
-    // Tracking locally
     List<XFile> pickedFiles = [];
 
     showModalBottomSheet(
@@ -463,17 +506,13 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setSheetState) {
-          // Correctly combine ALL available images for a unified gallery experience
           List<Map<String, dynamic>> combinedItems = [
-            ...existingPhotos.map(
+            ...currentUrls.map(
               (p) => {
-                'url': _getPhotoUrl(p['photo_reference'] ?? ''),
-                'type': 'photo',
+                'url': _getPhotoUrl(p),
+                'type': 'image',
                 'data': p,
               },
-            ),
-            ...existingImages.map(
-              (url) => {'url': url, 'type': 'image', 'data': url},
             ),
           ];
           List<String> displayUrls = combinedItems
@@ -491,7 +530,6 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
             ),
             child: Column(
               children: [
-                // Header
                 Container(
                   padding: const EdgeInsets.symmetric(
                     vertical: 20,
@@ -575,33 +613,13 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                               return;
                                             }
                                             setSheetState(() {
-                                              var item = combinedItems[idx];
-                                              if (item['type'] == 'photo') {
-                                                existingPhotos.remove(
-                                                  item['data'],
-                                                );
-                                              } else {
-                                                existingImages.remove(
-                                                  item['data'],
-                                                );
-                                              }
-                                              // Re-sync local variables for UI rebuild
+                                              currentUrls.remove(combinedItems[idx]['data']);
                                               combinedItems = [
-                                                ...existingPhotos.map(
+                                                ...currentUrls.map(
                                                   (p) => {
-                                                    'url': _getPhotoUrl(
-                                                      p['photo_reference'] ??
-                                                          '',
-                                                    ),
-                                                    'type': 'photo',
-                                                    'data': p,
-                                                  },
-                                                ),
-                                                ...existingImages.map(
-                                                  (url) => {
-                                                    'url': url,
+                                                    'url': _getPhotoUrl(p),
                                                     'type': 'image',
-                                                    'data': url,
+                                                    'data': p,
                                                   },
                                                 ),
                                               ];
@@ -701,7 +719,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                     color: onboardingBlueVeryLight,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: primaryBlue.withOpacity(0.3),
+                                      color: Colors.blue.withValues(alpha: 0.1),
                                       style: BorderStyle.solid,
                                     ),
                                   ),
@@ -750,8 +768,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                           height: 55,
                           child: ElevatedButton(
                             onPressed: () async {
-                              if (existingImages.isEmpty &&
-                                  existingPhotos.isEmpty &&
+                              if (currentUrls.isEmpty &&
                                   pickedFiles.isEmpty) {
                                 CustomToast.warning(
                                   context,
@@ -761,14 +778,15 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                 return;
                               }
                               Navigator.pop(ctx);
-                              _handleUpdate(place['place_id'], {
+                              _handleUpdate(place.id!, {
                                 'name': nameController.text.trim(),
-                                'description': descriptionController.text
-                                    .trim(),
+                                'editorial_summary': {
+                                  'overview': descriptionController.text.trim(),
+                                },
                                 'formatted_address': addressController.text
                                     .trim(),
-                                'photos': existingPhotos,
-                                'images': existingImages,
+                                'photos': currentUrls.map((p) => {'photo_reference': p}).toList(),
+                                'images': currentUrls,
                               }, pickedFiles);
                             },
                             style: ElevatedButton.styleFrom(
@@ -855,29 +873,22 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     }
   }
 
-  void _confirmDelete(dynamic place) {
+  void _confirmDelete(PlaceModel place) {
     CustomAlertDialog.show(
       context,
       title: 'Delete Place?',
       message:
-          "Are you sure you want to remove '${place['name']}'? This action cannot be undone.",
+          "Are you sure you want to remove '${place.name}'? This action cannot be undone.",
       confirmLabel: 'Delete',
       type: CustomAlertType.error,
       icon: Icons.delete_forever_rounded,
-      onConfirm: () => _deletePlace(place['place_id']),
+      onConfirm: () => _deletePlace(place.id),
     );
   }
 
-  String _getPlacePhotoReference(dynamic place) {
-    if (place['photos'] != null &&
-        place['photos'] is List &&
-        place['photos'].isNotEmpty) {
-      return place['photos'][0]['photo_reference'] ?? '';
-    }
-    if (place['images'] != null &&
-        place['images'] is List &&
-        place['images'].isNotEmpty) {
-      return place['images'][0] ?? '';
+  String _getPlacePhotoReference(PlaceModel place) {
+    if (place.images.isNotEmpty) {
+      return place.images[0];
     }
     return '';
   }

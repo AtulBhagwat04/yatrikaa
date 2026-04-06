@@ -15,6 +15,7 @@ const {
   getPackageParticipants,
   getAllPackagesAdmin,
   getGuideBookings,
+  handleTravelerStatus,
 } = require('../controllers/packagesController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -28,6 +29,7 @@ router.get('/bookings/mine', protect, getMyBookings);                   // User:
 router.get('/bookings/organizer', protect, getGuideBookings);             // Guide: all bookings for their packages
 router.patch('/bookings/:id/cancel', protect, cancelBooking);           // User/Guide: cancel booking
 router.patch('/bookings/:id/confirm', protect, confirmBooking);          // Guide/Admin: confirm booking
+router.patch('/bookings/:id/travelers/:travelerId', protect, handleTravelerStatus); // Guide/Admin: confirm/reject individual traveler
 
 // ── Admin-only management ──────────────────────────────────────────────────
 router.get(
