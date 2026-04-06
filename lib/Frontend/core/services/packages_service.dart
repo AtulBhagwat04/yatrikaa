@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -155,22 +155,32 @@ class PackagesService {
     }
   }
 
-  Future<List<TravelPackageModel>> getMyPackages() async {
+  Future<Map<String, dynamic>> getMyPackages({
+    int page = 1,
+    int limit = 12,
+  }) async {
     try {
       final headers = await _authHeaders();
+      final url = '${ApiConstants.getMyPackagesUrl()}?page=$page&limit=$limit';
       final response = await BackendHealthManager.instance.get(
-        ApiConstants.getMyPackagesUrl(),
+        url,
         headers: headers,
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List results = data['results'] ?? [];
-        return results.map((j) => TravelPackageModel.fromJson(j)).toList();
+        final bool hasMore = data['hasMore'] ?? false;
+        
+        return {
+          'packages': results.map((j) => TravelPackageModel.fromJson(j)).toList(),
+          'hasMore': hasMore,
+          'totalCount': data['totalCount'] ?? results.length,
+        };
       }
       throw Exception('Failed to fetch my packages');
     } catch (e) {
       print('PackagesService.getMyPackages: $e');
-      return [];
+      return {'packages': <TravelPackageModel>[], 'hasMore': false, 'totalCount': 0};
     }
   }
 
@@ -302,7 +312,7 @@ class PackagesService {
       final body = {
         'travelers': travelers,
         'contactNumber': contactNumber,
-        if (notes != null) 'notes': notes,
+        'notes': notes,
       };
       final response = await BackendHealthManager.instance.post(
         ApiConstants.getJoinPackageUrl(packageId),
@@ -427,6 +437,29 @@ class PackagesService {
     }
   }
 
+  Future<bool> handleTravelerStatus({
+    required String bookingId,
+    required String travelerId,
+    required String status,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      final url = '${ApiConstants.baseUrl}/packages/bookings/$bookingId/travelers/$travelerId';
+      final response = await http.patch(
+        Uri.parse(url),
+        headers: headers,
+        body: json.encode({'status': status}),
+      );
+
+      if (response.statusCode == 200) return true;
+      final data = json.decode(response.body);
+      throw Exception(data['error'] ?? 'Failed to update traveler status');
+    } catch (e) {
+      print('PackagesService.handleTravelerStatus: $e');
+      rethrow;
+    }
+  }
+
   /// Admin only: Approve and publish a draft package.
   Future<bool> publishPackage(String id) async {
     try {
@@ -443,24 +476,36 @@ class PackagesService {
   }
 
   /// Admin only: Fetch all packages regardless of status.
-  Future<List<TravelPackageModel>> getAdminPackages({String? status}) async {
+  Future<Map<String, dynamic>> getAdminPackages({
+    String? status,
+    int page = 1,
+    int limit = 12,
+  }) async {
     try {
       final headers = await _authHeaders();
       String url = ApiConstants.getAdminAllPackagesUrl();
-      if (status != null) url += '?status=$status';
+      final List<String> params = ['page=$page', 'limit=$limit'];
+      if (status != null) params.add('status=$status');
+      url += '?${params.join('&')}';
 
       final response = await http.get(Uri.parse(url), headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List results = data['results'] ?? [];
-        return results.map((j) => TravelPackageModel.fromJson(j)).toList();
+        final bool hasMore = data['hasMore'] ?? false;
+
+        return {
+          'packages': results.map((j) => TravelPackageModel.fromJson(j)).toList(),
+          'hasMore': hasMore,
+          'totalCount': data['totalCount'] ?? results.length,
+        };
       }
       throw Exception(
         'Failed to fetch admin packages (${response.statusCode})',
       );
     } catch (e) {
       print('PackagesService.getAdminPackages Error: $e');
-      rethrow;
+      return {'packages': <TravelPackageModel>[], 'hasMore': false, 'totalCount': 0};
     }
   }
 

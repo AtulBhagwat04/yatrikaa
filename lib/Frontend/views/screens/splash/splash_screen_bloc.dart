@@ -50,8 +50,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     emit(state.copyWith(showText: true));
 
     // Step 3: Hold final frame to allow animations to complete
-    // Total exposure time is approximately 3.5 seconds
-    await Future.delayed(const Duration(milliseconds: 2500));
+    await Future.delayed(const Duration(milliseconds: 1200));
 
     // Step 4: Finalize and trigger navigation
     emit(state.copyWith(navigationReady: true));

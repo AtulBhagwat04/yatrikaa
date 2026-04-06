@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -18,7 +18,7 @@ import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
 
 // ── Lazy loading constants ───────────────────────────────────────────────────
-const int _kPackagesPageSize = 10;
+const int _kPackagesPageSize = 12;
 
 class PackagesDiscoveryScreen extends StatefulWidget {
   const PackagesDiscoveryScreen({super.key});
@@ -280,7 +280,7 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _tabs.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
           final (label, icon) = _tabs[i];
           return CategoryChip(
@@ -301,7 +301,7 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, __) => Container(
+          (_, _) => Container(
             margin: const EdgeInsets.only(bottom: 16),
             height: 270,
             child: const ShimmerBox(radius: 16),
@@ -317,7 +317,7 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, __) => Container(
+          (_, _) => Container(
             margin: const EdgeInsets.only(bottom: 16),
             height: 270,
             child: const ShimmerBox(radius: 16),
@@ -418,8 +418,8 @@ class _PackageCard extends StatelessWidget {
                       height: 180,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => const ShimmerBox(height: 180),
-                      errorWidget: (_, __, ___) => Container(
+                      placeholder: (_, _) => const ShimmerBox(height: 180),
+                      errorWidget: (_, _, _) => Container(
                         height: 180,
                         color: onboardingBlueVeryLight,
                         child: const Icon(Icons.image_not_supported_outlined),

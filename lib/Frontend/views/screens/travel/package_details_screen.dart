@@ -1,5 +1,4 @@
-﻿import 'dart:async';
-import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -260,8 +259,8 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                   return CachedNetworkImage(
                     imageUrl: photos[real],
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => const ShimmerBox(),
-                    errorWidget: (_, __, ___) => _imageError(),
+                    placeholder: (_, _) => const ShimmerBox(),
+                    errorWidget: (_, _, _) => _imageError(),
                   );
                 },
               ),
@@ -324,7 +323,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
               bottom: 20,
               child: ListenableBuilder(
                 listenable: _scrollController,
-                builder: (_, __) {
+                builder: (_, _) {
                   final offset = _scrollController.hasClients
                       ? _scrollController.offset
                       : 0.0;
@@ -937,6 +936,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                         context,
                         packageId: widget.package.id,
                         packageTitle: widget.package.title,
+                        guideName: widget.package.organizer.name,
                         pricePerPerson: widget.package.price,
                         availableSeats: remaining,
                       ),

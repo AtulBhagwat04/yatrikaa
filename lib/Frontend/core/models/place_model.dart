@@ -1,4 +1,4 @@
-﻿import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
 
@@ -88,6 +88,12 @@ class PlaceModel {
     this.website,
     this.isOpen,
   });
+
+  // --- COMPATIBILITY GETTERS ---
+  String get formattedAddress => address ?? '';
+  List<String> get types => category != null ? [category!] : [];
+  List<String> get photos => images;
+  // -----------------------------
 
   factory PlaceModel.fromJson(Map<String, dynamic> json) {
     final geometry = json['geometry'];

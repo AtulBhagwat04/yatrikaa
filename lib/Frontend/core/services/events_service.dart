@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -15,7 +15,7 @@ class EventsService {
     String? category,
     bool? popular,
     int page = 1,
-    int limit = 10,
+    int limit = 12,
   }) async {
     try {
       String url = '${ApiConstants.baseUrl}/events';

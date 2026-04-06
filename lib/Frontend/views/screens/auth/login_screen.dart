@@ -153,12 +153,14 @@ class _LoginScreenState extends State<LoginScreen>
                               prefixIcon: Icons.email_rounded,
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
-                                if (value == null || value.isEmpty)
+                                if (value == null || value.isEmpty) {
                                   return 'Email is required';
+                                }
                                 if (!RegExp(
                                   r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                ).hasMatch(value))
+                                ).hasMatch(value)) {
                                   return 'Enter a valid email';
+                                }
                                 return null;
                               },
                             ),

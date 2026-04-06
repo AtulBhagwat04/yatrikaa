@@ -53,7 +53,7 @@ class EventsController {
   getEvents = async (req, res, next) => {
     const { category, popular } = req.query;
     const page  = Math.max(1, parseInt(req.query.page  || '1',  10));
-    const limit = Math.max(0, parseInt(req.query.limit || '10', 10));
+    const limit = Math.max(0, parseInt(req.query.limit || '12', 10));
 
     try {
       let filter = {};

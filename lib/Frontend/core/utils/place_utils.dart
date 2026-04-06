@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class PlaceUtils {
   static bool checkIfOpenNow(String? timings, bool? defaultIsOpen) {
-    if (timings == null || timings.trim().isEmpty)
+    if (timings == null || timings.trim().isEmpty) {
       return defaultIsOpen ?? false;
+    }
 
     final t = timings.toLowerCase().replaceAll('\u202f', ' ');
     if (t.contains("24 hours") ||

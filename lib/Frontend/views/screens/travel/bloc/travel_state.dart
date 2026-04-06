@@ -1,4 +1,4 @@
-﻿import 'package:equatable/equatable.dart';
+import 'package:equatable/equatable.dart';
 import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
 import 'package:yatrikaa/Frontend/core/models/booking_model.dart';
 import 'package:yatrikaa/Frontend/core/models/guide_request_model.dart';
@@ -23,10 +23,14 @@ class TravelState extends Equatable {
   // ── Guide: My Packages ─────────────────────────────────────────────────────
   final TravelStatus myPackagesStatus;
   final List<TravelPackageModel> myPackages;
+  final int myPackagesPage;
+  final bool myPackagesHasMore;
 
   // ── Admin: Review Queue ───────────────────────────────────────────────────
   final TravelStatus adminPackagesStatus;
   final List<TravelPackageModel> adminPackages;
+  final int adminPackagesPage;
+  final bool adminPackagesHasMore;
 
   // ── Admin: Guide Requests ──────────────────────────────────────────────────
   final TravelStatus adminGuideRequestsStatus;
@@ -57,6 +61,8 @@ class TravelState extends Equatable {
     this.detailError,
     this.myPackagesStatus = TravelStatus.initial,
     this.myPackages = const [],
+    this.myPackagesPage = 1,
+    this.myPackagesHasMore = false,
     this.bookingsStatus = TravelStatus.initial,
     this.myBookings = const [],
     this.bookingsError,
@@ -65,6 +71,8 @@ class TravelState extends Equatable {
     this.actionSuccessMessage,
     this.adminPackagesStatus = TravelStatus.initial,
     this.adminPackages = const [],
+    this.adminPackagesPage = 1,
+    this.adminPackagesHasMore = false,
     this.adminGuideRequestsStatus = TravelStatus.initial,
     this.adminGuideRequests = const [],
     this.guideBookingsStatus = TravelStatus.initial,
@@ -82,6 +90,8 @@ class TravelState extends Equatable {
     String? detailError,
     TravelStatus? myPackagesStatus,
     List<TravelPackageModel>? myPackages,
+    int? myPackagesPage,
+    bool? myPackagesHasMore,
     TravelStatus? bookingsStatus,
     List<BookingModel>? myBookings,
     String? bookingsError,
@@ -90,6 +100,8 @@ class TravelState extends Equatable {
     String? actionSuccessMessage,
     TravelStatus? adminPackagesStatus,
     List<TravelPackageModel>? adminPackages,
+    int? adminPackagesPage,
+    bool? adminPackagesHasMore,
     TravelStatus? adminGuideRequestsStatus,
     List<GuideRequestModel>? adminGuideRequests,
     TravelStatus? guideBookingsStatus,
@@ -106,6 +118,8 @@ class TravelState extends Equatable {
       detailError: detailError ?? this.detailError,
       myPackagesStatus: myPackagesStatus ?? this.myPackagesStatus,
       myPackages: myPackages ?? this.myPackages,
+      myPackagesPage: myPackagesPage ?? this.myPackagesPage,
+      myPackagesHasMore: myPackagesHasMore ?? this.myPackagesHasMore,
       bookingsStatus: bookingsStatus ?? this.bookingsStatus,
       myBookings: myBookings ?? this.myBookings,
       bookingsError: bookingsError ?? this.bookingsError,
@@ -114,6 +128,8 @@ class TravelState extends Equatable {
       actionSuccessMessage: actionSuccessMessage ?? this.actionSuccessMessage,
       adminPackagesStatus: adminPackagesStatus ?? this.adminPackagesStatus,
       adminPackages: adminPackages ?? this.adminPackages,
+      adminPackagesPage: adminPackagesPage ?? this.adminPackagesPage,
+      adminPackagesHasMore: adminPackagesHasMore ?? this.adminPackagesHasMore,
       adminGuideRequestsStatus:
           adminGuideRequestsStatus ?? this.adminGuideRequestsStatus,
       adminGuideRequests: adminGuideRequests ?? this.adminGuideRequests,
@@ -172,6 +188,8 @@ class TravelState extends Equatable {
     detailError,
     myPackagesStatus,
     myPackages,
+    myPackagesPage,
+    myPackagesHasMore,
     bookingsStatus,
     myBookings,
     bookingsError,
@@ -180,6 +198,8 @@ class TravelState extends Equatable {
     actionSuccessMessage,
     adminPackagesStatus,
     adminPackages,
+    adminPackagesPage,
+    adminPackagesHasMore,
     adminGuideRequestsStatus,
     adminGuideRequests,
     guideBookingsStatus,

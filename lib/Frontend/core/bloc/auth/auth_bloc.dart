@@ -1,4 +1,4 @@
-﻿import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
@@ -83,14 +83,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final newReviewsCount = event.reviewsCount ?? currentState.reviewsCount;
       final newPostsCount = event.postsCount ?? currentState.postsCount;
 
-      if (event.tripsCount != null)
+      if (event.tripsCount != null) {
         await _authService.updateTripsCount(newTripsCount);
-      if (event.savedCount != null)
+      }
+      if (event.savedCount != null) {
         await _authService.updateSavedCount(newSavedCount);
-      if (event.reviewsCount != null)
+      }
+      if (event.reviewsCount != null) {
         await _authService.updateReviewsCount(newReviewsCount);
-      if (event.postsCount != null)
+      }
+      if (event.postsCount != null) {
         await _authService.updatePostsCount(newPostsCount);
+      }
 
       emit(
         Authenticated(

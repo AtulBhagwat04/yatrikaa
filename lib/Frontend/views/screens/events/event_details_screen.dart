@@ -1,5 +1,4 @@
-﻿import 'dart:async';
-import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
@@ -989,7 +988,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               alignment: Alignment.centerRight,
               children: [
                 ...previousChildren,
-                if (currentChild != null) currentChild,
+                ?currentChild,
               ],
             );
           },

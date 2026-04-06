@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -296,7 +296,7 @@ class _PopularEventsViewState extends State<_PopularEventsView> {
         childAspectRatio: 0.72,
       ),
       itemCount: 8,
-      itemBuilder: (_, __) => const ShimmerBox(radius: 12),
+      itemBuilder: (_, _) => const ShimmerBox(radius: 12),
     );
   }
 
@@ -305,7 +305,7 @@ class _PopularEventsViewState extends State<_PopularEventsView> {
       padding: const EdgeInsets.all(AppSpacing.ms),
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 6,
-      itemBuilder: (_, __) => Container(
+      itemBuilder: (_, _) => Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.s),
         height: 270,
         child: const ShimmerBox(radius: 12),
@@ -548,8 +548,8 @@ class _EventGridCard extends StatelessWidget {
               CachedNetworkImage(
                 imageUrl: event.imageUrl,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => const ShimmerBox(),
-                errorWidget: (_, __, ___) => Container(
+                placeholder: (_, _) => const ShimmerBox(),
+                errorWidget: (_, _, _) => Container(
                   color: appGreyVeryLight,
                   child: const Icon(
                     Icons.image_not_supported_rounded,
@@ -714,8 +714,8 @@ class _EventListCard extends StatelessWidget {
                       height: 180,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => const ShimmerBox(height: 180),
-                      errorWidget: (_, __, ___) => Container(
+                      placeholder: (_, _) => const ShimmerBox(height: 180),
+                      errorWidget: (_, _, _) => Container(
                         height: 180,
                         color: onboardingBlueVeryLight,
                         child: const Center(

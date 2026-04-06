@@ -207,6 +207,9 @@ class PlacesController {
       if (typeof body.types === 'string') {
         try { body.types = JSON.parse(body.types); } catch (e) {}
       }
+      if (typeof body.editorial_summary === 'string') {
+        try { body.editorial_summary = JSON.parse(body.editorial_summary); } catch (e) {}
+      }
       if (typeof body.rating === 'string') body.rating = parseFloat(body.rating);
       if (typeof body.user_ratings_total === 'string') body.user_ratings_total = parseInt(body.user_ratings_total);
       if (body.parking_available === 'true') body.parking_available = true;
@@ -249,7 +252,7 @@ class PlacesController {
       let body = { ...req.body };
 
       // Multi-part form-data sends everything as strings. Parse nested JSON.
-      const jsonFields = ['geometry', 'opening_hours', 'facilities', 'types', 'photos', 'images'];
+      const jsonFields = ['geometry', 'opening_hours', 'facilities', 'types', 'photos', 'images', 'editorial_summary'];
       jsonFields.forEach(field => {
         if (typeof body[field] === 'string' && body[field].trim() !== '') {
           try {
@@ -263,6 +266,11 @@ class PlacesController {
           }
         }
       });
+      
+      // Ensure photos are objects if they came as strings (from older frontend versions or simplified updates)
+      if (Array.isArray(body.photos)) {
+        body.photos = body.photos.map(p => typeof p === 'string' ? { photo_reference: p } : p);
+      }
       
       if (typeof body.rating === 'string') body.rating = parseFloat(body.rating);
       if (typeof body.user_ratings_total === 'string') body.user_ratings_total = parseInt(body.user_ratings_total);

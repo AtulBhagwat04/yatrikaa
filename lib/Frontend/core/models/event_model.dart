@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
@@ -26,7 +26,7 @@ class EventModel extends Equatable {
   final int interestedCount;
   final List<String> interestedUsers;
 
-  EventModel({
+  const EventModel({
     required this.id,
     required this.title,
     required this.description,

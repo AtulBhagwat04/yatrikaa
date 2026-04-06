@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,6 +14,7 @@ import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
 class BookingFormSheet extends StatefulWidget {
   final String packageId;
   final String packageTitle;
+  final String guideName;
   final double pricePerPerson;
   final int availableSeats;
 
@@ -21,6 +22,7 @@ class BookingFormSheet extends StatefulWidget {
     super.key,
     required this.packageId,
     required this.packageTitle,
+    required this.guideName,
     required this.pricePerPerson,
     required this.availableSeats,
   });
@@ -30,6 +32,7 @@ class BookingFormSheet extends StatefulWidget {
     BuildContext context, {
     required String packageId,
     required String packageTitle,
+    required String guideName,
     required double pricePerPerson,
     required int availableSeats,
   }) {
@@ -42,6 +45,7 @@ class BookingFormSheet extends StatefulWidget {
         child: BookingFormSheet(
           packageId: packageId,
           packageTitle: packageTitle,
+          guideName: guideName,
           pricePerPerson: pricePerPerson,
           availableSeats: availableSeats,
         ),
@@ -98,6 +102,7 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
     context.read<TravelBloc>().add(
       TravelJoinRequested(
         packageId: widget.packageId,
+        guideName: widget.guideName,
         travelers: travelers,
         contactNumber: _contactController.text.trim(),
         notes: _notesController.text.trim().isEmpty
@@ -117,7 +122,8 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
           ScaffoldMessenger.of(ctx).showSnackBar(
             SnackBar(
               content: Text(
-                state.actionSuccessMessage ?? 'Booking successful! 🎉',
+                state.actionSuccessMessage ??
+                    'Booking request sent! ⏳ Please wait for ${widget.guideName} to approve your booking.',
               ),
               backgroundColor: successColorDark,
               behavior: SnackBarBehavior.floating,
@@ -522,7 +528,7 @@ class _TravelerForm extends StatelessWidget {
               // Gender
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: entry.gender,
+                  initialValue: entry.gender,
                   onChanged: (v) => entry.gender = v!,
                   style: GoogleFonts.montserrat(
                     fontSize: 13,

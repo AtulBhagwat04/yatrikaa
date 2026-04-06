@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,17 +19,43 @@ class UserManagementScreen extends StatefulWidget {
 
 class _UserManagementScreenState extends State<UserManagementScreen>
     with SingleTickerProviderStateMixin {
-  List<dynamic> _users = [];
+  final List<dynamic> _travelers = [];
+  final List<dynamic> _guides = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   String? _error;
   final AuthService _authService = AuthService();
   late TabController _tabController;
+
+  int _travelerPage = 1;
+  int _guidePage = 1;
+  bool _hasMoreTravelers = false;
+  bool _hasMoreGuides = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _fetchUsers();
+    _initialFetch();
+  }
+
+  Future<void> _initialFetch() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
+    try {
+      await Future.wait([
+        _fetchUsers('user', refresh: true),
+        _fetchUsers('guide', refresh: true),
+      ]);
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -38,42 +64,60 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     super.dispose();
   }
 
-  Future<void> _fetchUsers() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    try {
-      final token = await _authService.getToken();
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/auth/users'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        if (mounted) {
-          setState(() {
-            _users = jsonDecode(response.body);
-            _isLoading = false;
-          });
-        }
-      } else {
-        throw Exception('Failed to load users: ${response.statusCode}');
-      }
-    } catch (e) {
+  Future<void> _fetchUsers(String role, {bool refresh = false}) async {
+    if (refresh) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
-          _isLoading = false;
+          _error = null;
+          if (role == 'user') {
+            _travelerPage = 1;
+            _travelers.clear();
+          } else {
+            _guidePage = 1;
+            _guides.clear();
+          }
         });
+      }
+    }
+
+    try {
+      final page = role == 'user' ? _travelerPage : _guidePage;
+      final result = await _authService.getUsersPaginated(role: role, page: page);
+      
+      debugPrint('[UserManagement] Fetched ${role}s: ${result['results']?.length} (Page: $page)');
+
+      if (mounted) {
+        setState(() {
+          final newUsers = result['results'] as List<dynamic>;
+          if (role == 'user') {
+            _travelers.addAll(newUsers);
+            _hasMoreTravelers = result['hasMore'] ?? false;
+          } else {
+            _guides.addAll(newUsers);
+            _hasMoreGuides = result['hasMore'] ?? false;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('[UserManagement] Error fetching $role: $e');
+      if (mounted) {
+        setState(() => _error = e.toString());
       }
     }
   }
 
-  List<dynamic> _getFilteredUsers(String role) {
-    return _users
-        .where((u) => (u['role'] ?? 'user').toString().toLowerCase() == role)
-        .toList();
+  Future<void> _loadMore(String role) async {
+    if (_isLoadingMore) return;
+    setState(() => _isLoadingMore = true);
+
+    if (role == 'user') {
+      _travelerPage++;
+    } else {
+      _guidePage++;
+    }
+
+    await _fetchUsers(role);
+    if (mounted) setState(() => _isLoadingMore = false);
   }
 
   @override
@@ -149,20 +193,56 @@ class _UserManagementScreenState extends State<UserManagementScreen>
       return _buildErrorWidget();
     }
 
-    final filtered = _getFilteredUsers(role);
+    final filtered = role == 'user' ? _travelers : _guides;
+    final hasMore = role == 'user' ? _hasMoreTravelers : _hasMoreGuides;
 
     if (filtered.isEmpty) {
       return _buildEmptyWidget(role);
     }
 
     return RefreshIndicator(
-      onRefresh: _fetchUsers,
+      onRefresh: () => _fetchUsers(role, refresh: true),
       color: primaryBlue,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-        itemCount: filtered.length,
-        itemBuilder: (context, index) => _buildUserCard(filtered[index]),
+        itemCount: filtered.length + (hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index < filtered.length) {
+            return _buildUserCard(filtered[index]);
+          }
+          return _buildLoadMoreButton(role);
+        },
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreButton(String role) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Center(
+        child: _isLoadingMore
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2, color: primaryBlue),
+              )
+            : TextButton.icon(
+                onPressed: () => _loadMore(role),
+                icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+                label: const Text(
+                  'Show More Users',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: primaryBlue,
+                  backgroundColor: primaryBlue.withValues(alpha: 0.08),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -305,7 +385,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                               Icon(
                                 Icons.mail_outline_rounded,
                                 size: 14,
-                                color: appGrey.withOpacity(0.6),
+                                color: appGrey.withValues(alpha: 0.6),
                               ),
                               const SizedBox(width: 6),
                               Expanded(
@@ -314,7 +394,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                                   style: GoogleFonts.montserrat(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
-                                    color: appGrey.withOpacity(0.8),
+                                    color: appGrey.withValues(alpha: 0.8),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -447,9 +527,9 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.12), width: 1.2),
+        border: Border.all(color: color.withValues(alpha: 0.12), width: 1.2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -486,7 +566,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -512,7 +592,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
             style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w600,
               fontSize: 10,
-              color: appGrey.withOpacity(0.7),
+              color: appGrey.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -525,7 +605,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
       height: 40,
       width: 1,
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      color: appGrey.withOpacity(0.1),
+      color: appGrey.withValues(alpha: 0.1),
     );
   }
 
@@ -533,7 +613,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(icon, size: 18, color: color),
@@ -546,7 +626,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
       width: double.infinity,
       height: double.infinity,
       alignment: Alignment.center,
-      color: color.withOpacity(0.15),
+      color: color.withValues(alpha: 0.15),
       child: Text(
         initial,
         style: GoogleFonts.montserrat(
@@ -572,7 +652,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
             AppText.caption(_error!, color: appGrey, align: TextAlign.center),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _fetchUsers,
+              onPressed: _initialFetch,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
                 shape: RoundedRectangleBorder(
@@ -596,7 +676,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
           Icon(
             Icons.people_alt_outlined,
             size: 80,
-            color: primaryBlue.withOpacity(0.1),
+            color: primaryBlue.withValues(alpha: 0.1),
           ),
           const SizedBox(height: 16),
           AppText.body(label, color: appGrey),
@@ -643,7 +723,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
             ),
           );
         }
-        _fetchUsers();
+        _initialFetch();
       } else {
         final error = jsonDecode(response.body);
         throw Exception(error['error'] ?? 'Failed to delete user');

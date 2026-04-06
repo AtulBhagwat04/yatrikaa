@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -74,6 +74,7 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
             p.myPackages != c.myPackages,
         builder: (ctx, state) {
           final allPackages = state.myPackages;
+          final hasMore = state.myPackagesHasMore;
 
           // Split by status for tabs
           final upcoming = allPackages
@@ -154,9 +155,9 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
                   : TabBarView(
                       controller: _tabController,
                       children: [
-                        _buildList(ctx, upcoming, 'Upcoming'),
-                        _buildList(ctx, active, 'Active'),
-                        _buildList(ctx, completed, 'Completed'),
+                        _buildList(ctx, upcoming, 'Upcoming', hasMore),
+                        _buildList(ctx, active, 'Active', hasMore),
+                        _buildList(ctx, completed, 'Completed', hasMore),
                       ],
                     ),
             ),
@@ -247,6 +248,7 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
     BuildContext ctx,
     List<TravelPackageModel> packages,
     String type,
+    bool hasMore,
   ) {
     return RefreshIndicator(
       onRefresh: () async {
@@ -329,33 +331,54 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
             )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: packages.length,
+              itemCount: packages.length + (hasMore ? 1 : 0),
               physics: const AlwaysScrollableScrollPhysics(),
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
-              itemBuilder: (_, i) => _PackageCard(
-                package: packages[i],
-                heroTag: 'package_${type}_${packages[i].id}',
-                onTap: () =>
-                    Navigator.pushNamed(
-                      ctx,
-                      RouteNames.packageDetails,
-                      arguments: {
-                        'id': packages[i].id,
-                        'heroTag': 'package_${type}_${packages[i].id}',
-                      },
-                    ).then(
-                      (_) => ctx.read<TravelBloc>().add(
-                        TravelMyPackagesRequested(),
-                      ),
-                    ),
-                onEdit: () => Navigator.pushNamed(
-                  ctx,
-                  RouteNames.createPackage,
-                  arguments: packages[i],
-                ),
-                onDelete: () => _showDeleteDialog(packages[i]),
-              ),
+              separatorBuilder: (_, _) => const SizedBox(height: 16),
+              itemBuilder: (_, i) {
+                if (i == packages.length) {
+                  return _buildLoadMore(ctx);
+                }
+                return _PackageCard(
+                  package: packages[i],
+                  heroTag: 'package_${type}_${packages[i].id}',
+                  onTap: () => Navigator.pushNamed(
+                    ctx,
+                    RouteNames.packageDetails,
+                    arguments: {
+                      'id': packages[i].id,
+                      'heroTag': 'package_${type}_${packages[i].id}',
+                    },
+                  ).then(
+                    (_) => ctx.read<TravelBloc>().add(
+                          TravelMyPackagesRequested(),
+                        ),
+                  ),
+                  onEdit: () => Navigator.pushNamed(
+                    ctx,
+                    RouteNames.createPackage,
+                    arguments: packages[i],
+                  ),
+                  onDelete: () => _showDeleteDialog(packages[i]),
+                );
+              },
             ),
+    );
+  }
+
+  Widget _buildLoadMore(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: OutlinedButton.icon(
+        onPressed: () => context.read<TravelBloc>().add(TravelLoadMoreMyPackages()),
+        icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+        label: AppText.body("Show More Tours", fontWeight: FontWeight.bold),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryBlue,
+          side: BorderSide(color: primaryBlue.withOpacity(0.3)),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
     );
   }
 
@@ -491,9 +514,9 @@ class _PackageCard extends StatelessWidget {
                             width: 125,
                             height: 170,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) =>
+                            placeholder: (_, _) =>
                                 const ShimmerBox(height: 170, width: 125),
-                            errorWidget: (_, __, ___) => Container(
+                            errorWidget: (_, _, _) => Container(
                               width: 125,
                               height: 170,
                               decoration: BoxDecoration(

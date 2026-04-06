@@ -47,6 +47,9 @@ class TravelPackageDetailRequested extends TravelEvent {
 /// Load packages created by the logged-in guide.
 class TravelMyPackagesRequested extends TravelEvent {}
 
+/// Load next page of my packages.
+class TravelLoadMoreMyPackages extends TravelEvent {}
+
 class TravelDeletePackageRequested extends TravelEvent {
   final String packageId;
   const TravelDeletePackageRequested(this.packageId);
@@ -86,17 +89,19 @@ class TravelMyBookingsRequested extends TravelEvent {}
 /// Submit a join / booking request.
 class TravelJoinRequested extends TravelEvent {
   final String packageId;
+  final String guideName;
   final List<Map<String, dynamic>> travelers;
   final String contactNumber;
   final String? notes;
   const TravelJoinRequested({
     required this.packageId,
+    required this.guideName,
     required this.travelers,
     required this.contactNumber,
     this.notes,
   });
   @override
-  List<Object?> get props => [packageId, travelers, contactNumber];
+  List<Object?> get props => [packageId, guideName, travelers, contactNumber];
 }
 
 /// Cancel an existing booking.
@@ -111,6 +116,14 @@ class TravelCancelBookingRequested extends TravelEvent {
 class TravelAdminReviewRequested extends TravelEvent {
   final String? status;
   const TravelAdminReviewRequested({this.status});
+  @override
+  List<Object?> get props => [status];
+}
+
+/// Load next page of admin packages.
+class TravelLoadMoreAdminPackages extends TravelEvent {
+  final String? status;
+  const TravelLoadMoreAdminPackages({this.status});
   @override
   List<Object?> get props => [status];
 }
@@ -157,6 +170,19 @@ class TravelHandleBookingRequested extends TravelEvent {
   });
   @override
   List<Object?> get props => [bookingId, action];
+}
+
+class TravelHandleTravelerStatusRequested extends TravelEvent {
+  final String bookingId;
+  final String travelerId;
+  final String status; // 'Confirmed' or 'Cancelled'
+  const TravelHandleTravelerStatusRequested({
+    required this.bookingId,
+    required this.travelerId,
+    required this.status,
+  });
+  @override
+  List<Object?> get props => [bookingId, travelerId, status];
 }
 
 /// Clear any error / join success state after it has been consumed.
