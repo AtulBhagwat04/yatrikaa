@@ -3,7 +3,7 @@ require('dotenv').config();
 module.exports = {
   PORT: process.env.PORT || 3000,
   MONGODB_URI: process.env.MONGODB_URI,
-  JWT_SECRET: process.env.JWT_SECRET || 'fallback_secret',
+  JWT_SECRET: process.env.JWT_SECRET || 'PLEASE_SET_JWT_SECRET_IN_ENV',
   GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY,
   GOOGLE_PLACES_BASE_URL: 'https://maps.googleapis.com/maps/api/place',
   // Default Admin Credentials (Should be set via .env)
