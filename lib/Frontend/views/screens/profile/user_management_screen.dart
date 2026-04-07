@@ -31,12 +31,28 @@ class _UserManagementScreenState extends State<UserManagementScreen>
   int _guidePage = 1;
   bool _hasMoreTravelers = false;
   bool _hasMoreGuides = false;
+  
+  final ScrollController _travelerScrollController = ScrollController();
+  final ScrollController _guideScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _initialFetch();
+    _travelerScrollController.addListener(() => _onScroll('user'));
+    _guideScrollController.addListener(() => _onScroll('guide'));
+  }
+
+  void _onScroll(String role) {
+    final controller = role == 'user' ? _travelerScrollController : _guideScrollController;
+    final hasMore = role == 'user' ? _hasMoreTravelers : _hasMoreGuides;
+    
+    if (controller.position.pixels >= controller.position.maxScrollExtent - 300) {
+      if (!_isLoadingMore && hasMore && !_isLoading) {
+        _loadMore(role);
+      }
+    }
   }
 
   Future<void> _initialFetch() async {
@@ -60,6 +76,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
 
   @override
   void dispose() {
+    _travelerScrollController.dispose();
+    _guideScrollController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -124,61 +142,64 @@ class _UserManagementScreenState extends State<UserManagementScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              pinned: true,
-              floating: true,
-              backgroundColor: onboardingBlueVeryLight,
-              elevation: 0,
-              scrolledUnderElevation: 2,
-              surfaceTintColor: Colors.white,
-              title: Text(
-                'User Management',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 22,
-                  color: appBlack,
+      body: SafeArea(
+        top: false,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                pinned: true,
+                floating: true,
+                backgroundColor: onboardingBlueVeryLight,
+                elevation: 0,
+                scrolledUnderElevation: 2,
+                surfaceTintColor: Colors.white,
+                title: Text(
+                  'User Management',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    color: appBlack,
+                  ),
+                ),
+                centerTitle: true,
+              ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SliverAppBarDelegate(
+                  TabBar(
+                    controller: _tabController,
+                    labelColor: primaryBlue,
+                    unselectedLabelColor: appGrey,
+                    indicatorColor: primaryBlue,
+                    indicatorWeight: 4,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    labelStyle: GoogleFonts.montserrat(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      letterSpacing: 0.5,
+                    ),
+                    unselectedLabelStyle: GoogleFonts.montserrat(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      letterSpacing: 0.5,
+                    ),
+                    tabs: const [
+                      Tab(text: 'Travelers'),
+                      Tab(text: 'Guides'),
+                    ],
+                  ),
                 ),
               ),
-              centerTitle: true,
-            ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SliverAppBarDelegate(
-                TabBar(
-                  controller: _tabController,
-                  labelColor: primaryBlue,
-                  unselectedLabelColor: appGrey,
-                  indicatorColor: primaryBlue,
-                  indicatorWeight: 4,
-                  indicatorSize: TabBarIndicatorSize.label,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  labelStyle: GoogleFonts.montserrat(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                    letterSpacing: 0.5,
-                  ),
-                  unselectedLabelStyle: GoogleFonts.montserrat(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    letterSpacing: 0.5,
-                  ),
-                  tabs: const [
-                    Tab(text: 'Travelers'),
-                    Tab(text: 'Guides'),
-                  ],
-                ),
-              ),
-            ),
-          ];
-        },
-        body: TabBarView(
-          controller: _tabController,
-          children: [_buildUserList('user'), _buildUserList('guide')],
+            ];
+          },
+          body: TabBarView(
+            controller: _tabController,
+            children: [_buildUserList('user'), _buildUserList('guide')],
+          ),
         ),
       ),
     );
@@ -194,7 +215,6 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     }
 
     final filtered = role == 'user' ? _travelers : _guides;
-    final hasMore = role == 'user' ? _hasMoreTravelers : _hasMoreGuides;
 
     if (filtered.isEmpty) {
       return _buildEmptyWidget(role);
@@ -204,48 +224,29 @@ class _UserManagementScreenState extends State<UserManagementScreen>
       onRefresh: () => _fetchUsers(role, refresh: true),
       color: primaryBlue,
       child: ListView.builder(
+        controller: role == 'user' ? _travelerScrollController : _guideScrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-        itemCount: filtered.length + (hasMore ? 1 : 0),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 60),
+        itemCount: filtered.length + (_isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
           if (index < filtered.length) {
             return _buildUserCard(filtered[index]);
           }
-          return _buildLoadMoreButton(role);
+          return _buildLoadingIndicator();
         },
       ),
     );
   }
 
-  Widget _buildLoadMoreButton(String role) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+  Widget _buildLoadingIndicator() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 24),
       child: Center(
-        child: _isLoadingMore
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2, color: primaryBlue),
-              )
-            : TextButton.icon(
-                onPressed: () => _loadMore(role),
-                icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
-                label: const Text(
-                  'Show More Users',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: primaryBlue,
-                  backgroundColor: primaryBlue.withValues(alpha: 0.08),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
+        child: CircularProgressIndicator(color: primaryBlue, strokeWidth: 3),
       ),
     );
   }
+
 
   Widget _buildUserCard(dynamic user) {
     final role = user['role'] ?? 'user';
@@ -722,8 +723,12 @@ class _UserManagementScreenState extends State<UserManagementScreen>
               behavior: SnackBarBehavior.floating,
             ),
           );
+          setState(() {
+            _travelers.removeWhere((u) => u['_id'] == userId);
+            _guides.removeWhere((u) => u['_id'] == userId);
+            _isLoading = false;
+          });
         }
-        _initialFetch();
       } else {
         final error = jsonDecode(response.body);
         throw Exception(error['error'] ?? 'Failed to delete user');

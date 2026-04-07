@@ -216,7 +216,7 @@ class _HomeTabState extends State<_HomeTab> {
                       onRefresh: () async {
                         context.read<HomeBloc>().add(HomeStarted());
                         await _checkNotifications();
-                        await Future.delayed(const Duration(milliseconds: 800));
+                        await Future.delayed(const Duration(milliseconds: 250));
                       },
                       color: primaryBlue,
                       backgroundColor: appWhite,

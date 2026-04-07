@@ -70,7 +70,7 @@ class SplashScreen extends StatelessWidget {
                             letterSpacing: 5,
                             color: appWhite,
                           ),
-                        ).animate().fadeIn(delay: 200.ms, duration: 1000.ms),
+                        ).animate().fadeIn(delay: 100.ms, duration: 600.ms),
 
                         const SizedBox(height: 10),
 
@@ -83,7 +83,7 @@ class SplashScreen extends StatelessWidget {
                             letterSpacing: 4,
                             color: appWhite.withOpacity(0.85),
                           ),
-                        ).animate().fadeIn(delay: 200.ms, duration: 1000.ms),
+                        ).animate().fadeIn(delay: 100.ms, duration: 600.ms),
                       ],
                     ),
                   ),
@@ -105,7 +105,7 @@ class SplashScreen extends StatelessWidget {
                               appWhite,
                             ),
                           ),
-                        ).animate().fadeIn(delay: 1000.ms),
+                        ).animate().fadeIn(delay: 500.ms),
 
                         const SizedBox(height: 24),
 
@@ -129,7 +129,7 @@ class SplashScreen extends StatelessWidget {
                               ),
                             ),
                           ],
-                        ).animate().fadeIn(delay: 1000.ms),
+                        ).animate().fadeIn(delay: 500.ms),
                       ],
                     ),
                   ),

@@ -37,15 +37,29 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
   String? _error;
   int _currentPage = 1;
   bool _hasMore = false;
+  bool _isMoreLoading = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _fetchEvents();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 300) {
+      if (!_isMoreLoading && _hasMore && !_isLoading) {
+        _loadMore();
+      }
+    }
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -53,11 +67,13 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
   Future<void> _fetchEvents({bool refresh = true}) async {
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
-      _error = null;
       if (refresh) {
+        _isLoading = true;
         _currentPage = 1;
+      } else {
+        _isMoreLoading = true;
       }
+      _error = null;
     });
 
     try {
@@ -85,6 +101,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         _filteredEvents = _allEvents;
         _hasMore = hasMore;
         _isLoading = false;
+        _isMoreLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
@@ -96,10 +113,8 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
   }
 
   void _loadMore() {
-    if (_hasMore && !_isLoading) {
-      setState(() {
-        _currentPage++;
-      });
+    if (_hasMore && !_isMoreLoading && !_isLoading) {
+      _currentPage++;
       _fetchEvents(refresh: false);
     }
   }
@@ -119,11 +134,14 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
-      body: RefreshIndicator(
-        onRefresh: _fetchEvents,
-        displacement: 80,
-        color: primaryBlue,
-        child: CustomScrollView(
+      body: SafeArea(
+        top: false,
+        child: RefreshIndicator(
+          onRefresh: _fetchEvents,
+          displacement: 80,
+          color: primaryBlue,
+          child: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
@@ -131,10 +149,12 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
             _buildAppBar(),
             _buildSearchBox(),
             _buildList(),
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            if (_hasMore || _isMoreLoading) _buildLoadMoreIndicator(),
+            const SliverToBoxAdapter(child: SizedBox(height: 60)),
           ],
         ),
       ),
+    ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.pushNamed(
@@ -271,42 +291,24 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            if (index == _filteredEvents.length) {
-              return _buildLoadMoreButton();
-            }
-            return _buildEventCard(_filteredEvents[index]);
-          },
-          childCount: _filteredEvents.length + (_hasMore ? 1 : 0),
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          return _buildEventCard(_filteredEvents[index]);
+        }, childCount: _filteredEvents.length),
       ),
     );
   }
 
-  Widget _buildLoadMoreButton() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24, top: 8),
-      child: OutlinedButton.icon(
-        onPressed: _loadMore,
-        icon: _isLoading
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.add_circle_outline_rounded, size: 20),
-        label: AppText.body(
-          _isLoading ? "Loading..." : "Show More Events",
-          fontWeight: FontWeight.bold,
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: primaryBlue,
-          side: BorderSide(color: primaryBlue.withValues(alpha: 0.2)),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+  Widget _buildLoadMoreIndicator() {
+    return SliverToBoxAdapter(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: _isMoreLoading
+              ? const CircularProgressIndicator(
+                  color: primaryBlue,
+                  strokeWidth: 3,
+                )
+              : const SizedBox.shrink(),
         ),
       ),
     );
@@ -322,15 +324,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         );
 
         if (result is EventModel && mounted) {
-          setState(() {
-            final allIdx = _allEvents.indexWhere((e) => e.id == result.id);
-            if (allIdx != -1) _allEvents[allIdx] = result;
-
-            final filterIdx = _filteredEvents.indexWhere(
-              (e) => e.id == result.id,
-            );
-            if (filterIdx != -1) _filteredEvents[filterIdx] = result;
-          });
+          _refreshSingleEvent(result.id);
         }
       },
       child: Container(
@@ -522,7 +516,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isDestructive ? Colors.white : Colors.black.withValues(alpha: 0.6),
+            color: isDestructive
+                ? Colors.white
+                : Colors.black.withValues(alpha: 0.6),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
@@ -676,13 +672,12 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                           fit: BoxFit.cover,
                                           placeholder: (_, _) =>
                                               const ShimmerBox(),
-                                          errorWidget: (_, _, _) =>
-                                              Container(
-                                                color: Colors.grey.shade200,
-                                                child: const Icon(
-                                                  Icons.broken_image,
-                                                ),
-                                              ),
+                                          errorWidget: (_, _, _) => Container(
+                                            color: Colors.grey.shade200,
+                                            child: const Icon(
+                                              Icons.broken_image,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                       Positioned(
@@ -787,7 +782,9 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                       color: onboardingBlueVeryLight,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: primaryBlue.withValues(alpha: 0.08),
+                                        color: primaryBlue.withValues(
+                                          alpha: 0.08,
+                                        ),
                                       ),
                                     ),
                                     child: Column(
@@ -1152,31 +1149,34 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
       );
       if (success && mounted) {
         CustomToast.success(context, "Event details updated successfully!");
-        _fetchEvents();
+        _refreshSingleEvent(id);
       }
     } catch (e) {
       if (mounted) {
         CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
       }
-    } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _deleteEvent(String id) async {
+  Future<void> _deleteEvent(String eventId) async {
     setState(() => _isLoading = true);
     try {
       final token = await _authService.getToken();
       final response = await http.delete(
-        Uri.parse('${ApiConstants.baseUrl}/events/$id'),
+        Uri.parse('${ApiConstants.baseUrl}/events/$eventId'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
-        if (mounted) {
-          CustomToast.success(context, 'Event deleted successfully');
-        }
-        _fetchEvents();
+        CustomToast.success(context, 'Event deleted successfully');
+        setState(() {
+          _allEvents.removeWhere((e) => e.id == eventId);
+          _filterEvents(_searchController.text);
+          _isLoading = false;
+        });
       } else {
         throw Exception('Failed to delete event');
       }
@@ -1185,6 +1185,25 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
       }
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _refreshSingleEvent(String id) async {
+    try {
+      final updatedEvent = await _eventsService.getEventDetails(id);
+      if (updatedEvent == null || !mounted) return;
+
+      setState(() {
+        final index = _allEvents.indexWhere((e) => e.id == id);
+        if (index != -1) {
+          _allEvents[index] = updatedEvent;
+        }
+        _filterEvents(_searchController.text);
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('[ManageEvents] Error refreshing single event: $e');
+      _fetchEvents();
     }
   }
 }

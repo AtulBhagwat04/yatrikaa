@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
 
@@ -15,28 +15,31 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 85,
       decoration: BoxDecoration(
         color: appWhite,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: shadowColor,
+            color: shadowColor.withOpacity(0.08),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
         ],
       ),
       child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _navItem(0, Icons.home_rounded, AppStrings.navHome),
-            _navItem(1, Icons.near_me_rounded, AppStrings.navNearby),
-            _navItem(2, Icons.groups_rounded, AppStrings.navCommunity),
-            _navItem(3, Icons.luggage_rounded, AppStrings.navPackages),
-            _navItem(4, Icons.person_rounded, AppStrings.navProfile),
-          ],
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _navItem(0, Icons.home_rounded, AppStrings.navHome),
+              _navItem(1, Icons.near_me_rounded, AppStrings.navNearby),
+              _navItem(2, Icons.groups_rounded, AppStrings.navCommunity),
+              _navItem(3, Icons.luggage_rounded, AppStrings.navPackages),
+              _navItem(4, Icons.person_rounded, AppStrings.navProfile),
+            ],
+          ),
         ),
       ),
     );

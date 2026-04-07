@@ -13,10 +13,17 @@ abstract class TravelEvent extends Equatable {
 class TravelPackagesRequested extends TravelEvent {
   final String category;
   final String search;
-  const TravelPackagesRequested({this.category = 'All', this.search = ''});
+  final bool isSilent;
+  const TravelPackagesRequested({
+    this.category = 'All',
+    this.search = '',
+    this.isSilent = false,
+  });
   @override
-  List<Object?> get props => [category, search];
+  List<Object?> get props => [category, search, isSilent];
 }
+
+class TravelLoadMorePackages extends TravelEvent {}
 
 class TravelLoadCache extends TravelEvent {}
 
@@ -39,9 +46,10 @@ class TravelSearchChanged extends TravelEvent {
 /// Load details for a specific package.
 class TravelPackageDetailRequested extends TravelEvent {
   final String packageId;
-  const TravelPackageDetailRequested(this.packageId);
+  final bool isSilent;
+  const TravelPackageDetailRequested(this.packageId, {this.isSilent = false});
   @override
-  List<Object?> get props => [packageId];
+  List<Object?> get props => [packageId, isSilent];
 }
 
 /// Load packages created by the logged-in guide.
@@ -175,7 +183,7 @@ class TravelHandleBookingRequested extends TravelEvent {
 class TravelHandleTravelerStatusRequested extends TravelEvent {
   final String bookingId;
   final String travelerId;
-  final String status; // 'Confirmed' or 'Cancelled'
+  final String status; // 'Confirmed' or 'Cancelled' or 'CancellationRequested'
   const TravelHandleTravelerStatusRequested({
     required this.bookingId,
     required this.travelerId,
@@ -183,6 +191,17 @@ class TravelHandleTravelerStatusRequested extends TravelEvent {
   });
   @override
   List<Object?> get props => [bookingId, travelerId, status];
+}
+
+class TravelCancelTravelerRequested extends TravelEvent {
+  final String bookingId;
+  final String travelerId;
+  const TravelCancelTravelerRequested({
+    required this.bookingId,
+    required this.travelerId,
+  });
+  @override
+  List<Object?> get props => [bookingId, travelerId];
 }
 
 /// Clear any error / join success state after it has been consumed.

@@ -14,6 +14,8 @@ class TravelState extends Equatable {
   final String selectedCategory;
   final String searchQuery;
   final String? packagesError;
+  final int packagesPage;
+  final bool packagesHasMore;
 
   // ── Detail ─────────────────────────────────────────────────────────────────
   final TravelStatus detailStatus;
@@ -56,6 +58,8 @@ class TravelState extends Equatable {
     this.selectedCategory = 'All',
     this.searchQuery = '',
     this.packagesError,
+    this.packagesPage = 1,
+    this.packagesHasMore = false,
     this.detailStatus = TravelStatus.initial,
     this.selectedPackage,
     this.detailError,
@@ -85,6 +89,8 @@ class TravelState extends Equatable {
     String? selectedCategory,
     String? searchQuery,
     String? packagesError,
+    int? packagesPage,
+    bool? packagesHasMore,
     TravelStatus? detailStatus,
     TravelPackageModel? selectedPackage,
     String? detailError,
@@ -113,6 +119,8 @@ class TravelState extends Equatable {
       selectedCategory: selectedCategory ?? this.selectedCategory,
       searchQuery: searchQuery ?? this.searchQuery,
       packagesError: packagesError ?? this.packagesError,
+      packagesPage: packagesPage ?? this.packagesPage,
+      packagesHasMore: packagesHasMore ?? this.packagesHasMore,
       detailStatus: detailStatus ?? this.detailStatus,
       selectedPackage: selectedPackage ?? this.selectedPackage,
       detailError: detailError ?? this.detailError,
@@ -166,6 +174,9 @@ class TravelState extends Equatable {
         (b) =>
             b.status == 'Pending' ||
             b.status == 'Confirmed' ||
+            b.status == 'Approved' ||
+            b.status == 'Paid' ||
+            b.status == 'Active' ||
             b.status == 'CancellationRequested',
       )
       .toList();
@@ -173,8 +184,9 @@ class TravelState extends Equatable {
   List<BookingModel> get completedBookings =>
       myBookings.where((b) => b.status == 'Completed').toList();
 
-  List<BookingModel> get cancelledBookings =>
-      myBookings.where((b) => b.status == 'Cancelled').toList();
+  List<BookingModel> get cancelledBookings => myBookings
+      .where((b) => b.status == 'Cancelled' || b.status == 'Rejected')
+      .toList();
 
   @override
   List<Object?> get props => [
@@ -183,6 +195,8 @@ class TravelState extends Equatable {
     selectedCategory,
     searchQuery,
     packagesError,
+    packagesPage,
+    packagesHasMore,
     detailStatus,
     selectedPackage,
     detailError,

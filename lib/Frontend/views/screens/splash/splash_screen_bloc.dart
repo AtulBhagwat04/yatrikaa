@@ -41,16 +41,16 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     StartAnimation event,
     Emitter<SplashState> emit,
   ) async {
-    // Step 1: Initial wait for native splash transition
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Step 1: Instant start for animations after native splash
+    await Future.delayed(const Duration(milliseconds: 50));
     emit(state.copyWith(showIcon: true));
 
     // Step 2: Show text and tagline
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 300));
     emit(state.copyWith(showText: true));
 
-    // Step 3: Hold final frame to allow animations to complete
-    await Future.delayed(const Duration(milliseconds: 1200));
+    // Step 3: Hold for full brand experience (Total ~2.0s)
+    await Future.delayed(const Duration(milliseconds: 400));
 
     // Step 4: Finalize and trigger navigation
     emit(state.copyWith(navigationReady: true));

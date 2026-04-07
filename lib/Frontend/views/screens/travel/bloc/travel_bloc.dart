@@ -32,7 +32,43 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     on<TravelAllGuideBookingsRequested>(_onAllGuideBookingsRequested);
     on<TravelHandleBookingRequested>(_onHandleBookingRequested);
     on<TravelHandleTravelerStatusRequested>(_onHandleTravelerStatusRequested);
+    on<TravelCancelTravelerRequested>(_onCancelTravelerRequested);
     on<TravelStatusReset>(_onStatusReset);
+    on<TravelLoadMorePackages>(_onLoadMorePackages);
+
+    // Initial polling setup
+    _startPolling();
+  }
+
+  Timer? _pollTimer;
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      // Periodic check for new data if app is active
+      if (!isClosed) {
+        // Only poll if not currently loading
+        if (state.packagesStatus != TravelStatus.loading) {
+          add(TravelPackagesRequested(
+            category: state.selectedCategory,
+            search: state.searchQuery,
+            isSilent: true,
+          ));
+        }
+        if (state.selectedPackage != null && state.detailStatus != TravelStatus.loading) {
+          add(TravelPackageDetailRequested(
+            state.selectedPackage!.id,
+            isSilent: true,
+          ));
+        }
+      }
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _pollTimer?.cancel();
+    return super.close();
   }
 
   Future<void> _onLoadCache(
@@ -56,16 +92,22 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     TravelPackagesRequested event,
     Emitter<TravelState> emit,
   ) async {
-    emit(state.copyWith(packagesStatus: TravelStatus.loading));
+    if (!event.isSilent) {
+      emit(state.copyWith(packagesStatus: TravelStatus.loading));
+    }
     try {
-      final packages = await _service.getPackages(
-        category: event.category,
+      final result = await _service.getPackagesPaginated(
+        category: event.category == 'All' ? null : event.category,
         search: event.search,
+        page: 1, // Always refresh page 1
+        limit: 12,
       );
       emit(
         state.copyWith(
           packagesStatus: TravelStatus.success,
-          packages: packages,
+          packages: result['packages'] as List<TravelPackageModel>,
+          packagesHasMore: result['hasMore'] as bool,
+          packagesPage: 1,
           selectedCategory: event.category,
           searchQuery: event.search,
         ),
@@ -77,6 +119,37 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
           packagesError: e.toString(),
         ),
       );
+    }
+  }
+
+  Future<void> _onLoadMorePackages(
+    TravelLoadMorePackages event,
+    Emitter<TravelState> emit,
+  ) async {
+    if (!state.packagesHasMore ||
+        state.packagesStatus == TravelStatus.loading) return;
+
+    try {
+      final nextPage = state.packagesPage + 1;
+      final result = await _service.getPackagesPaginated(
+        category: state.selectedCategory == 'All' ? null : state.selectedCategory,
+        search: state.searchQuery,
+        page: nextPage,
+        limit: 12,
+      );
+
+      final newPackages = List<TravelPackageModel>.from(state.packages);
+      newPackages.addAll(result['packages'] as List<TravelPackageModel>);
+
+      emit(
+        state.copyWith(
+          packages: newPackages,
+          packagesHasMore: result['hasMore'] as bool,
+          packagesPage: nextPage,
+        ),
+      );
+    } catch (e) {
+      print('TravelBloc._onLoadMorePackages: $e');
     }
   }
 
@@ -95,7 +168,9 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     TravelPackageDetailRequested event,
     Emitter<TravelState> emit,
   ) async {
-    emit(state.copyWith(detailStatus: TravelStatus.loading));
+    if (!event.isSilent) {
+      emit(state.copyWith(detailStatus: TravelStatus.loading));
+    }
     try {
       final pkg = await _service.getPackageDetails(event.packageId);
       if (pkg != null) {
@@ -212,6 +287,9 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
                 'Booking request sent! ⏳ Please wait for ${event.guideName} to approve your booking.',
           ),
         );
+        // Instant update for the package details!
+        add(TravelPackageDetailRequested(event.packageId));
+        add(const TravelPackagesRequested());
       } else {
         throw Exception('Failed to join package');
       }
@@ -241,6 +319,37 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
           myBookings: bookings,
         ),
       );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          actionStatus: BookingActionStatus.failure,
+          actionError: e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onCancelTravelerRequested(
+    TravelCancelTravelerRequested event,
+    Emitter<TravelState> emit,
+  ) async {
+    emit(state.copyWith(actionStatus: BookingActionStatus.loading));
+    try {
+      final success = await _service.handleTravelerStatus(
+        bookingId: event.bookingId,
+        travelerId: event.travelerId,
+        status: 'Cancelled',
+        isRequest: true,
+      );
+      if (success) {
+        emit(
+          state.copyWith(
+            actionStatus: BookingActionStatus.success,
+            actionSuccessMessage: 'Cancellation requested for traveler',
+          ),
+        );
+        add(TravelMyBookingsRequested());
+      }
     } catch (e) {
       emit(
         state.copyWith(
@@ -339,6 +448,9 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
             actionStatus: BookingActionStatus.success,
             actionSuccessMessage: 'Package published and is now live! 🚀',
             adminPackages: updated,
+            selectedPackage: state.selectedPackage?.id == event.packageId 
+              ? state.selectedPackage!.copyWith(status: 'Published') 
+              : state.selectedPackage,
           ),
         );
       } else {
@@ -453,6 +565,13 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
       if (success) {
         // Refresh my packages list (first page)
         final result = await _service.getMyPackages(page: 1, limit: 12);
+        
+        // Also refresh selected package if it's the one we just updated
+        TravelPackageModel? updatedPackage = state.selectedPackage;
+        if (state.selectedPackage?.id == event.packageId) {
+          updatedPackage = await _service.getPackageDetails(event.packageId);
+        }
+
         emit(
           state.copyWith(
             actionStatus: BookingActionStatus.success,
@@ -460,6 +579,7 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
             myPackages: result['packages'] as List<TravelPackageModel>,
             myPackagesHasMore: result['hasMore'] as bool,
             myPackagesPage: 1,
+            selectedPackage: updatedPackage,
           ),
         );
       } else {
@@ -590,9 +710,12 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         emit(
           state.copyWith(
             actionStatus: BookingActionStatus.success,
-            actionSuccessMessage: 'Traveler status updated to ${event.status}',
+            actionSuccessMessage: 'Traveler status updated successfully',
           ),
         );
+        // Refresh bookings automatically after status update
+        add(TravelMyBookingsRequested());
+        add(TravelAllGuideBookingsRequested());
       }
     } catch (e) {
       emit(

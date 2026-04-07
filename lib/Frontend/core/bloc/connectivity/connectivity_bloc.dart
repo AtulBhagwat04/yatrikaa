@@ -49,7 +49,7 @@ class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
     _connectivitySubscription?.cancel();
 
     // Initial check
-    Future.delayed(const Duration(milliseconds: 500), () async {
+    Future.delayed(const Duration(milliseconds: 100), () async {
       final results = await Connectivity().checkConnectivity();
       await _handleConnectivityChange(results);
     });

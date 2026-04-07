@@ -136,24 +136,28 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen>
                     return 0;
                   });
 
-            final cancellationList =
-                bookings
-                    .where(
-                      (b) =>
-                          b.status == 'CancellationRequested' ||
-                          b.status == 'Cancelled',
-                    )
-                    .toList()
+            final cancellationList = bookings.where((b) {
+              final hasTravelerReq = b.travelers.any(
+                (t) => t.status == 'CancellationRequested',
+              );
+              return b.status == 'CancellationRequested' ||
+                  b.status == 'Cancelled' ||
+                  hasTravelerReq;
+            }).toList()
                   ..sort((a, b) {
-                    // CancellationRequested first
-                    if (a.status == 'CancellationRequested' &&
-                        b.status != 'CancellationRequested') {
-                      return -1;
-                    }
-                    if (a.status != 'CancellationRequested' &&
-                        b.status == 'CancellationRequested') {
-                      return 1;
-                    }
+                    final aHasTravelerReq = a.travelers.any(
+                      (t) => t.status == 'CancellationRequested',
+                    );
+                    final bHasTravelerReq = b.travelers.any(
+                      (t) => t.status == 'CancellationRequested',
+                    );
+                    final aUrgent =
+                        a.status == 'CancellationRequested' || aHasTravelerReq;
+                    final bUrgent =
+                        b.status == 'CancellationRequested' || bHasTravelerReq;
+
+                    if (aUrgent && !bUrgent) return -1;
+                    if (!aUrgent && bUrgent) return 1;
                     return 0;
                   });
 
@@ -513,34 +517,90 @@ class _BookingCard extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                if (t.status == 'Pending' && booking.status != 'CancellationRequested') ...[
-                                  IconButton(
-                                    icon: const Icon(Icons.close_rounded, color: errorColor, size: 20),
-                                    onPressed: () => _handleTraveler(context, t.id, 'Cancelled'),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: const Icon(Icons.check_rounded, color: successColorDark, size: 20),
-                                    onPressed: () => _handleTraveler(context, t.id, 'Confirmed'),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ] else ...[
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: (t.status == 'Confirmed' ? successColorDark : errorColorDark).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: AppText.caption(
-                                      t.status,
-                                      color: t.status == 'Confirmed' ? successColorDark : errorColorDark,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ],
+                                 if ((t.status == 'Pending' ||
+                                         t.status == 'CancellationRequested') &&
+                                     booking.status !=
+                                         'CancellationRequested') ...[
+                                   if (t.status == 'CancellationRequested')
+                                     Padding(
+                                       padding: const EdgeInsets.only(right: 8),
+                                       child: Container(
+                                         padding: const EdgeInsets.symmetric(
+                                           horizontal: 6,
+                                           vertical: 2,
+                                         ),
+                                         decoration: BoxDecoration(
+                                           color: Colors.red.withOpacity(0.1),
+                                           borderRadius:
+                                               BorderRadius.circular(4),
+                                         ),
+                                         child: Row(
+                                           children: [
+                                             const Icon(
+                                               Icons.warning_amber_rounded,
+                                               size: 10,
+                                               color: Colors.red,
+                                             ),
+                                             const SizedBox(width: 4),
+                                             AppText.small(
+                                               'CANCEL REQ.',
+                                               color: Colors.red,
+                                               size: 8,
+                                               fontWeight: FontWeight.w900,
+                                             ),
+                                           ],
+                                         ),
+                                       ),
+                                     ),
+                                   IconButton(
+                                     icon: const Icon(
+                                       Icons.close_rounded,
+                                       color: errorColor,
+                                       size: 20,
+                                     ),
+                                     onPressed: () =>
+                                         _handleTraveler(context, t.id, 'Cancelled'),
+                                     padding: EdgeInsets.zero,
+                                     constraints: const BoxConstraints(),
+                                   ),
+                                   const SizedBox(width: 8),
+                                   IconButton(
+                                     icon: const Icon(
+                                       Icons.check_rounded,
+                                       color: successColorDark,
+                                       size: 20,
+                                     ),
+                                     onPressed: () =>
+                                         _handleTraveler(context, t.id, 'Confirmed'),
+                                     padding: EdgeInsets.zero,
+                                     constraints: const BoxConstraints(),
+                                   ),
+                                 ] else ...[
+                                   Container(
+                                     padding: const EdgeInsets.symmetric(
+                                       horizontal: 8,
+                                       vertical: 2,
+                                     ),
+                                     decoration: BoxDecoration(
+                                       color: (t.status == 'Confirmed'
+                                               ? successColorDark
+                                               : (t.status == 'CancellationRequested'
+                                                   ? Colors.orange
+                                                   : errorColorDark))
+                                           .withOpacity(0.1),
+                                       borderRadius: BorderRadius.circular(6),
+                                     ),
+                                     child: AppText.caption(
+                                       t.status,
+                                       color: t.status == 'Confirmed'
+                                           ? successColorDark
+                                           : (t.status == 'CancellationRequested'
+                                               ? Colors.deepOrange
+                                               : errorColorDark),
+                                       fontWeight: FontWeight.w800,
+                                     ),
+                                   ),
+                                 ],
                               ],
                             ),
                           );

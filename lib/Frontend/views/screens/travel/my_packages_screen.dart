@@ -23,16 +23,43 @@ class MyPackagesScreen extends StatefulWidget {
 class _MyPackagesScreenState extends State<MyPackagesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final ScrollController _upcomingScrollController = ScrollController();
+  final ScrollController _activeScrollController = ScrollController();
+  final ScrollController _completedScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     context.read<TravelBloc>().add(TravelMyPackagesRequested());
+
+    _upcomingScrollController.addListener(() => _onScroll('Upcoming'));
+    _activeScrollController.addListener(() => _onScroll('Active'));
+    _completedScrollController.addListener(() => _onScroll('Completed'));
+  }
+
+  void _onScroll(String type) {
+    final controller = type == 'Upcoming'
+        ? _upcomingScrollController
+        : type == 'Active'
+        ? _activeScrollController
+        : _completedScrollController;
+
+    if (controller.position.pixels >=
+        controller.position.maxScrollExtent - 300) {
+      final state = context.read<TravelBloc>().state;
+      if (state.myPackagesStatus != TravelStatus.loading &&
+          state.myPackagesHasMore) {
+        context.read<TravelBloc>().add(TravelLoadMoreMyPackages());
+      }
+    }
   }
 
   @override
   void dispose() {
+    _upcomingScrollController.dispose();
+    _activeScrollController.dispose();
+    _completedScrollController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -91,75 +118,78 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
 
           return Scaffold(
             backgroundColor: onboardingBlueVeryLight,
-            body: NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) {
-                return [
-                  SliverAppBar(
-                    pinned: true,
-                    floating: true,
-                    backgroundColor: onboardingBlueVeryLight,
-                    elevation: 0,
-                    scrolledUnderElevation: 2,
-                    surfaceTintColor: Colors.white,
-                    title: AppText.heading(
-                      'Manage Tours',
-                      fontWeight: FontWeight.w900,
-                      size: 22,
+            body: SafeArea(
+              top: false,
+              child: NestedScrollView(
+                headerSliverBuilder: (context, innerBoxIsScrolled) {
+                  return [
+                    SliverAppBar(
+                      pinned: true,
+                      floating: true,
+                      backgroundColor: onboardingBlueVeryLight,
+                      elevation: 0,
+                      scrolledUnderElevation: 2,
+                      surfaceTintColor: Colors.white,
+                      title: AppText.heading(
+                        'Manage Tours',
+                        fontWeight: FontWeight.w900,
+                        size: 22,
+                      ),
+                      centerTitle: true,
                     ),
-                    centerTitle: true,
-                  ),
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _SliverAppBarDelegate(
-                      TabBar(
-                        controller: _tabController,
-                        labelColor: primaryBlue,
-                        unselectedLabelColor: appGrey,
-                        indicatorColor: primaryBlue,
-                        indicatorWeight: 3,
-                        indicatorSize: TabBarIndicatorSize.label,
-                        labelStyle: GoogleFonts.montserrat(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
-                        unselectedLabelStyle: GoogleFonts.montserrat(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                        tabs: [
-                          Tab(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text('Upcoming'),
-                                  if (upcoming.isNotEmpty) ...[
-                                    const SizedBox(width: 6),
-                                    _badge(upcoming.length),
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _SliverAppBarDelegate(
+                        TabBar(
+                          controller: _tabController,
+                          labelColor: primaryBlue,
+                          unselectedLabelColor: appGrey,
+                          indicatorColor: primaryBlue,
+                          indicatorWeight: 3,
+                          indicatorSize: TabBarIndicatorSize.label,
+                          labelStyle: GoogleFonts.montserrat(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                          unselectedLabelStyle: GoogleFonts.montserrat(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                          tabs: [
+                            Tab(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text('Upcoming'),
+                                    if (upcoming.isNotEmpty) ...[
+                                      const SizedBox(width: 6),
+                                      _badge(upcoming.length),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                          const Tab(text: 'Active'),
-                          const Tab(text: 'Completed'),
-                        ],
+                            const Tab(text: 'Active'),
+                            const Tab(text: 'Completed'),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ];
-              },
-              body: state.myPackagesStatus == TravelStatus.failure
-                  ? _buildError(ctx)
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildList(ctx, upcoming, 'Upcoming', hasMore),
-                        _buildList(ctx, active, 'Active', hasMore),
-                        _buildList(ctx, completed, 'Completed', hasMore),
-                      ],
-                    ),
+                  ];
+                },
+                body: state.myPackagesStatus == TravelStatus.failure
+                    ? _buildError(ctx)
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildList(ctx, upcoming, 'Upcoming', hasMore),
+                          _buildList(ctx, active, 'Active', hasMore),
+                          _buildList(ctx, completed, 'Completed', hasMore),
+                        ],
+                      ),
+              ),
             ),
             floatingActionButton: FloatingActionButton(
               onPressed: () =>
@@ -250,11 +280,16 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
     String type,
     bool hasMore,
   ) {
+    final ScrollController scrollController = type == 'Upcoming'
+        ? _upcomingScrollController
+        : type == 'Active'
+        ? _activeScrollController
+        : _completedScrollController;
+
     return RefreshIndicator(
       onRefresh: () async {
         ctx.read<TravelBloc>().add(TravelMyPackagesRequested());
-        // Small delay to ensure the refresh animation stays visible for a moment
-        await Future.delayed(const Duration(milliseconds: 800));
+        await Future.delayed(const Duration(milliseconds: 250));
       },
       color: primaryBlue,
       backgroundColor: Colors.white,
@@ -330,29 +365,31 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
               ),
             )
           : ListView.separated(
-              padding: const EdgeInsets.all(16),
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
               itemCount: packages.length + (hasMore ? 1 : 0),
               physics: const AlwaysScrollableScrollPhysics(),
               separatorBuilder: (_, _) => const SizedBox(height: 16),
               itemBuilder: (_, i) {
                 if (i == packages.length) {
-                  return _buildLoadMore(ctx);
+                  return _buildLoadingIndicator();
                 }
                 return _PackageCard(
                   package: packages[i],
                   heroTag: 'package_${type}_${packages[i].id}',
-                  onTap: () => Navigator.pushNamed(
-                    ctx,
-                    RouteNames.packageDetails,
-                    arguments: {
-                      'id': packages[i].id,
-                      'heroTag': 'package_${type}_${packages[i].id}',
-                    },
-                  ).then(
-                    (_) => ctx.read<TravelBloc>().add(
+                  onTap: () =>
+                      Navigator.pushNamed(
+                        ctx,
+                        RouteNames.packageDetails,
+                        arguments: {
+                          'id': packages[i].id,
+                          'heroTag': 'package_${type}_${packages[i].id}',
+                        },
+                      ).then(
+                        (_) => ctx.read<TravelBloc>().add(
                           TravelMyPackagesRequested(),
                         ),
-                  ),
+                      ),
                   onEdit: () => Navigator.pushNamed(
                     ctx,
                     RouteNames.createPackage,
@@ -365,19 +402,11 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
     );
   }
 
-  Widget _buildLoadMore(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: OutlinedButton.icon(
-        onPressed: () => context.read<TravelBloc>().add(TravelLoadMoreMyPackages()),
-        icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
-        label: AppText.body("Show More Tours", fontWeight: FontWeight.bold),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: primaryBlue,
-          side: BorderSide(color: primaryBlue.withOpacity(0.3)),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
+  Widget _buildLoadingIndicator() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: CircularProgressIndicator(color: primaryBlue, strokeWidth: 3),
       ),
     );
   }

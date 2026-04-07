@@ -17,7 +17,14 @@ const _parsePackageBody = (body) => {
   if (!body) return {};
   const b = { ...body };
 
-  const jsonFields = ['destination', 'duration', 'itinerary', 'inclusions', 'exclusions'];
+  const jsonFields = [
+    'destination',
+    'duration',
+    'itinerary',
+    'inclusions',
+    'exclusions',
+    'images',
+  ];
   for (const field of jsonFields) {
     if (b[field] && typeof b[field] === 'string') {
       try {
@@ -31,6 +38,9 @@ const _parsePackageBody = (body) => {
   // Booleans
   if (typeof b.isPopular === 'string') {
     b.isPopular = b.isPopular === 'true';
+  }
+  if (typeof b.isComingSoon === 'string') {
+    b.isComingSoon = b.isComingSoon === 'true';
   }
 
   // Numbers
@@ -511,12 +521,15 @@ const confirmBooking = async (req, res, next) => {
       if (allDone) return res.status(400).json({ success: false, error: 'Already fully processed' });
     }
 
-    // Track newly confirmed names for notification
-    const newlyConfirmedNames = [];
+    const { status: requestedStatus } = req.body;
+    const finalStatus = (requestedStatus === 'Cancelled') ? 'Cancelled' : 'Confirmed';
+
+    // Track newly updated names for notification
+    const newlyUpdatedNames = [];
     booking.travelers.forEach(t => {
       if (t.status === 'Pending') {
-        t.status = 'Confirmed';
-        newlyConfirmedNames.push(t.name);
+        t.status = finalStatus;
+        newlyUpdatedNames.push(t.name);
       }
     });
 
@@ -524,18 +537,27 @@ const confirmBooking = async (req, res, next) => {
     const anyConfirmed = booking.travelers.some(t => t.status === 'Confirmed');
     booking.status = anyConfirmed ? 'Confirmed' : 'Cancelled';
     
+    if (finalStatus === 'Cancelled' && newlyUpdatedNames.length > 0) {
+      await TravelPackage.updateOne(
+        { _id: pkg._id, currentParticipants: { $gte: newlyUpdatedNames.length } },
+        { $inc: { currentParticipants: -newlyUpdatedNames.length } }
+      );
+    }
+    
     await booking.save();
 
     const dbUser = await User.findById(booking.user);
     if (dbUser && dbUser.fcmToken) {
       let body = `Your booking for "${pkg.title}" update:`;
-      if (newlyConfirmedNames.length > 0) {
-        body += ` Confirmed: ${newlyConfirmedNames.join(', ')}.`;
+      if (finalStatus === 'Confirmed' && newlyUpdatedNames.length > 0) {
+        body += ` Confirmed: ${newlyUpdatedNames.join(', ')}.`;
+      } else if (finalStatus === 'Cancelled' && newlyUpdatedNames.length > 0) {
+        body += ` Cancelled: ${newlyUpdatedNames.join(', ')}.`;
       }
       
-      const cancelledNames = booking.travelers.filter(t => t.status === 'Cancelled').map(t => t.name);
+      const cancelledNames = booking.travelers.filter(t => t.status === 'Cancelled' && !newlyUpdatedNames.includes(t.name)).map(t => t.name);
       if (cancelledNames.length > 0) {
-        body += ` Cancelled: ${cancelledNames.join(', ')}.`;
+        body += ` Previously Cancelled: ${cancelledNames.join(', ')}.`;
       }
 
       notificationService.sendToToken(dbUser.fcmToken, {
