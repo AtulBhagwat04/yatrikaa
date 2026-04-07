@@ -218,7 +218,7 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
               // ── "Load more" shimmer at bottom ──────────────────────────────
               if (_isLoadingMore) _buildLoadMoreShimmer(),
 
-              const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
+              const SliverPadding(padding: EdgeInsets.only(bottom: 110)),
             ],
           ),
         ),
@@ -252,8 +252,8 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
                 const SizedBox(height: 2),
                 AppText.caption(
                   AppStrings.packSubtitle,
-                  color: appGrey,
-                  fontWeight: FontWeight.w500,
+                  color: appGreyDark, // Improved contrast
+                  fontWeight: FontWeight.w600,
                   size: 13,
                 ),
               ],
@@ -435,20 +435,30 @@ class _PackageCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: isFull
-                              ? Colors.red.shade700
-                              : Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(20),
+                              ? errorColor.withOpacity(0.9)
+                              : Colors.black.withOpacity(0.55),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                            )
+                          ],
                         ),
                         child: Text(
                           package.isComingSoon
-                              ? 'Coming Soon'
+                              ? 'COMING SOON'
                               : isFull
-                                  ? 'Fully Booked'
-                                  : '$seatsLeft seats left',
+                                  ? 'FULLY BOOKED'
+                                  : '$seatsLeft SEATS LEFT',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
@@ -486,8 +496,9 @@ class _PackageCard extends StatelessWidget {
                             '₹${package.price.toInt()}',
                             style: const TextStyle(
                               color: primaryBlue,
-                              fontSize: 16,
+                              fontSize: 18, // increased from 16
                               fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
                             ),
                           ),
                         ],

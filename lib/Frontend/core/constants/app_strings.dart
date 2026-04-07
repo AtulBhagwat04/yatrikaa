@@ -221,7 +221,7 @@ class AppStrings {
 
   // ================= PACKAGES =================
   static const String packTitle = "Travel Packages";
-  static const String packSubtitle = "Curated trips across Maharashtra";
+  static const String packSubtitle = "Curated trips across India";
 
   // ================= EXPLORE =================
   static const String expTitle = "Explore";

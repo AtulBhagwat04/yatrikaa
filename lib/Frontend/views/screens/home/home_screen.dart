@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
@@ -27,6 +26,7 @@ import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/views/widgets/event_horizontal_card.dart';
 import 'package:yatrikaa/Frontend/views/widgets/place_nearby_card.dart';
 import 'package:yatrikaa/Frontend/core/models/event_model.dart';
+import 'package:yatrikaa/Frontend/views/widgets/travel/package_card.dart';
 import 'package:yatrikaa/Frontend/core/services/notification_service.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -48,31 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   late final HomeBloc _homeBloc;
   DateTime? _lastBackPressTime;
-
-  Future<void> _handlePop(bool didPop) async {
-    if (didPop) return;
-
-    if (_selectedIndex != 0) {
-      setState(() => _selectedIndex = 0);
-      return;
-    }
-
-    final now = DateTime.now();
-    if (_lastBackPressTime == null ||
-        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
-      _lastBackPressTime = now;
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Press back again to exit'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-      return;
-    }
-    SystemNavigator.pop();
-  }
 
   @override
   void initState() {
@@ -99,7 +74,58 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onTabTap(int i) {
     HapticFeedback.selectionClick();
-    setState(() => _selectedIndex = i);
+    if (_selectedIndex != i) {
+      setState(() => _selectedIndex = i);
+    }
+  }
+
+  Widget _getTabContent(int index) {
+    switch (index) {
+      case 0:
+        return _HomeTab(
+          key: const ValueKey('home'),
+          onGoExplore: () => _onTabTap(1),
+          onGoPackages: () => _onTabTap(3),
+        );
+      case 1:
+        return const ExploreScreen(key: ValueKey('explore'));
+      case 2:
+        return const CommunityScreen(key: ValueKey('community'));
+      case 3:
+        return const PackagesDiscoveryScreen(key: ValueKey('packages'));
+      case 4:
+        return const ProfileScreen(
+          showBackButton: false,
+          key: ValueKey('profile'),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Future<void> _handlePop(bool didPop) async {
+    if (didPop) return;
+
+    if (_selectedIndex != 0) {
+      _onTabTap(0);
+      return;
+    }
+
+    final now = DateTime.now();
+    if (_lastBackPressTime == null ||
+        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Press back again to exit'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+    SystemNavigator.pop();
   }
 
   @override
@@ -109,9 +135,8 @@ class _HomeScreenState extends State<HomeScreen> {
       child: BlocListener<HomeBloc, HomeState>(
         listenWhen: (p, c) => p.isOffline != c.isOffline,
         listener: (context, state) {
-          // Re-load logic when coming back online
           if (!state.isOffline) {
-            // ... load data
+            // Re-load logic
           }
         },
         child: BlocBuilder<HomeBloc, HomeState>(
@@ -125,29 +150,43 @@ class _HomeScreenState extends State<HomeScreen> {
                 canPop: false,
                 onPopInvokedWithResult: (didPop, result) => _handlePop(didPop),
                 child: Scaffold(
+                  extendBody: true,
                   extendBodyBehindAppBar: true,
                   backgroundColor: onboardingBlueVeryLight,
                   body: Stack(
                     children: [
-                      // 1. The main content of the app
-                      IndexedStack(
-                        index: _selectedIndex,
-                        children: [
-                          _HomeTab(
-                            onGoExplore: () => _onTabTap(1),
-                            onGoPackages: () => _onTabTap(3),
-                          ),
-                          const ExploreScreen(),
-                          const CommunityScreen(),
-                          const PackagesDiscoveryScreen(),
-                          const ProfileScreen(showBackButton: false),
-                        ],
+                      // 1. Persistent screen stack to prevent rebuilding on every tab switch
+                      Stack(
+                        children: List.generate(5, (index) {
+                          final bool active = _selectedIndex == index;
+                          return IgnorePointer(
+                            ignoring: !active,
+                            child: AnimatedOpacity(
+                              opacity: active ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 400),
+                              child: AnimatedSlide(
+                                offset: active
+                                    ? Offset.zero
+                                    : const Offset(0.02, 0), // Subtle shift
+                                duration: const Duration(milliseconds: 400),
+                                curve: Curves.easeOutCubic,
+                                child: _getTabContent(index),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      // 2. The floating navigation bar
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: AppBottomNav(
+                          selectedIndex: _selectedIndex,
+                          onItemSelected: _onTabTap,
+                        ),
                       ),
                     ],
-                  ),
-                  bottomNavigationBar: AppBottomNav(
-                    selectedIndex: _selectedIndex,
-                    onItemSelected: _onTabTap,
                   ),
                 ),
               ),
@@ -163,7 +202,11 @@ class _HomeScreenState extends State<HomeScreen> {
 class _HomeTab extends StatefulWidget {
   final VoidCallback onGoExplore;
   final VoidCallback onGoPackages;
-  const _HomeTab({required this.onGoExplore, required this.onGoPackages});
+  const _HomeTab({
+    super.key,
+    required this.onGoExplore,
+    required this.onGoPackages,
+  });
 
   @override
   State<_HomeTab> createState() => _HomeTabState();
@@ -172,6 +215,11 @@ class _HomeTab extends StatefulWidget {
 class _HomeTabState extends State<_HomeTab> {
   final NotificationService _notificationService = NotificationService();
   bool _hasNewNotifications = false;
+
+  // Scroll visibility states for alluring animations
+  bool _destAtEnd = false;
+  bool _eventsAtEnd = false;
+  bool _packagesAtEnd = false;
 
   @override
   void initState() {
@@ -224,7 +272,12 @@ class _HomeTabState extends State<_HomeTab> {
                         physics: const BouncingScrollPhysics(
                           parent: AlwaysScrollableScrollPhysics(),
                         ),
-                        padding: const EdgeInsets.all(AppSpacing.ms),
+                        padding: const EdgeInsets.only(
+                          top: AppSpacing.ms,
+                          left: AppSpacing.ms,
+                          right: AppSpacing.ms,
+                          bottom: 110,
+                        ),
                         children: [
                           AppAnimations.fadeIn(
                             child: ModernHomeHeader(
@@ -249,15 +302,16 @@ class _HomeTabState extends State<_HomeTab> {
                             child: RichText(
                               text: TextSpan(
                                 style: GoogleFonts.montserrat(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 24, // reduced from 28
+                                  fontWeight: FontWeight.w800,
                                   color: blackOpacity,
-                                  height: 1.2,
+                                  height: 1.1,
                                 ),
                                 children: [
                                   TextSpan(text: AppStrings.letExploreText),
                                   TextSpan(
-                                    text: "${AppStrings.appName}!",
+                                    text:
+                                        "${AppStrings.appName}!", // Added space
                                     style: const TextStyle(color: primaryBlue),
                                   ),
                                 ],
@@ -287,25 +341,51 @@ class _HomeTabState extends State<_HomeTab> {
 
                           ModernSectionTitle(
                             title: "Featured Destinations",
+                            showPulse: _destAtEnd,
                             onTap: () => Navigator.pushNamed(
                               context,
                               RouteNames.featuredDestinations,
                             ),
                           ),
                           const SizedBox(height: AppSpacing.ms),
-                          _buildFeaturedDestinations(context, state),
+                          NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              if (notification is ScrollUpdateNotification) {
+                                final atEnd =
+                                    notification.metrics.extentAfter < 50;
+                                if (atEnd != _destAtEnd) {
+                                  setState(() => _destAtEnd = atEnd);
+                                }
+                              }
+                              return false;
+                            },
+                            child: _buildFeaturedDestinations(context, state),
+                          ),
 
                           const SizedBox(height: AppSpacing.s),
 
                           ModernSectionTitle(
                             title: AppStrings.popularEvents,
+                            showPulse: _eventsAtEnd,
                             onTap: () => Navigator.pushNamed(
                               context,
                               RouteNames.popularEvents,
                             ),
                           ),
                           const SizedBox(height: AppSpacing.ms),
-                          _buildEventsHorizontalCards(context, state),
+                          NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              if (notification is ScrollUpdateNotification) {
+                                final atEnd =
+                                    notification.metrics.extentAfter < 50;
+                                if (atEnd != _eventsAtEnd) {
+                                  setState(() => _eventsAtEnd = atEnd);
+                                }
+                              }
+                              return false;
+                            },
+                            child: _buildEventsHorizontalCards(context, state),
+                          ),
 
                           const SizedBox(height: AppSpacing.s),
 
@@ -315,10 +395,23 @@ class _HomeTabState extends State<_HomeTab> {
                               children: [
                                 ModernSectionTitle(
                                   title: 'Travel Packages',
+                                  showPulse: _packagesAtEnd,
                                   onTap: widget.onGoPackages,
                                 ),
                                 const SizedBox(height: AppSpacing.ms),
-                                _buildPackagesPreview(context),
+                                NotificationListener<ScrollNotification>(
+                                  onNotification: (notification) {
+                                    if (notification is ScrollUpdateNotification) {
+                                      final atEnd =
+                                          notification.metrics.extentAfter < 50;
+                                      if (atEnd != _packagesAtEnd) {
+                                        setState(() => _packagesAtEnd = atEnd);
+                                      }
+                                    }
+                                    return false;
+                                  },
+                                  child: _buildPackagesPreview(context),
+                                ),
                               ],
                             ),
                           ),
@@ -349,21 +442,21 @@ class _HomeTabState extends State<_HomeTab> {
   Widget _buildFeaturedDestinations(BuildContext context, HomeState state) {
     if (state.isLoadingRecommended) {
       return SizedBox(
-        height: 300,
+        height: 270,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: 3,
           itemBuilder: (_, i) => Container(
-            width: 240,
+            width: 225,
             margin: const EdgeInsets.only(right: AppSpacing.m),
-            child: const ShimmerBox(radius: 16),
+            child: const ShimmerBox(radius: 14),
           ),
         ),
       );
     }
     if (state.recommendedPlaces.isEmpty) return const SizedBox();
     return SizedBox(
-      height: 300,
+      height: 270,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -372,9 +465,9 @@ class _HomeTabState extends State<_HomeTab> {
           final place = state.recommendedPlaces.take(12).toList()[i];
           return ModernPlaceCard(
             place: place,
-            width: 240,
-            height: 300,
-            radius: 16,
+            width: 225,
+            height: 270,
+            radius: 14,
             onTap: () => Navigator.pushNamed(
               context,
               RouteNames.placeDetails,
@@ -389,16 +482,14 @@ class _HomeTabState extends State<_HomeTab> {
   Widget _buildEventsHorizontalCards(BuildContext context, HomeState state) {
     if (state.isLoadingEvents) {
       return SizedBox(
-        height: 300,
+        height: 270,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: 3,
           itemBuilder: (_, i) => Container(
-            width: 240, // Matches Featured Destinations width
+            width: 225, // Synchronized with Destinations
             margin: EdgeInsets.only(right: i < 2 ? AppSpacing.m : 0),
-            child: const ShimmerBox(
-              radius: 16,
-            ), // Matches EventHorizontalCard default radius
+            child: const ShimmerBox(radius: 14),
           ),
         ),
       );
@@ -423,7 +514,7 @@ class _HomeTabState extends State<_HomeTab> {
       );
     }
     return SizedBox(
-      height: 300, // Matched with shimmer height
+      height: 270, // Consistent with Destinations
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -433,7 +524,8 @@ class _HomeTabState extends State<_HomeTab> {
           final event = events[i];
           return EventHorizontalCard(
             event: event,
-            width: 240, // Matches Featured Destinations width
+            width: 225, // Consistent with Destinations
+            radius: 14,
             onTap: () async {
               final result = await Navigator.pushNamed(
                 context,
@@ -577,14 +669,14 @@ class _HomeTabState extends State<_HomeTab> {
         if (state.packagesStatus == TravelStatus.loading ||
             state.packagesStatus == TravelStatus.initial) {
           return SizedBox(
-            height: 200,
+            height: 210,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: 3,
               itemBuilder: (_, i) => Container(
-                width: 280,
+                width: 290,
                 margin: const EdgeInsets.only(right: AppSpacing.m),
-                child: const ShimmerBox(radius: 16),
+                child: const ShimmerBox(radius: 14),
               ),
             ),
           );
@@ -651,195 +743,26 @@ class _HomeTabState extends State<_HomeTab> {
           );
         }
         return SizedBox(
-          height: 200, // Matched with shimmer height
+          height: 210,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: preview.length,
             itemBuilder: (ctx, i) {
               final pkg = preview[i];
-              const double cardRadius = 16; // Matched with shimmer radius
-              return Container(
-                width: 280, // Matched with shimmer width
-                margin: EdgeInsets.only(
+              return Padding(
+                padding: EdgeInsets.only(
                   right: i == preview.length - 1 ? 0 : AppSpacing.m,
-                  bottom: 8,
-                  top: 4,
                 ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(cardRadius),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: InkWell(
+                child: PackageCard(
+                  package: pkg,
+                  width: 290,
+                  height: 210,
+                  radius: 14,
                   onTap: () => Navigator.pushNamed(
                     context,
                     RouteNames.packageDetails,
                     arguments: pkg.id,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(cardRadius),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: pkg.mainPhotoUrl.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: pkg.mainPhotoUrl,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) =>
-                                      const ShimmerBox(),
-                                  errorWidget: (context, url, error) =>
-                                      Container(
-                                        color: primaryBlue.withOpacity(0.1),
-                                        child: const Icon(
-                                          Icons.landscape_rounded,
-                                          color: primaryBlue,
-                                          size: 40,
-                                        ),
-                                      ),
-                                )
-                              : Container(
-                                  color: primaryBlue.withOpacity(0.1),
-                                  child: const Icon(
-                                    Icons.landscape_rounded,
-                                    color: primaryBlue,
-                                    size: 40,
-                                  ),
-                                ),
-                        ),
-                        // Gradient Overlay
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.05),
-                                  Colors.black.withOpacity(0.75),
-                                  Colors.black,
-                                ],
-                                stops: const [0.5, 0.7, 0.9, 1.0],
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Remaining Seats Tag (Top Right)
-                        if (pkg.maxGroupSize > 0)
-                          Positioned(
-                            top: 14,
-                            right: 14,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.4),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.2),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.group_rounded,
-                                    color: Colors.white,
-                                    size: 13,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  AppText.small(
-                                    '${pkg.maxGroupSize - pkg.currentParticipants} SEATS LEFT',
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    size: 10,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        // Content (Bottom)
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      AppText.heading(
-                                        pkg.title,
-                                        color: Colors.white,
-                                        size: 19,
-                                        fontWeight: FontWeight.w900,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      // Duration (at place of location)
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.av_timer_rounded,
-                                            color: Colors.white70,
-                                            size: 12,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          AppText.body(
-                                            '${pkg.days}D / ${pkg.nights}N',
-                                            color: Colors.white.withOpacity(
-                                              0.85,
-                                            ),
-                                            size: 13,
-                                            fontWeight: FontWeight.w700,
-                                            maxLines: 1,
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    AppText.small(
-                                      'STARTING FROM',
-                                      color: Colors.white.withOpacity(0.6),
-                                      fontWeight: FontWeight.w800,
-                                      size: 8,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    AppText.heading(
-                                      '₹${pkg.price.toInt()}',
-                                      color: Colors.white,
-                                      size: 22,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               );

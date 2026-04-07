@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
@@ -42,12 +42,16 @@ class ModernHomeHeader extends StatelessWidget {
               if (location != null)
                 Row(
                   children: [
-                    const Icon(Icons.location_on, color: appGrey, size: 14),
+                    const Icon(
+                      Icons.location_on,
+                      color: appGreyDark,
+                      size: 14,
+                    ),
                     const SizedBox(width: 2),
                     AppText.caption(
                       location!,
-                      color: appGrey,
-                      fontWeight: FontWeight.w500,
+                      color: appGreyDark,
+                      fontWeight: FontWeight.w600,
                     ),
                   ],
                 ),
