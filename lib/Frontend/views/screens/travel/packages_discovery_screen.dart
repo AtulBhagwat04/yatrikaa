@@ -440,7 +440,11 @@ class _PackageCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          isFull ? 'Fully Booked' : '$seatsLeft seats left',
+                          package.isComingSoon
+                              ? 'Coming Soon'
+                              : isFull
+                                  ? 'Fully Booked'
+                                  : '$seatsLeft seats left',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
@@ -449,6 +453,14 @@ class _PackageCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (package.isComingSoon)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.05),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 Padding(

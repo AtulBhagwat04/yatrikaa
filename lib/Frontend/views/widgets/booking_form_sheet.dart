@@ -144,7 +144,7 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
       child: DraggableScrollableSheet(
         initialChildSize: 0.9,
         maxChildSize: 0.95,
-        minChildSize: 0.5,
+        minChildSize: 0.2, // Reduced to handle keyboard better
         builder: (_, scrollController) => Container(
           decoration: const BoxDecoration(
             color: appWhite,
@@ -528,7 +528,7 @@ class _TravelerForm extends StatelessWidget {
               // Gender
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  initialValue: entry.gender,
+                  value: entry.gender,
                   onChanged: (v) => entry.gender = v!,
                   style: GoogleFonts.montserrat(
                     fontSize: 13,

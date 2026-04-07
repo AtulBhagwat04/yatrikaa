@@ -33,12 +33,10 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
   final TextEditingController _maxGroupController = TextEditingController();
   final TextEditingController _daysController = TextEditingController();
   final TextEditingController _nightsController = TextEditingController();
-  final TextEditingController _destinationController = TextEditingController();
-  final TextEditingController _latController = TextEditingController();
-  final TextEditingController _lngController = TextEditingController();
   final TextEditingController _bestSeasonController = TextEditingController();
   DateTime? _startDate;
   DateTime? _endDate;
+  bool _isComingSoon = false;
 
   // ── Dropdowns ─────────────────────────────────────────────────────────────
   String _selectedDifficulty = 'Moderate';
@@ -81,15 +79,13 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
       _maxGroupController.text = pkg.maxGroupSize.toString();
       _daysController.text = pkg.days.toString();
       _nightsController.text = pkg.nights.toString();
-      _destinationController.text = pkg.destinationName;
-      _latController.text = pkg.lat.toString();
-      _lngController.text = pkg.lng.toString();
       _bestSeasonController.text = pkg.bestSeason ?? '';
       _startDate = pkg.startDate;
       _endDate = pkg.endDate;
       _selectedDifficulty = pkg.difficulty;
       _selectedCategory = pkg.category;
       _existingImages = List.from(pkg.images);
+      _isComingSoon = pkg.isComingSoon;
 
       // Inclusions
       _inclusionCtls.clear();
@@ -126,6 +122,43 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
         for (final step in pkg.itinerary) {
           final day = _ItineraryDay(day: step.day, date: step.date);
           day.titleCtl.text = step.title;
+
+          // Places
+          day.places.clear();
+          day.placeNodes.clear();
+          for (final place in step.places) {
+            day.places.add(TextEditingController(text: place));
+            day.placeNodes.add(FocusNode());
+          }
+          if (day.places.isEmpty) {
+            day.places.add(TextEditingController());
+            day.placeNodes.add(FocusNode());
+          }
+
+          // Hotels
+          day.hotels.clear();
+          day.hotelNodes.clear();
+          for (final hotel in step.hotelName) {
+            day.hotels.add(TextEditingController(text: hotel));
+            day.hotelNodes.add(FocusNode());
+          }
+          if (day.hotels.isEmpty) {
+            day.hotels.add(TextEditingController());
+            day.hotelNodes.add(FocusNode());
+          }
+
+          // Stays
+          day.stays.clear();
+          day.stayNodes.clear();
+          for (final stay in step.stayLocation) {
+            day.stays.add(TextEditingController(text: stay));
+            day.stayNodes.add(FocusNode());
+          }
+          if (day.stays.isEmpty) {
+            day.stays.add(TextEditingController());
+            day.stayNodes.add(FocusNode());
+          }
+
           day.activities.clear();
           day.activityNodes.clear();
           for (final activity in step.activities) {
@@ -153,9 +186,6 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
       _maxGroupController,
       _daysController,
       _nightsController,
-      _destinationController,
-      _latController,
-      _lngController,
       _bestSeasonController,
     ]) {
       c.dispose();
@@ -200,9 +230,38 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
       _itinerary[dayIndex].activities.add(TextEditingController());
       _itinerary[dayIndex].activityNodes.add(FocusNode());
     });
-    // Request focus on the next frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _itinerary[dayIndex].activityNodes.last.requestFocus();
+    });
+  }
+
+  void _addPlace(int dayIndex) {
+    setState(() {
+      _itinerary[dayIndex].places.add(TextEditingController());
+      _itinerary[dayIndex].placeNodes.add(FocusNode());
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _itinerary[dayIndex].placeNodes.last.requestFocus();
+    });
+  }
+
+  void _addHotel(int dayIndex) {
+    setState(() {
+      _itinerary[dayIndex].hotels.add(TextEditingController());
+      _itinerary[dayIndex].hotelNodes.add(FocusNode());
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _itinerary[dayIndex].hotelNodes.last.requestFocus();
+    });
+  }
+
+  void _addStay(int dayIndex) {
+    setState(() {
+      _itinerary[dayIndex].stays.add(TextEditingController());
+      _itinerary[dayIndex].stayNodes.add(FocusNode());
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _itinerary[dayIndex].stayNodes.last.requestFocus();
     });
   }
 
@@ -294,11 +353,8 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
         'nights': int.tryParse(_nightsController.text) ?? 0,
       },
       'destination': {
-        'name': _destinationController.text.trim(),
-        'location': {
-          'lat': double.tryParse(_latController.text) ?? 0.0,
-          'lng': double.tryParse(_lngController.text) ?? 0.0,
-        },
+        'name': 'Multiple Places',
+        'location': {'lat': 0.0, 'lng': 0.0},
       },
       'difficulty': _selectedDifficulty,
       'category': _selectedCategory,
@@ -315,6 +371,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
       'itinerary': _itinerary.map((d) => d.toJson()).toList(),
       'startDate': _startDate?.toIso8601String(),
       'endDate': _endDate?.toIso8601String(),
+      'isComingSoon': _isComingSoon,
     };
 
     if (widget.package != null) {
@@ -392,131 +449,114 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
               const SizedBox(height: 16),
 
               // Basic Info
-              _buildSectionCard(
-                'Basic Information',
-                Icons.info_outline_rounded,
-                [
-                  _field(
-                    'Package Title',
-                    'e.g. Lohagad Monsoon Trek',
-                    _titleController,
-                    validator: _required,
-                  ),
-                  _field(
-                    'Description',
-                    'What makes this trip special? Include route, highlights...',
-                    _descController,
-                    maxLines: 4,
-                    validator: _required,
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _field(
-                          'Price (₹/person)',
-                          '1499',
-                          _priceController,
-                          inputType: TextInputType.number,
-                          validator: _requiredNum,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _field(
-                          'Max Group Size',
-                          '20',
-                          _maxGroupController,
-                          inputType: TextInputType.number,
-                          validator: _requiredNum,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _datePicker('Start Date', _startDate, (d) {
-                          setState(() => _startDate = d);
-                          _updateDurationFromDates();
-                        }),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _datePicker('End Date', _endDate, (d) {
-                          setState(() => _endDate = d);
-                          _updateDurationFromDates();
-                        }),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _field(
-                          'Days',
-                          '1',
-                          _daysController,
-                          inputType: TextInputType.number,
-                          readOnly: true,
-                          validator: _requiredNum,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _field(
-                          'Nights',
-                          '0',
-                          _nightsController,
-                          inputType: TextInputType.number,
-                          readOnly: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Destination
-              _buildSectionCard('Destination', Icons.location_on_outlined, [
+              _buildSectionCard('Basic Information', Icons.info_outline_rounded, [
                 _field(
-                  'Place Name',
-                  'e.g. Rajmachi, Pune',
-                  _destinationController,
+                  'Package Title',
+                  'e.g. Lohagad Monsoon Trek',
+                  _titleController,
+                  validator: _required,
+                ),
+                _field(
+                  'Description',
+                  'What makes this trip special? Include route, highlights...',
+                  _descController,
+                  maxLines: 4,
                   validator: _required,
                 ),
                 Row(
                   children: [
                     Expanded(
                       child: _field(
-                        'Latitude',
-                        '18.5204',
-                        _latController,
-                        inputType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
+                        'Price (₹/person)',
+                        '1499',
+                        _priceController,
+                        inputType: TextInputType.number,
+                        validator: _requiredNum,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _field(
-                        'Longitude',
-                        '73.8567',
-                        _lngController,
-                        inputType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
+                        'Max Group Size',
+                        '20',
+                        _maxGroupController,
+                        inputType: TextInputType.number,
+                        validator: _requiredNum,
                       ),
                     ),
                   ],
                 ),
-                AppText.body(
-                  'Tip: Open Google Maps, long-press a location to copy coordinates.',
-                  color: appGrey,
-                  size: 11,
+                Row(
+                  children: [
+                    Expanded(
+                      child: _datePicker('Start Date', _startDate, (d) {
+                        setState(() {
+                          _startDate = d;
+                          // Reset end date if it's now before start date
+                          if (_endDate != null &&
+                              _startDate != null &&
+                              _endDate!.isBefore(_startDate!)) {
+                            _endDate = null;
+                          }
+                        });
+                        _updateDurationFromDates();
+                      }, firstDate: DateTime.now()),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _datePicker('End Date', _endDate, (d) {
+                        setState(() => _endDate = d);
+                        _updateDurationFromDates();
+                      }, firstDate: _startDate ?? DateTime.now()),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _field(
+                        'Days',
+                        '1',
+                        _daysController,
+                        inputType: TextInputType.number,
+                        readOnly: true,
+                        validator: _requiredNum,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _field(
+                        'Nights',
+                        '0',
+                        _nightsController,
+                        inputType: TextInputType.number,
+                        readOnly: true,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: AppText.body(
+                    'Mark as Coming Soon',
+                    fontWeight: FontWeight.w700,
+                    size: 14,
+                  ),
+                  subtitle: AppText.body(
+                    'Users can see the package but cannot book it yet. Day-by-day itinerary will be hidden.',
+                    size: 11,
+                    color: appGrey,
+                  ),
+                  value: _isComingSoon,
+                  activeColor: primaryBlue,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setState(() => _isComingSoon = val),
                 ),
               ]),
+              const SizedBox(height: 16),
+
+              // Destination section removed as requested - moved to Itinerary day by day planning.
               const SizedBox(height: 16),
 
               // Trip Details
@@ -929,8 +969,10 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
   Widget _datePicker(
     String label,
     DateTime? date,
-    ValueChanged<DateTime?> onPicked,
-  ) {
+    ValueChanged<DateTime?> onPicked, {
+    DateTime? firstDate,
+    DateTime? lastDate,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -938,13 +980,16 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
         const SizedBox(height: 6),
         GestureDetector(
           onTap: () async {
-            final firstDate = DateTime.now();
-            final lastDate = DateTime.now().add(const Duration(days: 365 * 5));
+            final fDate = firstDate ?? DateTime.now();
+            final lDate =
+                lastDate ?? DateTime.now().add(const Duration(days: 365 * 5));
             final d = await showDatePicker(
               context: context,
-              initialDate: date ?? DateTime.now(),
-              firstDate: firstDate,
-              lastDate: lastDate,
+              initialDate: (date != null && !date.isBefore(fDate))
+                  ? date
+                  : fDate,
+              firstDate: fDate,
+              lastDate: lDate,
               builder: (context, child) {
                 return Theme(
                   data: Theme.of(context).copyWith(
@@ -1037,7 +1082,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
 
   Widget _buildItineraryDayBlock(int index, _ItineraryDay day) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: onboardingBlueVeryLight,
@@ -1113,95 +1158,218 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          ...day.activities.asMap().entries.map(
-            (e) => Row(
-              children: [
-                const Icon(Icons.circle, size: 6, color: primaryBlue),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: e.value,
-                    focusNode: day.activityNodes[e.key],
-                    textInputAction: TextInputAction.next,
-                    style: GoogleFonts.montserrat(fontSize: 12),
-                    decoration: InputDecoration(
-                      hintText: 'Activity ${e.key + 1}...',
-                      hintStyle: GoogleFonts.montserrat(
-                        color: appGreyLight,
-                        fontSize: 11,
-                      ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                    ),
-                  ),
-                ),
-              ],
+          const SizedBox(height: 12),
+          // 📍 PLACES TO VISIT
+          _itineraryHeader(Icons.location_on_rounded, 'Places to visit'),
+          ...day.places.asMap().entries.map(
+            (e) => _itineraryListField(
+              e.value,
+              day.placeNodes[e.key],
+              'Place ${e.key + 1}',
+              Icons.location_on_rounded,
+              () => setState(() {
+                if (day.places.length > 1) {
+                  day.places.removeAt(e.key);
+                  day.placeNodes[e.key].dispose();
+                  day.placeNodes.removeAt(e.key);
+                }
+              }),
             ),
           ),
-          TextButton.icon(
-            onPressed: () => _addActivity(index),
-            icon: const Icon(Icons.add, size: 14),
-            label: const Text('Add Activity', style: TextStyle(fontSize: 11)),
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              foregroundColor: primaryBlue,
+          _itineraryAddBtn('Add Place', () => _addPlace(index)),
+
+          const SizedBox(height: 10),
+          // 🏨 HOTELS (Breakfast/Lunch/Dinner/Wait)
+          _itineraryHeader(Icons.hotel_rounded, 'Hotels / Dining'),
+          ...day.hotels.asMap().entries.map(
+            (e) => _itineraryListField(
+              e.value,
+              day.hotelNodes[e.key],
+              'Hotel ${e.key + 1}',
+              Icons.hotel_rounded,
+              () => setState(() {
+                if (day.hotels.length > 1) {
+                  day.hotels.removeAt(e.key);
+                  day.hotelNodes[e.key].dispose();
+                  day.hotelNodes.removeAt(e.key);
+                }
+              }),
             ),
+          ),
+          _itineraryAddBtn('Add Hotel/Dining', () => _addHotel(index)),
+
+          const SizedBox(height: 10),
+          // 🛌 STAY LOCATIONS
+          _itineraryHeader(Icons.map_rounded, 'Stay Locations'),
+          ...day.stays.asMap().entries.map(
+            (e) => _itineraryListField(
+              e.value,
+              day.stayNodes[e.key],
+              'Location ${e.key + 1}',
+              Icons.map_rounded,
+              () => setState(() {
+                if (day.stays.length > 1) {
+                  day.stays.removeAt(e.key);
+                  day.stayNodes[e.key].dispose();
+                  day.stayNodes.removeAt(e.key);
+                }
+              }),
+            ),
+          ),
+          _itineraryAddBtn('Add Stay Location', () => _addStay(index)),
+
+          const SizedBox(height: 12),
+          _itineraryHeader(Icons.task_alt_rounded, 'Activities'),
+          ...day.activities.asMap().entries.map(
+            (e) => _itineraryListField(
+              e.value,
+              day.activityNodes[e.key],
+              'Activity ${e.key + 1}',
+              Icons.task_alt_rounded,
+              () => setState(() {
+                if (day.activities.length > 1) {
+                  day.activities.removeAt(e.key);
+                  day.activityNodes[e.key].dispose();
+                  day.activityNodes.removeAt(e.key);
+                }
+              }),
+            ),
+          ),
+          _itineraryAddBtn('Add Activity', () => _addActivity(index)),
+        ],
+      ),
+    );
+  }
+
+  Widget _itineraryHeader(IconData icon, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 12, color: primaryBlue),
+          const SizedBox(width: 4),
+          AppText.body(label, size: 11, fontWeight: FontWeight.w800),
+        ],
+      ),
+    );
+  }
+
+  Widget _itineraryAddBtn(String label, VoidCallback onTap) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: const Icon(Icons.add, size: 14),
+      label: Text(label, style: const TextStyle(fontSize: 11)),
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
+        foregroundColor: primaryBlue,
+        minimumSize: const Size(0, 30),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+
+  Widget _itineraryListField(
+    TextEditingController ctl,
+    FocusNode node,
+    String hint,
+    IconData icon,
+    VoidCallback onRemove,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: ctl,
+              focusNode: node,
+              style: GoogleFonts.montserrat(fontSize: 12),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: GoogleFonts.montserrat(
+                  color: appGreyLight,
+                  fontSize: 11,
+                ),
+                filled: true,
+                fillColor: Colors.black.withOpacity(0.04),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                prefixIcon: Icon(
+                  icon,
+                  size: 14,
+                  color: primaryBlue.withOpacity(0.5),
+                ),
+                isDense: true,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline, size: 14),
+            onPressed: onRemove,
+            color: errorColor,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
         ],
       ),
     );
   }
 
-  Widget _listItem(
-    TextEditingController ctl,
-    FocusNode node,
-    VoidCallback onRemove,
-    String hint,
-    Color iconColor,
-  ) {
-    return Row(
-      children: [
-        Icon(Icons.label_outline, size: 16, color: iconColor),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextField(
-            controller: ctl,
-            focusNode: node,
-            textInputAction: TextInputAction.next,
-            style: GoogleFonts.montserrat(fontSize: 13),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: GoogleFonts.montserrat(
-                color: appGreyLight,
-                fontSize: 12,
-              ),
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 6),
+Widget _listItem(
+  TextEditingController ctl,
+  FocusNode node,
+  VoidCallback onRemove,
+  String hint,
+  Color iconColor,
+) {
+  return Row(
+    children: [
+      Icon(Icons.label_outline, size: 16, color: iconColor),
+      const SizedBox(width: 8),
+      Expanded(
+        child: TextField(
+          controller: ctl,
+          focusNode: node,
+          textInputAction: TextInputAction.next,
+          style: GoogleFonts.montserrat(fontSize: 13),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.montserrat(
+              color: appGreyLight,
+              fontSize: 12,
             ),
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 6),
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.remove_circle_outline, size: 16),
-          onPressed: onRemove,
-          color: errorColor,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-      ],
-    );
-  }
+      ),
+      IconButton(
+        icon: const Icon(Icons.remove_circle_outline, size: 16),
+        onPressed: onRemove,
+        color: errorColor,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+      ),
+    ],
+  );
+}
 
-  // Validators
-  String? _required(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'This field is required' : null;
-  String? _requiredNum(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Required';
-    if (double.tryParse(v) == null) return 'Must be a number';
-    return null;
-  }
+// Validators
+String? _required(String? v) =>
+    (v == null || v.trim().isEmpty) ? 'This field is required' : null;
+String? _requiredNum(String? v) {
+  if (v == null || v.trim().isEmpty) return 'Required';
+  if (double.tryParse(v) == null) return 'Must be a number';
+  return null;
+}
+
 }
 
 // ── Data holder for one itinerary day ──────────────────────────────────────
@@ -1210,6 +1378,16 @@ class _ItineraryDay {
   int day;
   DateTime? date;
   final TextEditingController titleCtl = TextEditingController();
+
+  final List<TextEditingController> places = [TextEditingController()];
+  final List<FocusNode> placeNodes = [FocusNode()];
+
+  final List<TextEditingController> hotels = [TextEditingController()];
+  final List<FocusNode> hotelNodes = [FocusNode()];
+
+  final List<TextEditingController> stays = [TextEditingController()];
+  final List<FocusNode> stayNodes = [FocusNode()];
+
   final List<TextEditingController> activities = [TextEditingController()];
   final List<FocusNode> activityNodes = [FocusNode()];
 
@@ -1217,10 +1395,15 @@ class _ItineraryDay {
 
   void dispose() {
     titleCtl.dispose();
-    for (final c in activities) {
+    for (final c in [...places, ...hotels, ...stays, ...activities]) {
       c.dispose();
     }
-    for (final n in activityNodes) {
+    for (final n in [
+      ...placeNodes,
+      ...hotelNodes,
+      ...stayNodes,
+      ...activityNodes,
+    ]) {
       n.dispose();
     }
   }
@@ -1229,6 +1412,18 @@ class _ItineraryDay {
     'day': day,
     'title': titleCtl.text.trim(),
     'date': date?.toIso8601String(),
+    'places': places
+        .map((c) => c.text.trim())
+        .where((t) => t.isNotEmpty)
+        .toList(),
+    'hotelName': hotels
+        .map((c) => c.text.trim())
+        .where((t) => t.isNotEmpty)
+        .toList(),
+    'stayLocation': stays
+        .map((c) => c.text.trim())
+        .where((t) => t.isNotEmpty)
+        .toList(),
     'activities': activities
         .map((c) => c.text.trim())
         .where((t) => t.isNotEmpty)

@@ -33,7 +33,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   final PlacesService _placesService = PlacesService();
   final ImagePicker _picker = ImagePicker();
 
-  // Pagination state
+  // Pagination & Scroll state
+  final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
   static const int _pageSize = 12;
   bool _hasMore = false;
@@ -43,10 +44,22 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   void initState() {
     super.initState();
     _fetchPlaces();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= 
+        _scrollController.position.maxScrollExtent - 300) {
+      if (!_isMoreLoading && _hasMore && !_isLoading) {
+        _fetchPlaces(refresh: false);
+      }
+    }
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -115,11 +128,14 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: onboardingBlueVeryLight,
-      body: RefreshIndicator(
-        onRefresh: _fetchPlaces,
-        displacement: 80, // Moves the pull-to-refresh spinner below the AppBar
-        color: primaryBlue,
-        child: CustomScrollView(
+      body: SafeArea(
+        top: false,
+        child: RefreshIndicator(
+          onRefresh: _fetchPlaces,
+          displacement: 80, // Moves the pull-to-refresh spinner below the AppBar
+          color: primaryBlue,
+          child: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
@@ -127,11 +143,12 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
             _buildAppBar(),
             _buildSearchBox(),
             _buildList(),
-            if (_hasMore) _buildLoadMore(),
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            if (_hasMore || _isMoreLoading) _buildLoadMoreIndicator(),
+            const SliverToBoxAdapter(child: SizedBox(height: 60)),
           ],
         ),
       ),
+    ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.pushNamed(
@@ -281,26 +298,14 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     );
   }
 
-  Widget _buildLoadMore() {
+  Widget _buildLoadMoreIndicator() {
     return SliverToBoxAdapter(
       child: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
           child: _isMoreLoading
               ? const CircularProgressIndicator(color: primaryBlue, strokeWidth: 3)
-              : TextButton.icon(
-                  onPressed: () => _fetchPlaces(refresh: false),
-                  icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
-                  label: AppText.body("Show More Places", fontWeight: FontWeight.bold),
-                  style: TextButton.styleFrom(
-                    foregroundColor: primaryBlue,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: primaryBlue.withValues(alpha: 0.2)),
-                    ),
-                  ),
-                ),
+              : const SizedBox.shrink(),
         ),
       ),
     );
@@ -863,7 +868,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
       );
       if (success && mounted) {
         CustomToast.success(context, "Place updated successfully!");
-        _fetchPlaces();
+        // Fetch single updated place to reflect changes without full list refresh
+        _refreshSinglePlace(id);
       }
     } catch (e) {
       if (mounted) {
@@ -911,7 +917,11 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         if (mounted) {
           CustomToast.success(context, 'Place deleted successfully');
         }
-        _fetchPlaces();
+        setState(() {
+          _allPlaces.removeWhere((p) => p.id == placeId);
+          _filterPlaces(_searchController.text);
+          _isLoading = false;
+        });
       } else {
         throw Exception('Failed to delete place');
       }
@@ -920,6 +930,26 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
       }
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _refreshSinglePlace(String id) async {
+    try {
+      final updatedPlace = await _placesService.getPlaceDetails(id);
+      if (!mounted) return;
+      
+      setState(() {
+        final index = _allPlaces.indexWhere((p) => p.id == id);
+        if (index != -1) {
+          _allPlaces[index] = updatedPlace;
+        }
+        _filterPlaces(_searchController.text);
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('[ManagePlaces] Error refreshing single place: $e');
+      // Fallback to full refresh if single fetch fails
+      _fetchPlaces();
     }
   }
 }

@@ -37,10 +37,37 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<TravelBloc, TravelState>(
-      buildWhen: (p, c) =>
-          p.bookingsStatus != c.bookingsStatus || p.myBookings != c.myBookings,
-      builder: (ctx, state) {
+    return BlocListener<TravelBloc, TravelState>(
+      listenWhen: (p, c) => p.actionStatus != c.actionStatus,
+      listener: (ctx, state) {
+        if (state.actionStatus == BookingActionStatus.success &&
+            state.actionSuccessMessage != null) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text(state.actionSuccessMessage!),
+              backgroundColor: successColorDark,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        } else if (state.actionStatus == BookingActionStatus.failure &&
+            state.actionError != null) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text(state.actionError!),
+              backgroundColor: errorColorDark,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+      },
+      child: BlocBuilder<TravelBloc, TravelState>(
+        buildWhen: (p, c) =>
+            p.bookingsStatus != c.bookingsStatus || p.myBookings != c.myBookings,
+        builder: (ctx, state) {
         return Scaffold(
           backgroundColor: onboardingBlueVeryLight,
           appBar: AppBar(
@@ -120,8 +147,9 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
                 ),
         );
       },
-    );
-  }
+    ),
+  );
+}
 
   Widget _badge(int count, Color color) {
     return Container(
@@ -158,7 +186,7 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
         itemBuilder: (_, i) => _BookingCard(
           booking: bookings[i],
           onCancel: type == 'upcoming'
-              ? () => _confirmCancel(ctx, bookings[i].id)
+              ? () => _confirmCancel(ctx, bookings[i])
               : null,
           onViewDetails: () => Navigator.pushNamed(
             ctx,
@@ -267,7 +295,18 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
     );
   }
 
-  void _confirmCancel(BuildContext ctx, String bookingId) {
+  void _confirmCancel(BuildContext ctx, BookingModel booking) {
+    final startDate = booking.package?.startDate;
+    if (startDate != null && DateTime.now().isAfter(startDate)) {
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot cancel tour after it has started.'),
+          backgroundColor: errorColorDark,
+        ),
+      );
+      return;
+    }
+
     CustomAlertDialog.show(
       ctx,
       title: 'Cancel Booking?',
@@ -277,7 +316,7 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
       type: CustomAlertType.error,
       icon: Icons.event_busy_rounded,
       onConfirm: () {
-        ctx.read<TravelBloc>().add(TravelCancelBookingRequested(bookingId));
+        ctx.read<TravelBloc>().add(TravelCancelBookingRequested(booking.id));
       },
     );
   }
@@ -335,6 +374,9 @@ class _BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tourHasStarted = booking.package?.startDate != null &&
+        booking.package!.startDate!.isBefore(DateTime.now());
+
     return Container(
       decoration: BoxDecoration(
         color: appWhite,
@@ -412,7 +454,7 @@ class _BookingCard extends StatelessWidget {
                     _row(Icons.location_on_outlined, booking.destinationName),
                   _row(
                     Icons.calendar_today_outlined,
-                    _formatDate(booking.bookingDate),
+                    _formatDate(booking.package?.startDate ?? booking.bookingDate),
                   ),
                     _row(
                       Icons.person_outline_rounded,
@@ -500,26 +542,11 @@ class _BookingCard extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: (t.status == 'Confirmed' 
-                                      ? successColorDark 
-                                      : t.status == 'Cancelled' 
-                                        ? errorColorDark 
-                                        : Colors.orange).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: AppText.small(
-                                    t.status,
-                                    size: 10,
-                                    color: t.status == 'Confirmed' 
-                                      ? successColorDark 
-                                      : t.status == 'Cancelled' 
-                                        ? errorColorDark 
-                                        : Colors.orange,
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                                _buildTravelerAction(
+                                  context,
+                                  booking,
+                                  t,
+                                  tourHasStarted,
                                 ),
                               ],
                             ),
@@ -579,22 +606,36 @@ class _BookingCard extends StatelessWidget {
                           ),
                         ),
                       ] else if (onCancel != null &&
-                          booking.status != 'CancellationRequested') ...[
+                          (booking.package?.startDate == null ||
+                              DateTime.now().isBefore(
+                                  booking.package!.startDate!))) ...[
                         const SizedBox(width: 10),
-                        Flexible(
-                          child: TextButton(
-                            onPressed: onCancel,
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed:
+                                booking.status == 'CancellationRequested'
+                                    ? null
+                                    : onCancel,
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                  color:
+                                      booking.status == 'CancellationRequested'
+                                          ? appGreyLight
+                                          : errorColorDark),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                             ),
-                            child: const Text(
-                              'Cancel',
+                            child: Text(
+                              booking.status == 'CancellationRequested'
+                                  ? 'Cancel Req.'
+                                  : 'Cancel',
                               style: TextStyle(
-                                color: errorColorDark,
+                                color: booking.status == 'CancellationRequested'
+                                    ? appGrey
+                                    : errorColorDark,
+                                fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
                               maxLines: 1,
@@ -610,6 +651,106 @@ class _BookingCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTravelerAction(
+    BuildContext context,
+    BookingModel booking,
+    TravelerModel t,
+    bool tourHasStarted,
+  ) {
+    if (t.status == 'Cancelled' || t.status == 'Rejected') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: errorColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: AppText.caption(
+          t.status,
+          color: errorColorDark,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+    }
+
+    if (t.status == 'CancellationRequested') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.orange.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: AppText.caption(
+          'Req.',
+          color: Colors.deepOrange,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+    }
+
+    // Only allow cancellation if tour hasn't started
+    if (tourHasStarted) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: successColorDark.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: AppText.caption(
+          t.status,
+          color: successColorDark,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+    }
+
+    return IconButton(
+      icon: const Icon(
+        Icons.cancel_outlined,
+        color: errorColor,
+        size: 20,
+      ),
+      onPressed: () => _confirmTravelerCancel(context, booking, t),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+    );
+  }
+
+  void _confirmTravelerCancel(
+    BuildContext context,
+    BookingModel booking,
+    TravelerModel t,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title:
+            AppText.subHeading('Cancel Traveler?', fontWeight: FontWeight.w800),
+        content: AppText.body(
+          'Are you sure you want to request cancellation for ${t.name}?',
+          color: appGrey,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: AppText.body('Back', color: appGrey),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<TravelBloc>().add(
+                    TravelCancelTravelerRequested(
+                      bookingId: booking.id,
+                      travelerId: t.id,
+                    ),
+                  );
+            },
+            child: AppText.body('Yes, Request', color: errorColor),
+          ),
+        ],
       ),
     );
   }

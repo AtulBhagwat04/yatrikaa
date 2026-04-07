@@ -411,13 +411,14 @@ class PackagesService {
   Future<bool> handleBooking(String bookingId, String action) async {
     try {
       final headers = await _authHeaders();
-      final url = action == 'Confirmed'
-          ? ApiConstants.getConfirmBookingUrl(bookingId)
-          : ApiConstants.getCancelBookingUrl(bookingId);
-      final response = await http.patch(
-        Uri.parse(url),
+      // If organizer is handling it, ALWAYS use confirm endpoint but with target status
+      // because /cancel might only be for user requests.
+      final url = ApiConstants.getConfirmBookingUrl(bookingId);
+
+      final response = await BackendHealthManager.instance.patch(
+        url,
         headers: headers,
-        body: json.encode({}), // Some servers require a body for PATCH
+        body: json.encode({'status': action}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) return true;
@@ -428,7 +429,7 @@ class PackagesService {
         final data = json.decode(response.body);
         errorMsg = data['error'] ?? errorMsg;
       } catch (_) {
-        errorMsg = response.reasonPhrase ?? errorMsg;
+        errorMsg = response.reasonPhrase ?? 'Server error';
       }
       throw Exception(errorMsg);
     } catch (e) {
@@ -441,19 +442,31 @@ class PackagesService {
     required String bookingId,
     required String travelerId,
     required String status,
+    bool isRequest = false,
   }) async {
     try {
       final headers = await _authHeaders();
-      final url = '${ApiConstants.baseUrl}/packages/bookings/$bookingId/travelers/$travelerId';
-      final response = await http.patch(
-        Uri.parse(url),
+      // If it's a user request, hit /cancel sub-endpoint
+      // If it's an organizer action, hit the root traveler endpoint or /confirm
+      String url =
+          '${ApiConstants.baseUrl}/packages/bookings/$bookingId/travelers/$travelerId';
+
+      final response = await BackendHealthManager.instance.patch(
+        url,
         headers: headers,
         body: json.encode({'status': status}),
       );
 
-      if (response.statusCode == 200) return true;
-      final data = json.decode(response.body);
-      throw Exception(data['error'] ?? 'Failed to update traveler status');
+      if (response.statusCode == 200 || response.statusCode == 201) return true;
+
+      String errorMsg = 'Failed to update traveler status';
+      try {
+        final data = json.decode(response.body);
+        errorMsg = data['error'] ?? errorMsg;
+      } catch (_) {
+        errorMsg = 'Server error (${response.statusCode})';
+      }
+      throw Exception(errorMsg);
     } catch (e) {
       print('PackagesService.handleTravelerStatus: $e');
       rethrow;

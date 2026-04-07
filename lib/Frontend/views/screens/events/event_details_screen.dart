@@ -915,35 +915,38 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.06),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.1)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.1)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 24),
               ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppText.body(title, fontWeight: FontWeight.w900),
-                  AppText.caption(subtitle, color: Colors.grey[600]),
-                ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText.body(title, fontWeight: FontWeight.w900),
+                    AppText.caption(subtitle, color: Colors.grey[600]),
+                  ],
+                ),
               ),
-            ),
-            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: color),
-          ],
+              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: color),
+            ],
+          ),
         ),
       ),
     );
@@ -976,36 +979,39 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       bottom: 0,
       left: 0,
       right: 0,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        color: Colors.transparent,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 700),
-          switchInCurve: Curves.easeInOutCubic,
-          switchOutCurve: Curves.easeInOutCubic,
-          layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-            return Stack(
-              alignment: Alignment.centerRight,
-              children: [
-                ...previousChildren,
-                ?currentChild,
-              ],
-            );
-          },
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: SizeTransition(
-                sizeFactor: animation,
-                axis: Axis.horizontal,
-                axisAlignment: 1.0,
-                child: child,
-              ),
-            );
-          },
-          child: (isInterested && !isEnded)
-              ? _buildFloatingHeart(event)
-              : _buildFullWidthButton(event, isEnded),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          color: Colors.transparent,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 700),
+            switchInCurve: Curves.easeInOutCubic,
+            switchOutCurve: Curves.easeInOutCubic,
+            layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+              return Stack(
+                alignment: Alignment.centerRight,
+                children: [
+                  ...previousChildren,
+                  if (currentChild != null) currentChild,
+                ],
+              );
+            },
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SizeTransition(
+                  sizeFactor: animation,
+                  axis: Axis.horizontal,
+                  axisAlignment: 1.0,
+                  child: child,
+                ),
+              );
+            },
+            child: (isInterested && !isEnded)
+                ? _buildFloatingHeart(event)
+                : _buildFullWidthButton(event, isEnded),
+          ),
         ),
       ),
     );

@@ -14,10 +14,10 @@ const travelPackageSchema = new mongoose.Schema({
     type: String,
   }],
   destination: {
-    name: { type: String, required: true },
+    name: { type: String, required: false },
     location: {
-      lat: { type: Number, required: true },
-      lng: { type: Number, required: true },
+      lat: { type: Number, required: false, default: 0 },
+      lng: { type: Number, required: false, default: 0 },
     },
   },
   duration: {
@@ -51,6 +51,9 @@ const travelPackageSchema = new mongoose.Schema({
     title: { type: String, required: true },
     date: { type: Date },
     activities: [{ type: String }],
+    places: [{ type: String }],
+    hotelName: [{ type: String }],
+    stayLocation: [{ type: String }],
   }],
   inclusions: [{
     type: String,
@@ -84,6 +87,10 @@ const travelPackageSchema = new mongoose.Schema({
   },
   endDate: {
     type: Date,
+  },
+  isComingSoon: {
+    type: Boolean,
+    default: false,
   }
 }, {
   timestamps: true,

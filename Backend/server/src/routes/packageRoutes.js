@@ -15,8 +15,7 @@ const {
   getPackageParticipants,
   getAllPackagesAdmin,
   getGuideBookings,
-  handleTravelerStatus,
-} = require('../controllers/packagesController');
+  handleTravelerStatus } = require('../controllers/packagesController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
@@ -57,7 +56,7 @@ router.post(
 // ── Parameterised Routes (/:id) — must come AFTER all static paths ────────
 router.get('/:id', getPackageDetails);
 
-router.put(
+router.patch(
   '/:id',
   protect,
   authorize('guide', 'admin'),

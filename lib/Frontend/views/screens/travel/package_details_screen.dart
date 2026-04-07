@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
@@ -155,79 +154,88 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: appWhite,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              _buildHero(context),
-              SliverToBoxAdapter(
-                child: Container(
-                  decoration: const BoxDecoration(color: appWhite),
-                  child: Column(
-                    children: [
-                      // Section 2: Experience / About
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.m,
-                          AppSpacing.m,
-                          AppSpacing.m,
-                          AppSpacing.xs,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          context.read<TravelBloc>().add(
+            TravelPackageDetailRequested(widget.package.id),
+          );
+        },
+        child: Stack(
+          children: [
+            CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: [
+                _buildHero(context),
+                SliverToBoxAdapter(
+                  child: Container(
+                    decoration: const BoxDecoration(color: appWhite),
+                    child: Column(
+                      children: [
+                        // Section 2: Experience / About
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.m,
+                            AppSpacing.m,
+                            AppSpacing.m,
+                            AppSpacing.xs,
+                          ),
+                          child: _AboutSection(
+                            description: widget.package.description,
+                          ),
                         ),
-                        child: _AboutSection(
-                          description: widget.package.description,
-                        ),
-                      ),
 
-                      // Section 3: Stats Row
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.m,
-                          vertical: AppSpacing.xs,
-                        ),
-                        child: _buildStatsCard(),
-                      ),
-
-                      if (widget.package.itinerary.isNotEmpty) ...[
-                        _buildSectionDivider(),
+                        // Section 3: Stats Row
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.m,
                             vertical: AppSpacing.xs,
                           ),
-                          child: _buildItinerary(),
+                          child: _buildStatsCard(),
                         ),
+
+                        if (widget.package.itinerary.isNotEmpty) ...[
+                          _buildSectionDivider(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.m,
+                              vertical: AppSpacing.xs,
+                            ),
+                            child: _buildItinerary(),
+                          ),
+                        ],
+
+                        // Section 4: Inclusions
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.m,
+                            vertical: AppSpacing.xs,
+                          ),
+                          child: _buildInclusionsExclusions(),
+                        ),
+
+                        // Section 5: Guide
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.m,
+                            vertical: AppSpacing.xs,
+                          ),
+                          child: _buildGuideCard(),
+                        ),
+
+                        const SizedBox(height: 210),
                       ],
-
-                      // Section 4: Inclusions
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.m,
-                          vertical: AppSpacing.xs,
-                        ),
-                        child: _buildInclusionsExclusions(),
-                      ),
-
-                      // Section 5: Guide
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.m,
-                          vertical: AppSpacing.xs,
-                        ),
-                        child: _buildGuideCard(),
-                      ),
-
-                      const SizedBox(height: 170),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          _buildStickyHeader(context),
-          _buildBookingBar(context),
-        ],
+              ],
+            ),
+            _buildStickyHeader(context),
+            _buildBookingBar(context),
+          ],
+        ),
       ),
     );
   }
@@ -282,41 +290,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
               ),
             ),
             // 📸 PHOTO COUNTER
-            if (photos.length > 1)
-              Positioned(
-                top: 110,
-                right: 20,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withOpacity(0.2)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.photo_library_outlined,
-                        color: Colors.white,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${_currentPage + 1}/${photos.length}',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            // Photo counter removed as requested
             Positioned(
               left: 20,
               right: 20,
@@ -603,6 +577,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
             step: widget.package.itinerary[i],
             isLast: i == widget.package.itinerary.length - 1,
             startDate: widget.package.startDate,
+            isComingSoon: widget.package.isComingSoon,
           ),
         ),
       ],
@@ -831,149 +806,165 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
     final total = widget.package.maxGroupSize;
     final remaining = total - filled;
     final isFull = remaining <= 0;
+    final isComingSoon = widget.package.isComingSoon;
 
     return Positioned(
       bottom: 24,
       left: 16,
       right: 16,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: primaryBlue,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'AVAILABILITY',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: primaryBlue,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AVAILABILITY',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
                       ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isComingSoon
+                                  ? 'STAY TUNED'
+                                  : isFull
+                                  ? 'FULLY BOOKED'
+                                  : '$remaining SPOTS LEFT',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'PER PERSON',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Text(
+                        '₹${widget.package.price.toInt()}',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: (isFull || isComingSoon)
+                      ? null
+                      : () => BookingFormSheet.show(
+                          context,
+                          packageId: widget.package.id,
+                          packageTitle: widget.package.title,
+                          guideName: widget.package.organizer.name,
+                          pricePerPerson: widget.package.price,
+                          availableSeats: remaining,
+                        ),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: (isFull || isComingSoon)
+                          ? Colors.white24
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    child: Center(
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
+                          AppText.button(
+                            isComingSoon
+                                ? 'COMING SOON'
+                                : isFull
+                                ? 'BOOKING CLOSED'
+                                : 'PROCEED TO BOOKING',
+                            color: (isFull || isComingSoon)
+                                ? Colors.white38
+                                : primaryBlue,
+                            size: 14,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            isFull ? 'FULLY BOOKED' : '$remaining SPOTS LEFT',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.2,
+                          if (!isFull && !isComingSoon)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                color: primaryBlue,
+                                size: 14,
+                              ),
                             ),
-                          ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'PER PERSON',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    Text(
-                      '₹${widget.package.price.toInt()}',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: isFull
-                    ? null
-                    : () => BookingFormSheet.show(
-                        context,
-                        packageId: widget.package.id,
-                        packageTitle: widget.package.title,
-                        guideName: widget.package.organizer.name,
-                        pricePerPerson: widget.package.price,
-                        availableSeats: remaining,
-                      ),
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: isFull ? Colors.white24 : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AppText.button(
-                          isFull ? 'BOOKING CLOSED' : 'PROCEED TO BOOKING',
-                          color: isFull ? Colors.white38 : primaryBlue,
-                          size: 14,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                        if (!isFull)
-                          const Padding(
-                            padding: EdgeInsets.only(left: 8),
-                            child: Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              color: primaryBlue,
-                              size: 14,
-                            ),
-                          ),
-                      ],
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1082,11 +1073,13 @@ class _ItineraryTile extends StatefulWidget {
   final ItineraryStep step;
   final bool isLast;
   final DateTime? startDate;
+  final bool isComingSoon;
 
   const _ItineraryTile({
     required this.step,
     required this.isLast,
     this.startDate,
+    this.isComingSoon = false,
   });
 
   @override
@@ -1098,21 +1091,17 @@ class _ItineraryTileState extends State<_ItineraryTile> {
 
   @override
   Widget build(BuildContext context) {
-    final date = (widget.startDate ?? DateTime.now()).add(
-      Duration(days: widget.step.day - 1),
-    );
-
     return Container(
-      margin: EdgeInsets.only(bottom: widget.isLast ? 0 : 36),
+      margin: EdgeInsets.only(bottom: widget.isLast ? 4 : 12),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           // 🚢 STRUCTURAL TIMELINE BRIDGE
-          // 🚢 STRUCTURAL TIMELINE BRIDGE
           if (!widget.isLast)
             Positioned(
               top: 32, // Start from the center of the circle
-              bottom: -40, // Extend to the next circle
+              bottom:
+                  -20, // Extend to the next circle (adjusted for smaller margin)
               left: 17,
               child: Container(
                 width: 2.5,
@@ -1125,20 +1114,23 @@ class _ItineraryTileState extends State<_ItineraryTile> {
 
           // 📄 ELITE NARRATIVE CARD
           Padding(
-            padding: const EdgeInsets.only(left: 56),
+            padding: const EdgeInsets.only(left: 45),
             child: GestureDetector(
               onTap: () => setState(() => _expanded = !_expanded),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 450),
                 curve: Curves.easeInOutCubic,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: _expanded ? primaryBlue.withAlpha(8) : appWhite,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _expanded
-                        ? primaryBlue.withOpacity(0.3)
-                        : appGreyLight.withOpacity(0.3),
+                        ? primaryBlue.withOpacity(0.5)
+                        : appGreyLight.withOpacity(0.8),
                     width: 1.5,
                   ),
                   boxShadow: [
@@ -1174,26 +1166,38 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                               if (!_expanded)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    '${widget.step.activities.length} Activities planned',
-                                    style: GoogleFonts.outfit(
-                                      color: appGrey,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (widget.step.places.isNotEmpty)
+                                        _collapsedInfoRow(
+                                          Icons.location_on_rounded,
+                                          widget.step.places.join(', '),
+                                        ),
+                                      if (widget.step.hotelName.isNotEmpty)
+                                        _collapsedInfoRow(
+                                          Icons.restaurant_menu,
+                                          widget.step.hotelName.join(', '),
+                                        ),
+                                      if (widget.step.stayLocation.isNotEmpty)
+                                        _collapsedInfoRow(
+                                          Icons.hotel_rounded,
+                                          widget.step.stayLocation.join(', '),
+                                        ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${widget.step.activities.length} Activities planned',
+                                        style: GoogleFonts.outfit(
+                                          color: appGrey,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                             ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          DateFormat('d MMM').format(date).toUpperCase(),
-                          style: GoogleFonts.outfit(
-                            color: primaryBlue,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                            letterSpacing: 1.0,
                           ),
                         ),
                       ],
@@ -1204,18 +1208,48 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                       child: !_expanded
                           ? const SizedBox(width: double.infinity, height: 0)
                           : Padding(
-                              padding: const EdgeInsets.only(top: 24),
+                              padding: const EdgeInsets.only(top: 12),
                               child: Column(
                                 children: [
-                                  Container(
-                                    height: 1.5,
-                                    width: 40,
-                                    decoration: BoxDecoration(
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    child: Divider(
+                                      height: 1,
                                       color: primaryBlue.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                   ),
-                                  const SizedBox(height: 20),
+                                  if (widget.step.places.isNotEmpty)
+                                    _buildInfoRow(
+                                      Icons.location_on_rounded,
+                                      'Visit: ',
+                                      widget.step.places.join(', '),
+                                    ),
+                                  if (widget.step.hotelName.isNotEmpty)
+                                    _buildInfoRow(
+                                      Icons.restaurant_menu,
+                                      'Hotels/Dining: ',
+                                      widget.step.hotelName.join(', '),
+                                    ),
+                                  if (widget.step.stayLocation.isNotEmpty)
+                                    _buildInfoRow(
+                                      Icons.hotel_rounded,
+                                      'Stay Locations: ',
+                                      widget.step.stayLocation.join(', '),
+                                    ),
+                                  if (widget.step.places.isNotEmpty ||
+                                      widget.step.hotelName.isNotEmpty ||
+                                      widget.step.stayLocation.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                      ),
+                                      child: Divider(
+                                        height: 1,
+                                        color: primaryBlue.withOpacity(0.3),
+                                      ),
+                                    ),
                                   ...widget.step.activities.map(
                                     (activity) => _buildActivityItem(activity),
                                   ),
@@ -1265,9 +1299,78 @@ class _ItineraryTileState extends State<_ItineraryTile> {
     );
   }
 
+  Widget _collapsedInfoRow(IconData icon, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: primaryBlue),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.outfit(
+                color: appBlack.withOpacity(0.7),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: primaryBlue.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 14, color: primaryBlue),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.outfit(
+                    color: appGrey,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: GoogleFonts.outfit(
+                    color: appBlack,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActivityItem(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
