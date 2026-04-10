@@ -324,4 +324,78 @@ class PlacesService {
       return [];
     }
   }
+
+  Future<PlaceModel?> addReview(String placeId, double rating, String text) async {
+    try {
+      final token = await _authService.getToken();
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/places/$placeId/reviews'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'rating': rating,
+          'text': text,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return PlaceModel.fromJson(data['result']);
+      }
+      return null;
+    } catch (e) {
+      print('Error adding review to place: $e');
+      return null;
+    }
+  }
+
+  Future<PlaceModel?> updateReview(String placeId, String reviewId, double rating, String text) async {
+    try {
+      final token = await _authService.getToken();
+      final response = await http.put(
+        Uri.parse('${ApiConstants.baseUrl}/places/$placeId/reviews/$reviewId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'rating': rating,
+          'text': text,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return PlaceModel.fromJson(data['result']);
+      }
+      return null;
+    } catch (e) {
+      print('Error updating review: $e');
+      return null;
+    }
+  }
+
+  Future<PlaceModel?> deleteReview(String placeId, String reviewId) async {
+    try {
+      final token = await _authService.getToken();
+      final response = await http.delete(
+        Uri.parse('${ApiConstants.baseUrl}/places/$placeId/reviews/$reviewId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return PlaceModel.fromJson(data['result']);
+      }
+      return null;
+    } catch (e) {
+      print('Error deleting review: $e');
+      return null;
+    }
+  }
 }
+

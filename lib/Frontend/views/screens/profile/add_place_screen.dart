@@ -11,6 +11,7 @@ import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 import 'package:yatrikaa/Frontend/core/services/places_service.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
 
 class AddPlaceScreen extends StatefulWidget {
   const AddPlaceScreen({super.key});
@@ -407,12 +408,22 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                         title: "Geography",
                         icon: Icons.location_on_rounded,
                         children: [
-                          _buildSleekField(
-                            label: "Location Address",
+                          ModernLocationField(
                             controller: _addressController,
+                            label: "Location Address",
                             hint: "Full landmark/area details...",
                             icon: Icons.map_rounded,
+                            onSelected: (place) {
+                              setState(() {
+                                _addressController.text = place.formattedAddress ?? place.name;
+                                _cityController.text = place.city ?? "";
+                                _stateController.text = place.state ?? "Maharashtra";
+                                _latController.text = place.lat.toString();
+                                _lngController.text = place.lng.toString();
+                              });
+                            },
                           ),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(

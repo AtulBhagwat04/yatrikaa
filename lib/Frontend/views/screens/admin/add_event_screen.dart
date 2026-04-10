@@ -11,6 +11,8 @@ import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 import 'package:yatrikaa/Frontend/core/services/events_service.dart';
+import 'package:yatrikaa/Frontend/core/services/places_service.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -381,12 +383,23 @@ class _AddEventScreenState extends State<AddEventScreen> {
                             hint: "e.g. Balewadi Stadium",
                             icon: Icons.business_rounded,
                           ),
-                          _buildSleekField(
-                            label: "Address",
+                          ModernLocationField(
                             controller: _addressController,
+                            label: "Address",
                             hint: "Full landmark/area details...",
                             icon: Icons.map_rounded,
+                            onSelected: (place) {
+                              setState(() {
+                                if (_venueController.text.isEmpty) {
+                                  _venueController.text = place.name;
+                                }
+                                _addressController.text = place.formattedAddress ?? place.name;
+                                _latController.text = place.lat.toString();
+                                _lngController.text = place.lng.toString();
+                              });
+                            },
                           ),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
@@ -865,10 +878,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
       height: 52,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? () {} : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: baseColor,
+          disabledBackgroundColor: baseColor,
           foregroundColor: fgColor,
+          disabledForegroundColor: fgColor,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),

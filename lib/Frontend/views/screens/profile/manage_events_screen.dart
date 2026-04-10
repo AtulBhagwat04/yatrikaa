@@ -12,6 +12,8 @@ import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
 import 'package:http/http.dart' as http;
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -215,24 +217,13 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
               ),
             ],
           ),
-          child: TextField(
-            controller: _searchController,
-            onChanged: _filterEvents,
-            decoration: InputDecoration(
-              hintText: "Search your events...",
-              hintStyle: GoogleFonts.montserrat(
-                color: Colors.grey.shade400,
-                fontSize: 14,
-              ),
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: primaryBlue,
-                size: 20,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 15),
+            child: ModernSearchBar(
+              controller: _searchController,
+              onChanged: _filterEvents,
+              suggestionsEnabled: false,
+              hint: "Search your events...",
+              icon: Icons.search_rounded,
             ),
-          ),
         ),
       ),
     );
@@ -445,8 +436,8 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                     Text(
                                       "${event.interestedCount}",
                                       style: GoogleFonts.montserrat(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
+                                        color: primaryBlue,
+                                        fontWeight: FontWeight.w800,
                                         fontSize: 12,
                                       ),
                                     ),
@@ -599,411 +590,449 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          return Container(
-            height: MediaQuery.of(context).size.height * 0.9,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-            ),
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Column(
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 20,
-                    horizontal: 24,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey.shade100),
+      builder: (ctx) {
+        bool isSheetLoading = false;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.9,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                children: [
+                  // Drag Handle
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AppText.heading(
-                        "Edit Event",
-                        size: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 24,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        AppText.subHeading(
-                          "MANAGE GALLERY",
-                          size: 12,
-                          color: Colors.grey,
+                        AppText.heading(
+                          "Edit Event",
+                          size: 20,
+                          fontWeight: FontWeight.w900,
                         ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 150,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              ...existingImages.asMap().entries.map((entry) {
-                                int idx = entry.key;
-                                String url = entry.value;
-                                return Container(
-                                  width: 130,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  child: Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: CachedNetworkImage(
-                                          imageUrl: url,
-                                          height: 150,
-                                          width: 130,
-                                          fit: BoxFit.cover,
-                                          placeholder: (_, _) =>
-                                              const ShimmerBox(),
-                                          errorWidget: (_, _, _) => Container(
-                                            color: Colors.grey.shade200,
-                                            child: const Icon(
-                                              Icons.broken_image,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 5,
-                                        right: 5,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            if (existingImages.length == 1 &&
-                                                pickedFiles.isEmpty) {
-                                              CustomToast.warning(
-                                                context,
-                                                "At least one image is required",
-                                                title: "Wait!",
-                                              );
-                                              return;
-                                            }
-                                            setSheetState(
-                                              () =>
-                                                  existingImages.removeAt(idx),
-                                            );
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.redAccent,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 14,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                              ...pickedFiles.asMap().entries.map((entry) {
-                                return Container(
-                                  width: 130,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  child: Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(
-                                          File(entry.value.path),
-                                          height: 150,
-                                          width: 130,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 5,
-                                        right: 5,
-                                        child: GestureDetector(
-                                          onTap: () => setSheetState(
-                                            () =>
-                                                pickedFiles.removeAt(entry.key),
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.black54,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 14,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                              if (existingImages.length + pickedFiles.length <
-                                  10)
-                                GestureDetector(
-                                  onTap: () async {
-                                    final List<XFile> images = await _picker
-                                        .pickMultiImage(imageQuality: 70);
-                                    if (images.isNotEmpty) {
-                                      setSheetState(() {
-                                        int remaining =
-                                            10 -
-                                            (existingImages.length +
-                                                pickedFiles.length);
-                                        pickedFiles.addAll(
-                                          images.take(remaining),
-                                        );
-                                      });
-                                    }
-                                  },
-                                  child: Container(
-                                    width: 130,
-                                    decoration: BoxDecoration(
-                                      color: onboardingBlueVeryLight,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: primaryBlue.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.add_photo_alternate_rounded,
-                                          color: primaryBlue.withOpacity(0.6),
-                                          size: 32,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        AppText.caption(
-                                          "Add Photo",
-                                          color: primaryBlue,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close_rounded),
                         ),
-                        const SizedBox(height: 32),
-                        AppText.subHeading(
-                          "EVENT INFO",
-                          size: 12,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSheetField(
-                          "Event Title",
-                          titleController,
-                          Icons.title_rounded,
-                        ),
-                        _buildSheetDropdown(
-                          "Category",
-                          selectedCategory,
-                          categories,
-                          (val) {
-                            if (val != null) {
-                              setSheetState(() => selectedCategory = val);
-                            }
-                          },
-                        ),
-                        _buildSheetField(
-                          "Description",
-                          descriptionController,
-                          Icons.notes_rounded,
-                          maxLines: 4,
-                        ),
-                        const SizedBox(height: 16),
-                        AppText.subHeading(
-                          "LOCATION",
-                          size: 12,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSheetField(
-                          "Venue Name",
-                          venueController,
-                          Icons.business_rounded,
-                        ),
-                        _buildSheetField(
-                          "Address",
-                          addressController,
-                          Icons.location_on_rounded,
-                          maxLines: 2,
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildSheetField(
-                                "Latitude",
-                                latController,
-                                Icons.gps_fixed_rounded,
-                                isNumber: true,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildSheetField(
-                                "Longitude",
-                                lngController,
-                                Icons.gps_fixed_rounded,
-                                isNumber: true,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        AppText.subHeading(
-                          "SCHEDULE",
-                          size: 12,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSheetPickerSelector(
-                          "Event Date",
-                          DateFormat('dd MMM, yyyy').format(selectedDate),
-                          Icons.calendar_today_rounded,
-                          () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: selectedDate,
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime.now().add(
-                                const Duration(days: 1000),
-                              ),
-                            );
-                            if (picked != null) {
-                              setSheetState(() => selectedDate = picked);
-                            }
-                          },
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildSheetPickerSelector(
-                                "Start Time",
-                                _formatTimeOfDay(startTime),
-                                Icons.access_time_rounded,
-                                () async {
-                                  final picked = await showTimePicker(
-                                    context: context,
-                                    initialTime: startTime,
-                                  );
-                                  if (picked != null) {
-                                    setSheetState(() => startTime = picked);
-                                  }
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildSheetPickerSelector(
-                                "End Time",
-                                _formatTimeOfDay(endTime),
-                                Icons.access_time_rounded,
-                                () async {
-                                  final picked = await showTimePicker(
-                                    context: context,
-                                    initialTime: endTime,
-                                  );
-                                  if (picked != null) {
-                                    setSheetState(() => endTime = picked);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 55,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (existingImages.isEmpty &&
-                                  pickedFiles.isEmpty) {
-                                CustomToast.warning(
-                                  context,
-                                  "At least one image is required",
-                                  title: "Wait!",
-                                );
-                                return;
-                              }
-                              Navigator.pop(ctx);
-                              _handleUpdate(
-                                event.id,
-                                {
-                                  'title': titleController.text.trim(),
-                                  'description': descriptionController.text
-                                      .trim(),
-                                  'venue': venueController.text.trim(),
-                                  'address': addressController.text.trim(),
-                                  'category': selectedCategory,
-                                  'date': selectedDate.toIso8601String(),
-                                  'startTime': _formatTimeOfDay(startTime),
-                                  'endTime': _formatTimeOfDay(endTime),
-                                  'geometry': {
-                                    'location': {
-                                      'lat':
-                                          double.tryParse(latController.text) ??
-                                          0.0,
-                                      'lng':
-                                          double.tryParse(lngController.text) ??
-                                          0.0,
-                                    },
-                                  },
-                                  'images': existingImages,
-                                },
-                                pickedFiles.map((x) => File(x.path)).toList(),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryBlue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: AppText.body(
-                              "Update Event Info",
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppText.subHeading(
+                            "MANAGE GALLERY",
+                            size: 11,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 150,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: [
+                                ...existingImages.asMap().entries.map((entry) {
+                                  int idx = entry.key;
+                                  String url = entry.value;
+                                  return Container(
+                                    width: 130,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: CachedNetworkImage(
+                                            imageUrl: url,
+                                            height: 150,
+                                            width: 130,
+                                            fit: BoxFit.cover,
+                                            placeholder: (_, _) =>
+                                                const ShimmerBox(),
+                                            errorWidget: (_, _, _) => Container(
+                                              color: Colors.grey.shade200,
+                                              child: const Icon(
+                                                Icons.broken_image,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 5,
+                                          right: 5,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              if (existingImages.length == 1 &&
+                                                  pickedFiles.isEmpty) {
+                                                CustomToast.warning(
+                                                  context,
+                                                  "At least one image is required",
+                                                  title: "Wait!",
+                                                );
+                                                return;
+                                              }
+                                              setSheetState(
+                                                () =>
+                                                    existingImages.removeAt(idx),
+                                              );
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.redAccent,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                color: Colors.white,
+                                                size: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                                ...pickedFiles.asMap().entries.map((entry) {
+                                  return Container(
+                                    width: 130,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(
+                                            File(entry.value.path),
+                                            height: 150,
+                                            width: 130,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 5,
+                                          right: 5,
+                                          child: GestureDetector(
+                                            onTap: () => setSheetState(
+                                              () =>
+                                                  pickedFiles.removeAt(entry.key),
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.black54,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                color: Colors.white,
+                                                size: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                                if (existingImages.length + pickedFiles.length <
+                                    10)
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final List<XFile> images = await _picker
+                                          .pickMultiImage(imageQuality: 70);
+                                      if (images.isNotEmpty) {
+                                        setSheetState(() {
+                                          int remaining =
+                                              10 -
+                                              (existingImages.length +
+                                                  pickedFiles.length);
+                                          pickedFiles.addAll(
+                                            images.take(remaining),
+                                          );
+                                        });
+                                      }
+                                    },
+                                    child: Container(
+                                      width: 130,
+                                      decoration: BoxDecoration(
+                                        color: onboardingBlueVeryLight,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: primaryBlue.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.add_photo_alternate_rounded,
+                                            color: primaryBlue.withOpacity(0.6),
+                                            size: 32,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          AppText.caption(
+                                            "Add Photo",
+                                            color: primaryBlue,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          AppText.subHeading(
+                            "EVENT INFO",
+                            size: 11,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSheetField(
+                            "Event Title",
+                            titleController,
+                            Icons.title_rounded,
+                          ),
+                          _buildSheetDropdown(
+                            "Category",
+                            selectedCategory,
+                            categories,
+                            (val) {
+                              if (val != null) {
+                                setSheetState(() => selectedCategory = val);
+                              }
+                            },
+                          ),
+                          _buildSheetField(
+                            "Description",
+                            descriptionController,
+                            Icons.notes_rounded,
+                            maxLines: 4,
+                          ),
+                          const SizedBox(height: 16),
+                          AppText.subHeading(
+                            "LOCATION",
+                            size: 11,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          const SizedBox(height: 16),
+                          ModernLocationField(
+                            controller: venueController,
+                            label: "Venue / City",
+                            hint: "Search and select venue",
+                            onSelected: (place) {
+                              venueController.text = place.name;
+                              // Optionally update address/lat/lng if requested
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          ModernLocationField(
+                            controller: addressController,
+                            label: "Address",
+                            hint: "Full address",
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildSheetField(
+                                  "Latitude",
+                                  latController,
+                                  Icons.gps_fixed_rounded,
+                                  isNumber: true,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildSheetField(
+                                  "Longitude",
+                                  lngController,
+                                  Icons.gps_fixed_rounded,
+                                  isNumber: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          AppText.subHeading(
+                            "SCHEDULE",
+                            size: 11,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSheetPickerSelector(
+                            "Event Date",
+                            DateFormat('dd MMM, yyyy').format(selectedDate),
+                            Icons.calendar_today_rounded,
+                            () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: selectedDate,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now().add(
+                                  const Duration(days: 1000),
+                                ),
+                              );
+                              if (picked != null) {
+                                setSheetState(() => selectedDate = picked);
+                              }
+                            },
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildSheetPickerSelector(
+                                  "Start Time",
+                                  _formatTimeOfDay(startTime),
+                                  Icons.access_time_rounded,
+                                  () async {
+                                    final picked = await showTimePicker(
+                                      context: context,
+                                      initialTime: startTime,
+                                    );
+                                    if (picked != null) {
+                                      setSheetState(() => startTime = picked);
+                                    }
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildSheetPickerSelector(
+                                  "End Time",
+                                  _formatTimeOfDay(endTime),
+                                  Icons.access_time_rounded,
+                                  () async {
+                                    final picked = await showTimePicker(
+                                      context: context,
+                                      initialTime: endTime,
+                                    );
+                                    if (picked != null) {
+                                      setSheetState(() => endTime = picked);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: isSheetLoading
+                                  ? () {}
+                                  : () async {
+                                      if (existingImages.isEmpty &&
+                                          pickedFiles.isEmpty) {
+                                        CustomToast.warning(
+                                          context,
+                                          "At least one image is required",
+                                          title: "Wait!",
+                                        );
+                                        return;
+                                      }
+
+                                      setSheetState(() => isSheetLoading = true);
+                                      final success = await _handleUpdate(
+                                        event.id,
+                                        {
+                                          'title': titleController.text.trim(),
+                                          'description': descriptionController.text
+                                              .trim(),
+                                          'venue': venueController.text.trim(),
+                                          'address': addressController.text.trim(),
+                                          'category': selectedCategory,
+                                          'date': selectedDate.toIso8601String(),
+                                          'startTime': _formatTimeOfDay(startTime),
+                                          'endTime': _formatTimeOfDay(endTime),
+                                          'geometry': {
+                                            'location': {
+                                              'lat':
+                                                  double.tryParse(latController.text) ??
+                                                  0.0,
+                                              'lng':
+                                                  double.tryParse(lngController.text) ??
+                                                  0.0,
+                                            },
+                                          },
+                                          'images': existingImages,
+                                        },
+                                        pickedFiles.map((x) => File(x.path)).toList(),
+                                      );
+
+                                      if (success && mounted) {
+                                        Navigator.pop(ctx);
+                                      } else if (mounted) {
+                                        setSheetState(() => isSheetLoading = false);
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryBlue,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: primaryBlue,
+                                disabledForegroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: isSheetLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : AppText.button(
+                                      "Update Event Info",
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1135,12 +1164,11 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     return DateFormat.jm().format(dt);
   }
 
-  Future<void> _handleUpdate(
+  Future<bool> _handleUpdate(
     String id,
     Map<String, dynamic> body,
     List<File> images,
   ) async {
-    setState(() => _isLoading = true);
     try {
       final success = await _eventsService.updateEvent(
         id,
@@ -1150,12 +1178,14 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
       if (success && mounted) {
         CustomToast.success(context, "Event details updated successfully!");
         _refreshSingleEvent(id);
+        return true;
       }
+      return false;
     } catch (e) {
       if (mounted) {
         CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
       }
-      setState(() => _isLoading = false);
+      return false;
     }
   }
 

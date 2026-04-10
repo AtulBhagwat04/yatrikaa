@@ -216,7 +216,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
               // ── Content ───────────────────────────────────────────────────
               ..._buildSliverContent(),
 
-              const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+              const SliverPadding(
+                padding: EdgeInsets.only(
+                  bottom: AppSpacing.xxxl + AppSpacing.l,
+                ),
+              ),
             ],
           ),
         ),
@@ -250,6 +254,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
         controller: _searchController,
         onChanged: _performSearch,
         focusNode: _searchFocusNode,
+        suggestionsEnabled: true,
+        onSuggestionSelected: (suggestion) {
+          _searchController.text = suggestion;
+          _performSearch(suggestion, force: true);
+          _searchFocusNode.unfocus();
+        },
       ),
     );
   }

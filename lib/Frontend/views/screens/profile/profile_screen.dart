@@ -12,6 +12,8 @@ import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/core/services/packages_service.dart';
 import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 // ─── Role configuration model ───────────────────────────────────
 class _RoleConfig {
@@ -71,159 +73,182 @@ class ProfileScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: onboardingBlueVeryLight,
-          appBar: AppBar(
-            backgroundColor: onboardingBlueVeryLight,
-            elevation: 0,
-            scrolledUnderElevation: 2,
-            surfaceTintColor: appWhite,
-            systemOverlayStyle: SystemUiOverlayStyle.dark,
-            automaticallyImplyLeading: false,
-            title: AppText.heading(
-              authState.name.isEmpty ? 'Profile' : authState.name,
-              fontWeight: FontWeight.w900,
-              size: 20,
-            ),
-            centerTitle: true,
-            actions: [const SizedBox(width: 8)],
-          ),
           body: AppAnimations.fadeIn(
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                // ── Profile Card ─────────────────────────
-                SliverToBoxAdapter(
-                  child: _ProfileCard(state: authState, cfg: cfg),
+                // ── Compact Header ──
+                SliverAppBar(
+                  pinned: true,
+                  floating: true,
+                  backgroundColor: onboardingBlueVeryLight,
+                  elevation: 0,
+                  scrolledUnderElevation: 2,
+                  surfaceTintColor: Colors.white,
+                  automaticallyImplyLeading: false,
+                  centerTitle: true,
+                  title: AppText.heading(
+                    'My Profile',
+                    fontWeight: FontWeight.w900,
+                    size: 22,
+                  ),
                 ),
-
-                // ── Stats ────────────────────────────────
+                // ── Profile Header ──
+                SliverToBoxAdapter(
+                  child: _ProfileHeader(
+                    state: authState,
+                    cfg: cfg,
+                  ).animate().fadeIn().moveY(begin: 20, end: 0),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                // ── Stats Summary ──
+                SliverToBoxAdapter(
+                  child: _StatsSummary(state: authState)
+                      .animate()
+                      .fadeIn(delay: 200.ms)
+                      .scale(begin: const Offset(0.98, 0.98)),
+                ),
+                // ── Sections ──
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.ms,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── ACCOUNT ──
+                        _SectionHeader('ACCOUNT'),
+                        _SectionCard(
+                          items: [
+                            _ProfileItem(
+                              icon: Icons.person_outline_rounded,
+                              label: 'Edit Profile',
+                              iconBgColor: Colors.blue.withOpacity(0.1),
+                              iconColor: Colors.blue,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.editProfile,
+                              ),
+                            ),
+                            _ProfileItem(
+                              icon: Icons.lock_outline_rounded,
+                              label: 'Change Password',
+                              iconBgColor: Colors.blue.withOpacity(0.1),
+                              iconColor: Colors.blue,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.changePassword,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // ── TRAVEL ──
+                        _SectionHeader('TRAVEL'),
+                        _SectionCard(
+                          items: [
+                            _ProfileItem(
+                              icon: Icons.grid_view_rounded,
+                              label: 'My Posts',
+                              iconBgColor: Colors.green.withOpacity(0.1),
+                              iconColor: Colors.green,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.myPosts,
+                              ),
+                            ),
+                            _ProfileItem(
+                              icon: Icons.map_outlined,
+                              label: 'My Trips',
+                              iconBgColor: Colors.green.withOpacity(0.1),
+                              iconColor: Colors.green,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.trips,
+                              ),
+                            ),
+                            _ProfileItem(
+                              icon: Icons.favorite_outline_rounded,
+                              label: 'Liked Places',
+                              iconBgColor: Colors.teal.withOpacity(0.1),
+                              iconColor: Colors.teal,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.favorites,
+                              ),
+                            ),
+                            _ProfileItem(
+                              icon: Icons.star_outline_rounded,
+                              label: 'My Reviews',
+                              iconBgColor: Colors.teal.withOpacity(0.1),
+                              iconColor: Colors.teal,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.reviews,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // ── ROLE SPECIFIC SECTIONS (GUIDE / ADMIN) ──
+                        ..._buildRoleSections(context, authState),
+
+                        // ── SUPPORT ──
+                        _SectionHeader('SUPPORT'),
+                        _SectionCard(
+                          items: [
+                            _ProfileItem(
+                              icon: Icons.help_outline_rounded,
+                              label: 'Help Center',
+                              iconBgColor: Colors.deepPurple.withOpacity(0.1),
+                              iconColor: Colors.deepPurple,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.helpCenter,
+                              ),
+                            ),
+                            _ProfileItem(
+                              icon: Icons.shield_outlined,
+                              label: 'Privacy Policy',
+                              iconBgColor: Colors.deepPurple.withOpacity(0.1),
+                              iconColor: Colors.deepPurple,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.privacyPolicy,
+                              ),
+                            ),
+                            _ProfileItem(
+                              icon: Icons.info_outline_rounded,
+                              label: 'About Yatrikaa',
+                              iconBgColor: Colors.deepPurple.withOpacity(0.1),
+                              iconColor: Colors.deepPurple,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.about,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+                        // ── SIGN OUT ──
+                        _SectionCard(
+                          items: [
+                            _ProfileItem(
+                              icon: Icons.logout_rounded,
+                              label: 'Sign Out',
+                              iconBgColor: Colors.red.withOpacity(0.1),
+                              iconColor: Colors.red,
+                              labelColor: Colors.redAccent,
+                              showArrow: true,
+                              onTap: () => _showLogoutDialog(context),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 100),
+                      ],
                     ),
-                    child: _StatsRow(state: authState),
-                  ),
+                  ).animate().fadeIn(delay: 400.ms),
                 ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                // ── Account Settings ─────────────────────
-                SliverToBoxAdapter(
-                  child: _SectionGroup(
-                    heading: 'Account',
-                    items: [
-                      _SectionItem(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Edit Profile',
-                        color: primaryBlue,
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          RouteNames.editProfile,
-                        ),
-                      ),
-                      _SectionItem(
-                        icon: Icons.lock_outline_rounded,
-                        label: 'Change Password',
-                        color: primaryBlue,
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          RouteNames.changePassword,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                // ── Travel ───────────────────────────────
-                SliverToBoxAdapter(
-                  child: _SectionGroup(
-                    heading: 'Travel',
-                    items: [
-                      _SectionItem(
-                        icon: Icons.grid_view_rounded,
-                        label: 'My Posts',
-                        color: travelSectionColor,
-                        onTap: () =>
-                            Navigator.pushNamed(context, RouteNames.myPosts),
-                      ),
-                      _SectionItem(
-                        icon: Icons.map_outlined,
-                        label: 'My Trips',
-                        color: travelSectionColor,
-                        onTap: () =>
-                            Navigator.pushNamed(context, RouteNames.trips),
-                      ),
-                      _SectionItem(
-                        icon: Icons.favorite_border_rounded,
-                        label: 'Liked Places',
-                        color: travelSectionColor,
-                        onTap: () =>
-                            Navigator.pushNamed(context, RouteNames.favorites),
-                      ),
-                      _SectionItem(
-                        icon: Icons.star_border_rounded,
-                        label: 'My Reviews',
-                        color: travelSectionColor,
-                        onTap: () =>
-                            Navigator.pushNamed(context, RouteNames.reviews),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // ── Role-based sections ───────────────────
-                ..._roleSections(
-                  authState.role,
-                  authState.guideRequestStatus,
-                  context,
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                // ── Support ──────────────────────────────
-                SliverToBoxAdapter(
-                  child: _SectionGroup(
-                    heading: 'Support',
-                    items: [
-                      _SectionItem(
-                        icon: Icons.help_outline_rounded,
-                        label: 'Help Center',
-                        color: supportSectionColor,
-                        onTap: () =>
-                            Navigator.pushNamed(context, RouteNames.helpCenter),
-                      ),
-                      _SectionItem(
-                        icon: Icons.privacy_tip_outlined,
-                        label: 'Privacy Policy',
-                        color: supportSectionColor,
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          RouteNames.privacyPolicy,
-                        ),
-                      ),
-                      _SectionItem(
-                        icon: Icons.info_outline_rounded,
-                        label: 'About Yatrikaa',
-                        color: supportSectionColor,
-                        onTap: () =>
-                            Navigator.pushNamed(context, RouteNames.about),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                // ── Logout ───────────────────────────────
-                SliverToBoxAdapter(
-                  child: _LogoutTile(onTap: () => _showLogoutDialog(context)),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 30)),
               ],
             ),
           ),
@@ -232,134 +257,112 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  List<SliverToBoxAdapter> _roleSections(
-    String role,
-    String guideStatus,
-    BuildContext context,
-  ) {
-    final r = role.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
-    List<SliverToBoxAdapter> out = [];
+  List<Widget> _buildRoleSections(BuildContext context, Authenticated state) {
+    final r = state.role.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    List<Widget> sections = [];
 
-    // Traveler level - Request to be a Guide
-    if (r == 'user') {
-      out.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
-
-      String label = 'Join as Guide';
-      IconData icon = Icons.person_add_alt_1_rounded;
-      Color color = guideColor;
-      VoidCallback? onTap = () => _showGuideRequestDialog(context);
-
-      if (guideStatus == 'Pending') {
-        label = 'Guide Request Pending';
-        icon = Icons.hourglass_top_rounded;
-        color = appGrey;
-        onTap = null;
-      } else if (guideStatus == 'Rejected') {
-        label = 'Re-apply for Guide';
-      }
-
-      out.add(
-        SliverToBoxAdapter(
-          child: _SectionGroup(
-            heading: 'Opportunity',
-            items: [
-              _SectionItem(
-                icon: icon,
-                label: label,
-                color: color,
-                onTap: onTap,
-              ),
-            ],
-          ),
+    if (r == 'user' && state.guideRequestStatus != 'Pending') {
+      sections.addAll([
+        _SectionHeader('OPPORTUNITY'),
+        _SectionCard(
+          items: [
+            _ProfileItem(
+              icon: Icons.verified_user_outlined,
+              label: 'Become a Guide',
+              iconBgColor: Colors.orange.withOpacity(0.1),
+              iconColor: Colors.orange,
+              onTap: () => _showGuideRequestDialog(context),
+            ),
+          ],
         ),
-      );
+      ]);
     }
 
     if (r == 'guide' || r == 'admin' || r == 'superadmin') {
-      out.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
-      out.add(
-        SliverToBoxAdapter(
-          child: _SectionGroup(
-            heading: 'Guide Panel',
-            items: [
-              _SectionItem(
-                icon: Icons.tour_rounded,
-                label: 'Manage Tours',
-                color: guidePanelColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.manageTours),
-              ),
-              _SectionItem(
-                icon: Icons.assignment_turned_in_outlined,
-                label: 'Bookings',
-                color: guidePanelColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.bookingRequests),
-              ),
-            ],
-          ),
+      sections.addAll([
+        _SectionHeader('GUIDE PANEL'),
+        _SectionCard(
+          items: [
+            _ProfileItem(
+              icon: Icons.flag_outlined,
+              label: 'Manage Tours',
+              iconBgColor: Colors.orange.withOpacity(0.1),
+              iconColor: Colors.orange,
+              onTap: () => Navigator.pushNamed(context, RouteNames.manageTours),
+            ),
+            _ProfileItem(
+              icon: Icons.assignment_outlined,
+              label: 'Bookings',
+              iconBgColor: Colors.orange.withOpacity(0.1),
+              iconColor: Colors.orange,
+              onTap: () =>
+                  Navigator.pushNamed(context, RouteNames.bookingRequests),
+            ),
+          ],
         ),
-      );
+      ]);
     }
 
     if (r == 'admin' || r == 'superadmin') {
-      out.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
-      out.add(
-        SliverToBoxAdapter(
-          child: _SectionGroup(
-            heading: 'Admin Control',
-            items: [
-              _SectionItem(
-                icon: Icons.people_alt_outlined,
-                label: 'User Management',
-                color: adminColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.userManagement),
-              ),
-              _SectionItem(
-                icon: Icons.add_location_alt_outlined,
-                label: 'Manage Places',
-                color: adminColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.managePlaces),
-              ),
-              _SectionItem(
-                icon: Icons.calendar_month_outlined,
-                label: 'Manage Events',
-                color: adminColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.manageEvents),
-              ),
-              _SectionItem(
-                icon: Icons.rate_review_outlined,
-                label: 'Review Moderation',
-                color: adminColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.reviewModeration),
-              ),
-              _SectionItem(
-                icon: Icons.checklist_rtl_rounded,
-                label: 'Global Approval Queue',
-                color: adminColor,
-                onTap: () =>
-                    Navigator.pushNamed(context, RouteNames.adminApprovalQueue),
-              ),
-            ],
-          ),
+      sections.addAll([
+        _SectionHeader('ADMIN CONTROL'),
+        _SectionCard(
+          items: [
+            _ProfileItem(
+              icon: Icons.people_outline_rounded,
+              label: 'User Management',
+              iconBgColor: Colors.red.withOpacity(0.05),
+              iconColor: Colors.red,
+              onTap: () =>
+                  Navigator.pushNamed(context, RouteNames.userManagement),
+            ),
+            _ProfileItem(
+              icon: Icons.add_location_alt_outlined,
+              label: 'Manage Places',
+              iconBgColor: Colors.red.withOpacity(0.05),
+              iconColor: Colors.red,
+              onTap: () =>
+                  Navigator.pushNamed(context, RouteNames.managePlaces),
+            ),
+            _ProfileItem(
+              icon: Icons.calendar_today_outlined,
+              label: 'Manage Events',
+              iconBgColor: Colors.red.withOpacity(0.05),
+              iconColor: Colors.red,
+              onTap: () =>
+                  Navigator.pushNamed(context, RouteNames.manageEvents),
+            ),
+            _ProfileItem(
+              icon: Icons.rate_review_outlined,
+              label: 'Review Moderation',
+              iconBgColor: Colors.red.withOpacity(0.05),
+              iconColor: Colors.red,
+              onTap: () =>
+                  Navigator.pushNamed(context, RouteNames.reviewModeration),
+            ),
+            _ProfileItem(
+              icon: Icons.checklist_rtl_rounded,
+              label: 'Global Approval Queue',
+              iconBgColor: Colors.red.withOpacity(0.05),
+              iconColor: Colors.red,
+              onTap: () =>
+                  Navigator.pushNamed(context, RouteNames.adminApprovalQueue),
+            ),
+          ],
         ),
-      );
+      ]);
     }
 
-    return out;
+    return sections;
   }
 
   void _showLogoutDialog(BuildContext context) {
     CustomAlertDialog.show(
       context,
       title: 'Sign Out',
-      message: 'Are you sure you want to sign out of Yatrikaa?',
+      message: 'Take a break, Yatrikaa will miss you! Come back soon.',
       confirmLabel: 'Sign Out',
-      cancelLabel: 'Cancel',
+      cancelLabel: 'Stay',
       type: CustomAlertType.error,
       icon: Icons.logout_rounded,
       onConfirm: () {
@@ -376,292 +379,81 @@ class ProfileScreen extends StatelessWidget {
   void _showGuideRequestDialog(BuildContext context) {
     CustomAlertDialog.show(
       context,
-      title: 'Become a Guide',
+      title: 'Share your Expertise',
       message:
-          'Our admin will review your profile and approve you within 24-48 hours.',
-      confirmLabel: 'Send Request',
+          'Apply to become a verified guide and help others explore the soul of Bharat.',
+      confirmLabel: 'Apply Now',
       cancelLabel: 'Later',
       type: CustomAlertType.info,
-      icon: Icons.person_add_rounded,
+      icon: Icons.verified_rounded,
       onConfirm: () async {
         final success = await PackagesService().requestGuideRole();
         if (success && context.mounted) {
           context.read<AuthBloc>().add(AppStarted());
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Guide request sent successfully!'),
-              backgroundColor: successColorDark,
-            ),
-          );
+          CustomToast.success(context, 'Application submitted!');
         }
       },
     );
   }
 }
 
-// ─── Profile Card (compact, professional) ───────────────────────
-class _ProfileCard extends StatelessWidget {
+// ─── Visual Components ───
+
+class _ProfileHeader extends StatelessWidget {
   final Authenticated state;
   final _RoleConfig cfg;
-
-  const _ProfileCard({required this.state, required this.cfg});
-
-  @override
-  Widget build(BuildContext context) {
-    final name = state.name.trim();
-    final firstChar = name.isNotEmpty ? name[0].toUpperCase() : '?';
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.ms),
-      decoration: BoxDecoration(
-        color: appWhite,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColorLight,
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // ── Gradient header strip ──
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [onboardingBlue, onboardingBlueSoft],
-              ),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: appWhite.withAlpha(178),
-                      width: 2.5,
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    radius: 30,
-                    backgroundColor: appWhite.withAlpha(51),
-                    child:
-                        state.profilePicture != null &&
-                            state.profilePicture!.isNotEmpty
-                        ? ClipOval(
-                            child: CachedNetworkImage(
-                              imageUrl: state.profilePicture!,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: appWhite,
-                                ),
-                              ),
-                              errorWidget: (context, url, error) =>
-                                  AppText.heading(
-                                    firstChar,
-                                    color: appWhite,
-                                    size: 24,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
-                          )
-                        : AppText.heading(
-                            firstChar,
-                            color: appWhite,
-                            size: 24,
-                            fontWeight: FontWeight.w800,
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppText.subHeading(
-                        state.name.isEmpty ? 'Traveler' : state.name,
-                        color: appWhite,
-                        size: 17,
-                        fontWeight: FontWeight.w800,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      AppText.caption(
-                        state.email,
-                        color: appWhite.withAlpha(191),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Stats Row ───────────────────────────────────────────────────
-class _StatsRow extends StatelessWidget {
-  final Authenticated state;
-  const _StatsRow({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 14),
-      decoration: BoxDecoration(
-        color: appWhite,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColorLight,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _StatCell(
-            icon: Icons.grid_view_rounded,
-            value: '${state.postsCount}',
-            label: 'Posts',
-            color: primaryBlue,
-            onTap: () => Navigator.pushNamed(context, RouteNames.myPosts),
-          ),
-          _verticalDivider(),
-          _StatCell(
-            icon: Icons.favorite_border_rounded,
-            value: '${state.savedCount}',
-            label: 'Likes',
-            color: travelSectionColor,
-            onTap: () => Navigator.pushNamed(context, RouteNames.favorites),
-          ),
-          _verticalDivider(),
-          _StatCell(
-            icon: Icons.star_border_rounded,
-            value: '${state.reviewsCount}',
-            label: 'Reviews',
-            color: reviewStatColor,
-            onTap: () => Navigator.pushNamed(context, RouteNames.reviews),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _verticalDivider() =>
-      Container(width: 1, height: 36, color: appGreyVeryLight);
-}
-
-class _StatCell extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _StatCell({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.color,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          child: Column(
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(height: 4),
-              AppText.body(
-                value,
-                fontWeight: FontWeight.w800,
-                color: color,
-                size: 16,
-              ),
-              AppText.small(label, color: appGrey, fontWeight: FontWeight.w500),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Section Group ───────────────────────────────────────────────
-class _SectionGroup extends StatelessWidget {
-  final String heading;
-  final List<_SectionItem> items;
-
-  const _SectionGroup({required this.heading, required this.items});
+  const _ProfileHeader({required this.state, required this.cfg});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.ms),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: AppText.caption(
-              heading.toUpperCase(),
-              color: appGrey,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-              size: 11,
-            ),
-          ),
           Container(
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(
               color: appWhite,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: shadowColorLight,
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              shape: BoxShape.circle,
             ),
-            child: Column(
-              children: List.generate(items.length, (i) {
-                return Column(
-                  children: [
-                    items[i],
-                    if (i < items.length - 1)
-                      Divider(
-                        height: 1,
-                        indent: 52,
-                        endIndent: 16,
-                        color: appGreyVeryLight,
+            child: CircleAvatar(
+              radius: 54,
+              backgroundColor: primaryBlue.withOpacity(0.1),
+              child:
+                  state.profilePicture != null &&
+                      state.profilePicture!.isNotEmpty
+                  ? ClipOval(
+                      child: CachedNetworkImage(
+                        imageUrl: state.profilePicture!,
+                        width: 108,
+                        height: 108,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        errorWidget: (context, url, error) => AppText.heading(
+                          state.name.isNotEmpty
+                              ? state.name[0].toUpperCase()
+                              : '?',
+                          size: 40,
+                          color: primaryBlue,
+                        ),
                       ),
-                  ],
-                );
-              }),
+                    )
+                  : AppText.heading(
+                      state.name.isNotEmpty ? state.name[0].toUpperCase() : '?',
+                      size: 40,
+                      color: primaryBlue,
+                    ),
             ),
+          ),
+          const SizedBox(height: 12),
+          AppText.heading(state.name, size: 22, fontWeight: FontWeight.w900),
+          const SizedBox(height: 2),
+          AppText.caption(
+            state.email,
+            color: appGrey,
+            fontWeight: FontWeight.w600,
           ),
         ],
       ),
@@ -669,118 +461,202 @@ class _SectionGroup extends StatelessWidget {
   }
 }
 
-// ─── Section Item ────────────────────────────────────────────────
-class _SectionItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback? onTap;
+class _StatsSummary extends StatelessWidget {
+  final Authenticated state;
+  const _StatsSummary({required this.state});
 
-  const _SectionItem({
-    required this.icon,
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: appWhite,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: appBlack.withOpacity(0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _StatItem(
+              label: 'Posts',
+              value: state.postsCount.toString(),
+              color: primaryBlue,
+            ),
+            _vDivider(),
+            _StatItem(
+              label: 'Favorites',
+              value: state.savedCount.toString(),
+              color: Colors.pinkAccent,
+            ),
+            _vDivider(),
+            _StatItem(
+              label: 'Reviews',
+              value: state.reviewsCount.toString(),
+              color: Colors.orangeAccent,
+            ),
+            _vDivider(),
+            _StatItem(
+              label: 'Trips',
+              value: state.tripsCount.toString(),
+              color: travelSectionColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _vDivider() =>
+      Container(height: 30, width: 1, color: appGreyVeryLight);
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  const _StatItem({
     required this.label,
+    required this.value,
     required this.color,
-    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap != null
-            ? () {
-                HapticFeedback.selectionClick();
-                onTap!();
-              }
-            : null,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(icon, size: 16, color: color),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppText.body(
-                  label,
-                  fontWeight: FontWeight.w600,
-                  size: 14,
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, size: 18, color: appGreyLight),
-            ],
-          ),
+    return Column(
+      children: [
+        AppText.heading(
+          value,
+          size: 18,
+          fontWeight: FontWeight.w900,
+          color: color,
         ),
+        const SizedBox(height: 2),
+        AppText.caption(
+          label,
+          size: 11,
+          color: appGrey,
+          fontWeight: FontWeight.w700,
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 6, top: 12),
+      child: AppText.body(
+        title,
+        size: 11,
+        fontWeight: FontWeight.w800,
+        color: appGrey,
+        letterSpacing: 0.5,
       ),
     );
   }
 }
 
-// ─── Logout Tile ─────────────────────────────────────────────────
-class _LogoutTile extends StatelessWidget {
-  final VoidCallback onTap;
-  const _LogoutTile({required this.onTap});
+class _SectionCard extends StatelessWidget {
+  final List<Widget> items;
+  const _SectionCard({required this.items});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: errorColor.withOpacity(0.2)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: errorColorLight,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: const Icon(
-                    Icons.logout_rounded,
-                    size: 16,
-                    color: errorColor,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppText.body(
-                    'Sign Out',
-                    color: errorColor,
-                    fontWeight: FontWeight.w600,
-                    size: 15,
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: errorColor.withOpacity(0.5),
-                ),
-              ],
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: appWhite,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: appBlack.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
+        ],
+      ),
+      child: Column(
+        children: List.generate(items.length, (index) {
+          return Column(
+            children: [
+              items[index],
+              if (index < items.length - 1)
+                Divider(height: 1, thickness: 1, color: appGreyLight),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _ProfileItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final Color iconBgColor;
+  final Color iconColor;
+  final Color? labelColor;
+  final bool showArrow;
+
+  const _ProfileItem({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    required this.iconBgColor,
+    required this.iconColor,
+    this.labelColor,
+    this.showArrow = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap?.call();
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: AppText.body(
+                label,
+                fontWeight: FontWeight.w600,
+                size: 14,
+                color: labelColor ?? appBlack,
+              ),
+            ),
+            if (showArrow)
+              Icon(
+                Icons.chevron_right_rounded,
+                color: appGrey.withOpacity(0.3),
+                size: 20,
+              ),
+          ],
         ),
       ),
     );

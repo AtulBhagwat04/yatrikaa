@@ -8,6 +8,10 @@ import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 import 'package:yatrikaa/Frontend/core/services/post_service.dart';
 import 'package:yatrikaa/Frontend/core/models/post_model.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
+
+import '../../../../core/widgets/custom_toast.dart';
 
 class EditPostSheet extends StatefulWidget {
   final PostModel post;
@@ -86,7 +90,7 @@ class _EditPostSheetState extends State<EditPostSheet> {
     if (updatedPost != null) {
       if (mounted) {
         CustomToast.success(context, "Post updated successfully!");
-        Navigator.pop(context, updatedPost);
+        Navigator.of(context).pop(updatedPost);
       }
     } else {
       if (mounted) {
@@ -123,41 +127,54 @@ class _EditPostSheetState extends State<EditPostSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Center(
-              child: Text(
-                "Edit Your Journey",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                  color: Colors.black,
+            Column(
+              children: [
+                Text(
+                  "Edit Your Journey",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: appBlack,
+                    letterSpacing: -0.5,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
+              ],
             ),
-            const SizedBox(height: 24),
-            _buildTextField(
+            const Divider(height: 32),
+            ModernLocationField(
               controller: _locationController,
               label: AppStrings.commLocationLabel,
-              icon: Icons.location_on_rounded,
               hint: AppStrings.commLocationHint,
+              onSelected: (place) {
+                setState(() => _locationController.text = place.name);
+              },
             ),
             const SizedBox(height: 20),
-            AppText.body(
-              AppStrings.commPhotoLabel,
-              fontWeight: FontWeight.bold,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                AppText.body(
+                  AppStrings.commPhotoLabel,
+                  fontWeight: FontWeight.w700,
+                ),
+                AppText.caption(
+                  "${widget.post.images.length + _imageFiles.length} / 10",
+                  color: primaryBlue,
+                  fontWeight: FontWeight.bold,
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             SizedBox(
-              height: 120,
+              height: 110,
               child: ListView(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 children: [
                   // Show existing images
                   ...widget.post.images.map(
                     (url) => Container(
-                      width: 120,
+                      width: 110,
                       margin: const EdgeInsets.only(right: 12),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
@@ -165,12 +182,13 @@ class _EditPostSheetState extends State<EditPostSheet> {
                           image: NetworkImage(url),
                           fit: BoxFit.cover,
                         ),
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -179,7 +197,7 @@ class _EditPostSheetState extends State<EditPostSheet> {
                     (entry) => Stack(
                       children: [
                         Container(
-                          width: 120,
+                          width: 110,
                           margin: const EdgeInsets.only(right: 12),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
@@ -187,23 +205,30 @@ class _EditPostSheetState extends State<EditPostSheet> {
                               image: FileImage(File(entry.value.path)),
                               fit: BoxFit.cover,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                         ),
                         Positioned(
-                          top: 4,
-                          right: 16,
+                          top: 6,
+                          right: 18,
                           child: GestureDetector(
                             onTap: () => _removeNewImage(entry.key),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.black54,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                size: 12,
-                                color: Colors.white,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                color: Colors.black45,
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 10,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -216,21 +241,40 @@ class _EditPostSheetState extends State<EditPostSheet> {
                     GestureDetector(
                       onTap: _pickImages,
                       child: Container(
-                        width: 120,
+                        width: 110,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
+                          color: primaryBlue.withOpacity(0.03),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(
+                            color: primaryBlue.withOpacity(0.1),
+                            style: BorderStyle.solid,
+                            width: 1.5,
+                          ),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              Icons.add_a_photo,
-                              color: primaryBlue.withOpacity(0.5),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: primaryBlue.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.add_a_photo_rounded,
+                                color: primaryBlue,
+                                size: 20,
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            AppText.caption("Add Photo", color: primaryBlue),
+                            const SizedBox(height: 8),
+                            const Text(
+                              "Add",
+                              style: TextStyle(
+                                color: primaryBlue,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -248,33 +292,48 @@ class _EditPostSheetState extends State<EditPostSheet> {
               maxLines: null,
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _updatePost,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryBlue.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+              child: ElevatedButton(
+                onPressed: _isLoading ? () {} : _updatePost,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryBlue,
+                  disabledBackgroundColor:
+                      primaryBlue, // Keep color during loading
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        "Save Changes",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    )
-                  : const Text(
-                      "Save Changes",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+              ),
             ),
             const SizedBox(height: 32),
           ],
@@ -290,24 +349,42 @@ class _EditPostSheetState extends State<EditPostSheet> {
     required String hint,
     int minLines = 1,
     int? maxLines = 1,
+    Function(String)? onChanged,
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppText.body(label, fontWeight: FontWeight.bold),
-        const SizedBox(height: 8),
+        AppText.body(label, fontWeight: FontWeight.w700),
+        const SizedBox(height: 10),
         TextField(
           controller: controller,
+          onChanged: onChanged,
           minLines: minLines,
           maxLines: maxLines,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: Icon(icon, color: primaryBlue),
+            hintStyle: TextStyle(color: appGrey.withOpacity(0.6), fontSize: 14),
+            prefixIcon: Icon(icon, color: primaryBlue, size: 20),
+            suffixIcon: suffixIcon,
             filled: true,
-            fillColor: Colors.grey.shade100,
+            fillColor: appGreyVeryLight.withOpacity(0.5),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: appGreyLight.withOpacity(0.3)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: appGreyLight.withOpacity(0.3)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: primaryBlue, width: 1.5),
             ),
           ),
         ),

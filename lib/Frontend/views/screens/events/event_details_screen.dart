@@ -13,6 +13,7 @@ import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 import 'package:yatrikaa/Frontend/views/widgets/external_action_card.dart';
 import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final String eventId;
@@ -96,9 +97,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not launch $urlString')));
+        CustomToast.error(context, 'Could not launch $urlString');
       }
     }
   }

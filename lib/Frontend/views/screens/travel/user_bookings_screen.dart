@@ -9,7 +9,11 @@ import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart' as auth;
 import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class UserBookingsScreen extends StatefulWidget {
   const UserBookingsScreen({super.key});
@@ -37,119 +41,119 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<TravelBloc, TravelState>(
-      listenWhen: (p, c) => p.actionStatus != c.actionStatus,
-      listener: (ctx, state) {
-        if (state.actionStatus == BookingActionStatus.success &&
-            state.actionSuccessMessage != null) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.actionSuccessMessage!),
-              backgroundColor: successColorDark,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
-        } else if (state.actionStatus == BookingActionStatus.failure &&
-            state.actionError != null) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.actionError!),
-              backgroundColor: errorColorDark,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<TravelBloc, TravelState>(
+          listenWhen: (p, c) => p.actionStatus != c.actionStatus,
+          listener: (ctx, state) {
+            if (state.actionStatus == BookingActionStatus.success &&
+                state.actionSuccessMessage != null) {
+              CustomToast.success(ctx, state.actionSuccessMessage!);
+            } else if (state.actionStatus == BookingActionStatus.failure &&
+                state.actionError != null) {
+              CustomToast.error(ctx, state.actionError!);
+            }
+          },
+        ),
+        // Sync tripsCount with AuthBloc for UI consistency
+        BlocListener<TravelBloc, TravelState>(
+          listenWhen: (p, c) =>
+              p.bookingsStatus != c.bookingsStatus ||
+              p.myBookings != c.myBookings,
+          listener: (ctx, state) {
+            if (state.bookingsStatus == TravelStatus.success) {
+              ctx.read<AuthBloc>().add(SyncAuthCounts());
+            }
+          },
+        ),
+      ],
       child: BlocBuilder<TravelBloc, TravelState>(
         buildWhen: (p, c) =>
-            p.bookingsStatus != c.bookingsStatus || p.myBookings != c.myBookings,
+            p.bookingsStatus != c.bookingsStatus ||
+            p.myBookings != c.myBookings,
         builder: (ctx, state) {
-        return Scaffold(
-          backgroundColor: onboardingBlueVeryLight,
-          appBar: AppBar(
+          return Scaffold(
             backgroundColor: onboardingBlueVeryLight,
-            elevation: 0,
-            title: AppText.subHeading(
-              'My Trips',
-              fontWeight: FontWeight.w800,
-              size: 20,
-            ),
-            centerTitle: true,
-            actions: [
-              if (state.bookingsStatus == TravelStatus.loading)
-                const Padding(
-                  padding: EdgeInsets.only(right: 16),
-                  child: Center(
-                    child: SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: primaryBlue,
+            appBar: AppBar(
+              backgroundColor: onboardingBlueVeryLight,
+              elevation: 0,
+              title: AppText.subHeading(
+                'My Trips',
+                fontWeight: FontWeight.w800,
+                size: 20,
+              ),
+              centerTitle: true,
+              actions: [
+                if (state.bookingsStatus == TravelStatus.loading)
+                  const Padding(
+                    padding: EdgeInsets.only(right: 16),
+                    child: Center(
+                      child: SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: primaryBlue,
+                        ),
                       ),
                     ),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.refresh_rounded, color: primaryBlue),
+                    onPressed: () =>
+                        ctx.read<TravelBloc>().add(TravelMyBookingsRequested()),
                   ),
-                )
-              else
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded, color: primaryBlue),
-                  onPressed: () =>
-                      ctx.read<TravelBloc>().add(TravelMyBookingsRequested()),
+              ],
+              bottom: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                labelColor: primaryBlue,
+                unselectedLabelColor: appGrey,
+                indicatorColor: primaryBlue,
+                indicatorWeight: 3,
+                labelStyle: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
                 ),
-            ],
-            bottom: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              labelColor: primaryBlue,
-              unselectedLabelColor: appGrey,
-              indicatorColor: primaryBlue,
-              indicatorWeight: 3,
-              labelStyle: GoogleFonts.montserrat(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-              unselectedLabelStyle: GoogleFonts.montserrat(
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-              ),
-              tabs: [
-                Tab(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('Upcoming'),
-                      if (state.upcomingBookings.isNotEmpty) ...[
-                        const SizedBox(width: 4),
-                        _badge(state.upcomingBookings.length, primaryBlue),
+                unselectedLabelStyle: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+                tabs: [
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Upcoming'),
+                        if (state.upcomingBookings.isNotEmpty) ...[
+                          const SizedBox(width: 4),
+                          _badge(state.upcomingBookings.length, primaryBlue),
+                        ],
                       ],
+                    ),
+                  ),
+                  const Tab(text: 'Completed'),
+                  const Tab(text: 'Cancelled'),
+                ],
+              ),
+            ),
+            body: state.bookingsStatus == TravelStatus.failure
+                ? _buildError(ctx)
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildList(ctx, state.upcomingBookings, 'upcoming'),
+                      _buildList(ctx, state.completedBookings, 'completed'),
+                      _buildList(ctx, state.cancelledBookings, 'cancelled'),
                     ],
                   ),
-                ),
-                const Tab(text: 'Completed'),
-                const Tab(text: 'Cancelled'),
-              ],
-            ),
-          ),
-          body: state.bookingsStatus == TravelStatus.failure
-              ? _buildError(ctx)
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildList(ctx, state.upcomingBookings, 'upcoming'),
-                    _buildList(ctx, state.completedBookings, 'completed'),
-                    _buildList(ctx, state.cancelledBookings, 'cancelled'),
-                  ],
-                ),
-        );
-      },
-    ),
-  );
-}
+          );
+        },
+      ),
+    );
+  }
 
   Widget _badge(int count, Color color) {
     return Container(
@@ -298,12 +302,7 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
   void _confirmCancel(BuildContext ctx, BookingModel booking) {
     final startDate = booking.package?.startDate;
     if (startDate != null && DateTime.now().isAfter(startDate)) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot cancel tour after it has started.'),
-          backgroundColor: errorColorDark,
-        ),
-      );
+      CustomToast.error(ctx, 'Cannot cancel tour after it has started.');
       return;
     }
 
@@ -374,7 +373,8 @@ class _BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tourHasStarted = booking.package?.startDate != null &&
+    final tourHasStarted =
+        booking.package?.startDate != null &&
         booking.package!.startDate!.isBefore(DateTime.now());
 
     return Container(
@@ -454,18 +454,20 @@ class _BookingCard extends StatelessWidget {
                     _row(Icons.location_on_outlined, booking.destinationName),
                   _row(
                     Icons.calendar_today_outlined,
-                    _formatDate(booking.package?.startDate ?? booking.bookingDate),
-                  ),
-                    _row(
-                      Icons.person_outline_rounded,
-                      'By ${booking.organiserName}',
+                    _formatDate(
+                      booking.package?.startDate ?? booking.bookingDate,
                     ),
+                  ),
+                  _row(
+                    Icons.person_outline_rounded,
+                    'By ${booking.organiserName}',
+                  ),
                   const SizedBox(height: 12),
                   // ────────────────── TRAVELERS LIST ──────────────────
                   Theme(
-                    data: Theme.of(context).copyWith(
-                      dividerColor: Colors.transparent,
-                    ),
+                    data: Theme.of(
+                      context,
+                    ).copyWith(dividerColor: Colors.transparent),
                     child: ExpansionTile(
                       dense: true,
                       visualDensity: VisualDensity.compact,
@@ -608,20 +610,20 @@ class _BookingCard extends StatelessWidget {
                       ] else if (onCancel != null &&
                           (booking.package?.startDate == null ||
                               DateTime.now().isBefore(
-                                  booking.package!.startDate!))) ...[
+                                booking.package!.startDate!,
+                              ))) ...[
                         const SizedBox(width: 10),
                         Expanded(
                           child: OutlinedButton(
-                            onPressed:
-                                booking.status == 'CancellationRequested'
-                                    ? null
-                                    : onCancel,
+                            onPressed: booking.status == 'CancellationRequested'
+                                ? null
+                                : onCancel,
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                  color:
-                                      booking.status == 'CancellationRequested'
-                                          ? appGreyLight
-                                          : errorColorDark),
+                                color: booking.status == 'CancellationRequested'
+                                    ? appGreyLight
+                                    : errorColorDark,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -708,11 +710,7 @@ class _BookingCard extends StatelessWidget {
     }
 
     return IconButton(
-      icon: const Icon(
-        Icons.cancel_outlined,
-        color: errorColor,
-        size: 20,
-      ),
+      icon: const Icon(Icons.cancel_outlined, color: errorColor, size: 20),
       onPressed: () => _confirmTravelerCancel(context, booking, t),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
@@ -727,8 +725,10 @@ class _BookingCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title:
-            AppText.subHeading('Cancel Traveler?', fontWeight: FontWeight.w800),
+        title: AppText.subHeading(
+          'Cancel Traveler?',
+          fontWeight: FontWeight.w800,
+        ),
         content: AppText.body(
           'Are you sure you want to request cancellation for ${t.name}?',
           color: appGrey,
@@ -742,11 +742,11 @@ class _BookingCard extends StatelessWidget {
             onPressed: () {
               Navigator.pop(ctx);
               context.read<TravelBloc>().add(
-                    TravelCancelTravelerRequested(
-                      bookingId: booking.id,
-                      travelerId: t.id,
-                    ),
-                  );
+                TravelCancelTravelerRequested(
+                  bookingId: booking.id,
+                  travelerId: t.id,
+                ),
+              );
             },
             child: AppText.body('Yes, Request', color: errorColor),
           ),

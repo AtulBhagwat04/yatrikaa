@@ -1,3 +1,4 @@
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +9,8 @@ import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
 
 /// A bottom-sheet booking form that collects traveler details.
 /// Shows success / error feedback from the Bloc.
@@ -118,26 +121,17 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
       listenWhen: (prev, curr) => prev.actionStatus != curr.actionStatus,
       listener: (ctx, state) {
         if (state.actionStatus == BookingActionStatus.success) {
+          // Sync profile counts after successful booking
+          ctx.read<AuthBloc>().add(SyncAuthCounts());
           Navigator.pop(ctx); // close sheet
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(
-                state.actionSuccessMessage ??
-                    'Booking request sent! ⏳ Please wait for ${widget.guideName} to approve your booking.',
-              ),
-              backgroundColor: successColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
+          CustomToast.success(
+            ctx,
+            state.actionSuccessMessage ??
+                'Booking request sent! ⏳ Please wait for ${widget.guideName} to approve your booking.',
           );
           ctx.read<TravelBloc>().add(TravelStatusReset());
         } else if (state.actionStatus == BookingActionStatus.failure) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.actionError ?? 'Something went wrong'),
-              backgroundColor: errorColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.error(ctx, state.actionError ?? 'Something went wrong');
           ctx.read<TravelBloc>().add(TravelStatusReset());
         }
       },

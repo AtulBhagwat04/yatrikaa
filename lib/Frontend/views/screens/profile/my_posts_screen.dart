@@ -1,10 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/models/post_model.dart';
 import 'package:yatrikaa/Frontend/core/services/post_service.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
 import 'package:yatrikaa/Frontend/views/screens/community/widgets/post_card.dart';
 import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
@@ -39,6 +40,13 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
           _myPosts = allPosts.where((p) => p.author.id == userId).toList();
           _isLoading = false;
         });
+
+        // Sync the actual count with the AuthBloc for UI consistency
+        if (mounted) {
+          context.read<AuthBloc>().add(
+            UpdateAuthCounts(postsCount: _myPosts.length),
+          );
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -95,6 +103,8 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
                         setState(() {
                           _myPosts.removeWhere((p) => p.id == post.id);
                         });
+                        // Sync count after deletion
+                        context.read<AuthBloc>().add(SyncAuthCounts());
                       }
                     },
                   );

@@ -73,3 +73,4 @@ class UpdateAuthCounts extends AuthEvent {
   @override
   List<Object?> get props => [tripsCount, savedCount, reviewsCount, postsCount];
 }
+class SyncAuthCounts extends AuthEvent {}

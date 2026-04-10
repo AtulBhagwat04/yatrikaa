@@ -13,6 +13,7 @@ import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/views/screens/auth/bloc/sign_up_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/auth/bloc/sign_up_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/auth/bloc/sign_up_state.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -183,33 +184,7 @@ class _SignUpScreenState extends State<SignUpScreen>
               child: BlocConsumer<SignupBloc, SignupState>(
                 listener: (context, state) {
                   if (state is SignupSuccess) {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            const Icon(
-                              Icons.check_circle_outline,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                AppStrings.signupSuccessMsg,
-                                style: TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: successColor,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        margin: const EdgeInsets.all(AppSpacing.m),
-                      ),
-                    );
+                    CustomToast.success(context, AppStrings.signupSuccessMsg);
                     context.read<AuthBloc>().add(
                       LoggedIn(
                         id: state.id,

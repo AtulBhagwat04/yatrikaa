@@ -5,6 +5,7 @@ import 'package:yatrikaa/Frontend/core/constants/app_input_fields.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_button.dart';
 import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -39,22 +40,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         );
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Password updated successfully'),
-              backgroundColor: successColor,
-            ),
-          );
+          CustomToast.success(context, 'Password updated successfully');
           Navigator.pop(context);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
-              backgroundColor: errorColor,
-            ),
-          );
+          CustomToast.error(context, e.toString().replaceAll('Exception: ', ''));
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);

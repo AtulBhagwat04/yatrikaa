@@ -1,5 +1,6 @@
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
+import 'package:yatrikaa/Frontend/core/models/review_model.dart';
 
 class ItineraryStep {
   final int day;
@@ -70,7 +71,7 @@ class OrganizerModel {
     return OrganizerModel(
       id: json['_id'] ?? '',
       name: json['name'] ?? 'Yatrikaa Guide',
-      profileImage: json['profileImage'],
+      profileImage: json['profilePicture'] ?? json['profileImage'],
       role: json['role'] ?? 'Guide',
       rating: (json['rating'] ?? json['averageRating'] ?? 0.0).toDouble(),
       tripsHosted:
@@ -82,6 +83,13 @@ class OrganizerModel {
           json['isVerified'] == true ||
           json['guideRequestStatus'] == 'Approved',
     );
+  }
+
+  String get profileUrl {
+    if (profileImage == null || profileImage!.isEmpty)
+      return AppAssets.placeholderImageUrl;
+    if (profileImage!.startsWith('http')) return profileImage!;
+    return ApiConstants.getPhotoUrl(profileImage!);
   }
 }
 
@@ -112,6 +120,7 @@ class TravelPackageModel {
   final DateTime? startDate;
   final DateTime? endDate;
   final bool isComingSoon;
+  final List<ReviewModel> reviews;
 
   TravelPackageModel({
     required this.id,
@@ -140,6 +149,7 @@ class TravelPackageModel {
     this.startDate,
     this.endDate,
     this.isComingSoon = false,
+    this.reviews = const [],
   });
 
   factory TravelPackageModel.fromJson(Map<String, dynamic> json) {
@@ -189,7 +199,11 @@ class TravelPackageModel {
         endDate: json['endDate'] != null
             ? DateTime.tryParse(json['endDate'].toString())
             : null,
-        isComingSoon: json['isComingSoon'] == true || json['isComingSoon'] == 'true',
+        isComingSoon:
+            json['isComingSoon'] == true || json['isComingSoon'] == 'true',
+        reviews: (json['reviews'] as List? ?? [])
+            .map((r) => ReviewModel.fromJson(r))
+            .toList(),
       );
     } catch (e) {
       print('TravelPackageModel.fromJson error: $e');
@@ -238,6 +252,7 @@ class TravelPackageModel {
     DateTime? startDate,
     DateTime? endDate,
     bool? isComingSoon,
+    List<ReviewModel>? reviews,
   }) {
     return TravelPackageModel(
       id: id ?? this.id,
@@ -266,6 +281,7 @@ class TravelPackageModel {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       isComingSoon: isComingSoon ?? this.isComingSoon,
+      reviews: reviews ?? this.reviews,
     );
   }
 
@@ -310,6 +326,7 @@ class TravelPackageModel {
       'startDate': startDate?.toIso8601String(),
       'endDate': endDate?.toIso8601String(),
       'isComingSoon': isComingSoon,
+      'reviews': reviews.map((r) => r.toJson()).toList(),
     };
   }
 }

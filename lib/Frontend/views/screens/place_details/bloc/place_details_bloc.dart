@@ -13,7 +13,37 @@ class PlaceDetailsBloc extends Bloc<PlaceDetailsEvent, PlaceDetailsState> {
     on<PlaceDetailsStarted>(_onStarted);
     on<PlaceDetailsFavoriteToggled>(_onFavoriteToggled);
     on<PlaceDetailsBookmarkToggled>(_onBookmarkToggled);
+    on<PlaceReviewAdded>(_onReviewAdded);
+    on<PlaceReviewUpdated>(_onReviewUpdated);
+    on<PlaceReviewDeleted>(_onReviewDeleted);
   }
+
+  Future<void> _onReviewAdded(
+    PlaceReviewAdded event,
+    Emitter<PlaceDetailsState> emit,
+  ) async {
+    if (state.place == null) return;
+
+    try {
+      final updatedPlace = await _placesService.addReview(
+        state.place!.id,
+        event.rating,
+        event.comment,
+      );
+
+      if (updatedPlace != null) {
+        emit(state.copyWith(
+          place: updatedPlace,
+          toastMessage: "Review submitted successfully!",
+        ));
+      } else {
+        emit(state.copyWith(toastMessage: "Error submitting review"));
+      }
+    } catch (e) {
+      emit(state.copyWith(toastMessage: "Error: $e"));
+    }
+  }
+
 
   void _onBookmarkToggled(
     PlaceDetailsBookmarkToggled event,
@@ -200,6 +230,58 @@ class PlaceDetailsBloc extends Bloc<PlaceDetailsEvent, PlaceDetailsState> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _onReviewUpdated(
+    PlaceReviewUpdated event,
+    Emitter<PlaceDetailsState> emit,
+  ) async {
+    if (state.place == null) return;
+    try {
+      final updatedPlace = await _placesService.updateReview(
+        state.place!.id,
+        event.reviewId,
+        event.rating,
+        event.comment,
+      );
+      if (updatedPlace != null) {
+        emit(
+          state.copyWith(
+            place: updatedPlace,
+            toastMessage: "Review updated successfully!",
+          ),
+        );
+      } else {
+        emit(state.copyWith(toastMessage: "Error: Could not update review"));
+      }
+    } catch (e) {
+      emit(state.copyWith(toastMessage: "Error: $e"));
+    }
+  }
+
+  Future<void> _onReviewDeleted(
+    PlaceReviewDeleted event,
+    Emitter<PlaceDetailsState> emit,
+  ) async {
+    if (state.place == null) return;
+    try {
+      final updatedPlace = await _placesService.deleteReview(
+        state.place!.id,
+        event.reviewId,
+      );
+      if (updatedPlace != null) {
+        emit(
+          state.copyWith(
+            place: updatedPlace,
+            toastMessage: "Review deleted successfully!",
+          ),
+        );
+      } else {
+        emit(state.copyWith(toastMessage: "Error: Could not delete review"));
+      }
+    } catch (e) {
+      emit(state.copyWith(toastMessage: "Error: $e"));
     }
   }
 }

@@ -14,6 +14,8 @@ import 'package:yatrikaa/Frontend/core/models/place_model.dart';
 import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
 import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 
 class ManagePlacesScreen extends StatefulWidget {
@@ -213,24 +215,13 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
               ),
             ],
           ),
-          child: TextField(
-            controller: _searchController,
-            onChanged: _filterPlaces,
-            decoration: InputDecoration(
-              hintText: "Search your places...",
-              hintStyle: GoogleFonts.montserrat(
-                color: Colors.grey.shade400,
-                fontSize: 14,
-              ),
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: primaryBlue,
-                size: 20,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 15),
+            child: ModernSearchBar(
+              controller: _searchController,
+              onChanged: _filterPlaces,
+              suggestionsEnabled: false,
+              hint: "Search your places...",
+              icon: Icons.search_rounded,
             ),
-          ),
         ),
       ),
     );
@@ -509,316 +500,361 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheetState) {
-          List<Map<String, dynamic>> combinedItems = [
-            ...currentUrls.map(
-              (p) => {
-                'url': _getPhotoUrl(p),
-                'type': 'image',
-                'data': p,
-              },
-            ),
-          ];
-          List<String> displayUrls = combinedItems
-              .map((item) => item['url'] as String)
-              .toList();
+      builder: (ctx) {
+        bool isSheetLoading = false;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            List<Map<String, dynamic>> combinedItems = [
+              ...currentUrls.map(
+                (p) => {
+                  'url': _getPhotoUrl(p),
+                  'type': 'image',
+                  'data': p,
+                },
+              ),
+            ];
+            List<String> displayUrls = combinedItems
+                .map((item) => item['url'] as String)
+                .toList();
 
-          return Container(
-            height: MediaQuery.of(context).size.height * 0.85,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-            ),
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 20,
-                    horizontal: 24,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey.shade100),
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                children: [
+                  // Drag Handle
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AppText.heading(
-                        "Edit Gallery",
-                        size: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 24,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        AppText.subHeading(
-                          "MANAGE GALLERY",
-                          size: 12,
-                          color: Colors.grey,
+                        AppText.heading(
+                          "Edit Place Gallery",
+                          size: 20,
+                          fontWeight: FontWeight.w900,
                         ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 150,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              ...displayUrls.asMap().entries.map((entry) {
-                                int idx = entry.key;
-                                String url = entry.value;
-                                return Container(
-                                  width: 130,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  child: Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: CachedNetworkImage(
-                                          imageUrl: url,
-                                          height: 150,
-                                          width: 130,
-                                          fit: BoxFit.cover,
-                                          placeholder: (_, _) =>
-                                              const ShimmerBox(),
-                                          errorWidget: (_, _, _) =>
-                                              Container(
-                                                color: Colors.grey.shade200,
-                                                child: const Icon(
-                                                  Icons.broken_image,
-                                                ),
-                                              ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 5,
-                                        right: 5,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            if (combinedItems.length == 1 &&
-                                                pickedFiles.isEmpty) {
-                                              CustomToast.warning(
-                                                context,
-                                                "At least one image is required",
-                                                title: "Wait!",
-                                              );
-                                              return;
-                                            }
-                                            setSheetState(() {
-                                              currentUrls.remove(combinedItems[idx]['data']);
-                                              combinedItems = [
-                                                ...currentUrls.map(
-                                                  (p) => {
-                                                    'url': _getPhotoUrl(p),
-                                                    'type': 'image',
-                                                    'data': p,
-                                                  },
-                                                ),
-                                              ];
-                                              displayUrls = combinedItems
-                                                  .map(
-                                                    (item) =>
-                                                        item['url'] as String,
-                                                  )
-                                                  .toList();
-                                            });
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.redAccent,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 14,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                              for (var i = 0; i < pickedFiles.length; i++)
-                                Container(
-                                  width: 130,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  child: Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.file(
-                                          File(pickedFiles[i].path),
-                                          height: 150,
-                                          width: 130,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 5,
-                                        right: 5,
-                                        child: GestureDetector(
-                                          onTap: () => setSheetState(
-                                            () => pickedFiles.removeAt(i),
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.black54,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 14,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              GestureDetector(
-                                onTap: () async {
-                                  if (combinedItems.length +
-                                          pickedFiles.length >=
-                                      10) {
-                                    CustomToast.warning(
-                                      context,
-                                      "Maximum 10 images allowed",
-                                      title: "Hold on!",
-                                    );
-                                    return;
-                                  }
-                                  final imgs = await _picker.pickMultiImage();
-                                  if (imgs.isNotEmpty) {
-                                    setSheetState(
-                                      () => pickedFiles.addAll(
-                                        imgs.take(
-                                          10 -
-                                              (combinedItems.length +
-                                                  pickedFiles.length),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: Container(
-                                  width: 130,
-                                  decoration: BoxDecoration(
-                                    color: onboardingBlueVeryLight,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.blue.withValues(alpha: 0.1),
-                                      style: BorderStyle.solid,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.add_photo_alternate_rounded,
-                                        color: primaryBlue.withOpacity(0.6),
-                                        size: 32,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      AppText.caption(
-                                        "Add Photo",
-                                        color: primaryBlue,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close_rounded),
                         ),
-                        const SizedBox(height: 32),
-                        _buildSheetField(
-                          "Place Name",
-                          nameController,
-                          Icons.place_rounded,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSheetField(
-                          "Address",
-                          addressController,
-                          Icons.map_rounded,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSheetField(
-                          "Description",
-                          descriptionController,
-                          Icons.notes_rounded,
-                          maxLines: 4,
-                        ),
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 55,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (currentUrls.isEmpty &&
-                                  pickedFiles.isEmpty) {
-                                CustomToast.warning(
-                                  context,
-                                  "At least one image is required",
-                                  title: "Wait!",
-                                );
-                                return;
-                              }
-                              Navigator.pop(ctx);
-                              _handleUpdate(place.id!, {
-                                'name': nameController.text.trim(),
-                                'editorial_summary': {
-                                  'overview': descriptionController.text.trim(),
-                                },
-                                'formatted_address': addressController.text
-                                    .trim(),
-                                'photos': currentUrls.map((p) => {'photo_reference': p}).toList(),
-                                'images': currentUrls,
-                              }, pickedFiles);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryBlue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: AppText.body(
-                              "Update Place Info",
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppText.subHeading(
+                            "MANAGE GALLERY",
+                            size: 11,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 150,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: [
+                                ...displayUrls.asMap().entries.map((entry) {
+                                  int idx = entry.key;
+                                  String url = entry.value;
+                                  return Container(
+                                    width: 130,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: CachedNetworkImage(
+                                            imageUrl: url,
+                                            height: 150,
+                                            width: 130,
+                                            fit: BoxFit.cover,
+                                            placeholder: (_, _) =>
+                                                const ShimmerBox(),
+                                            errorWidget: (_, _, _) => Container(
+                                              color: Colors.grey.shade200,
+                                              child: const Icon(
+                                                Icons.broken_image,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 5,
+                                          right: 5,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              if (combinedItems.length == 1 &&
+                                                  pickedFiles.isEmpty) {
+                                                CustomToast.warning(
+                                                  context,
+                                                  "At least one image is required",
+                                                  title: "Wait!",
+                                                );
+                                                return;
+                                              }
+                                              setSheetState(() {
+                                                currentUrls.remove(
+                                                    combinedItems[idx]['data']);
+                                                combinedItems = [
+                                                  ...currentUrls.map(
+                                                    (p) => {
+                                                      'url': _getPhotoUrl(p),
+                                                      'type': 'image',
+                                                      'data': p,
+                                                    },
+                                                  ),
+                                                ];
+                                                displayUrls = combinedItems
+                                                    .map(
+                                                      (item) =>
+                                                          item['url'] as String,
+                                                    )
+                                                    .toList();
+                                              });
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.redAccent,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                color: Colors.white,
+                                                size: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                                for (var i = 0; i < pickedFiles.length; i++)
+                                  Container(
+                                    width: 130,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(
+                                            File(pickedFiles[i].path),
+                                            height: 150,
+                                            width: 130,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 5,
+                                          right: 5,
+                                          child: GestureDetector(
+                                            onTap: () => setSheetState(
+                                              () => pickedFiles.removeAt(i),
+                                            ),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.black54,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                color: Colors.white,
+                                                size: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                GestureDetector(
+                                  onTap: () async {
+                                    if (combinedItems.length +
+                                            pickedFiles.length >=
+                                        10) {
+                                      CustomToast.warning(
+                                        context,
+                                        "Maximum 10 images allowed",
+                                        title: "Hold on!",
+                                      );
+                                      return;
+                                    }
+                                    final imgs = await _picker.pickMultiImage();
+                                    if (imgs.isNotEmpty) {
+                                      setSheetState(
+                                        () => pickedFiles.addAll(
+                                          imgs.take(
+                                            10 -
+                                                (combinedItems.length +
+                                                    pickedFiles.length),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 130,
+                                    decoration: BoxDecoration(
+                                      color: onboardingBlueVeryLight,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.blue.withValues(alpha: 0.1),
+                                        style: BorderStyle.solid,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.add_photo_alternate_rounded,
+                                          color: primaryBlue.withOpacity(0.6),
+                                          size: 32,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        AppText.caption(
+                                          "Add Photo",
+                                          color: primaryBlue,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          AppText.subHeading(
+                            "PLACE INFO",
+                            size: 11,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSheetField(
+                            "Place Name",
+                            nameController,
+                            Icons.place_rounded,
+                          ),
+                          const SizedBox(height: 16),
+                          ModernLocationField(
+                            controller: addressController,
+                            label: "Address",
+                            hint: "Search and select address",
+                          ),
+                          const SizedBox(height: 16),
+                          _buildSheetField(
+                            "Description",
+                            descriptionController,
+                            Icons.notes_rounded,
+                            maxLines: 4,
+                          ),
+                          const SizedBox(height: 32),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: isSheetLoading
+                                  ? () {}
+                                  : () async {
+                                      if (currentUrls.isEmpty &&
+                                          pickedFiles.isEmpty) {
+                                        CustomToast.warning(
+                                          context,
+                                          "At least one image is required",
+                                          title: "Wait!",
+                                        );
+                                        return;
+                                      }
+
+                                      setSheetState(() => isSheetLoading = true);
+                                      final success = await _handleUpdate(
+                                          place.id!,
+                                          {
+                                            'name': nameController.text.trim(),
+                                            'editorial_summary': {
+                                              'overview': descriptionController
+                                                  .text
+                                                  .trim(),
+                                            },
+                                            'formatted_address':
+                                                addressController.text.trim(),
+                                            'photos': currentUrls
+                                                .map((p) =>
+                                                    {'photo_reference': p})
+                                                .toList(),
+                                            'images': currentUrls,
+                                          },
+                                          pickedFiles);
+
+                                      if (success && mounted) {
+                                        Navigator.pop(ctx);
+                                      } else if (mounted) {
+                                        setSheetState(
+                                            () => isSheetLoading = false);
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryBlue,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: primaryBlue,
+                                disabledForegroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: isSheetLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : AppText.body(
+                                      "Update Place Info",
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -854,12 +890,11 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     );
   }
 
-  Future<void> _handleUpdate(
+  Future<bool> _handleUpdate(
     String id,
     Map<String, dynamic> body,
     List<XFile> images,
   ) async {
-    setState(() => _isLoading = true);
     try {
       final success = await _placesService.updatePlace(
         id,
@@ -868,14 +903,15 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
       );
       if (success && mounted) {
         CustomToast.success(context, "Place updated successfully!");
-        // Fetch single updated place to reflect changes without full list refresh
         _refreshSinglePlace(id);
+        return true;
       }
+      return false;
     } catch (e) {
       if (mounted) {
         CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
       }
-      setState(() => _isLoading = false);
+      return false;
     }
   }
 

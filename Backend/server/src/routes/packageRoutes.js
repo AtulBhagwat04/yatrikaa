@@ -15,7 +15,10 @@ const {
   getPackageParticipants,
   getAllPackagesAdmin,
   getGuideBookings,
-  handleTravelerStatus } = require('../controllers/packagesController');
+  handleTravelerStatus,
+  addReview,
+  updateReview,
+  deleteReview } = require('../controllers/packagesController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
@@ -67,6 +70,9 @@ router.patch(
 router.delete('/:id', protect, authorize('admin'), deletePackage);
 
 router.post('/:id/join', protect, joinPackage);                         // User: join a package
+router.post('/:id/reviews', protect, addReview);                        // User: add a review
+router.put('/:id/reviews/:reviewId', protect, updateReview);           // User: update own review
+router.delete('/:id/reviews/:reviewId', protect, deleteReview);        // User: delete own review
 router.get('/:id/participants', protect, getPackageParticipants);       // Guide/Admin: participants
 
 module.exports = router;

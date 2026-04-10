@@ -14,6 +14,12 @@ import 'package:yatrikaa/Frontend/views/widgets/booking_form_sheet.dart';
 import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 import 'package:yatrikaa/Frontend/views/widgets/rating_badge.dart';
 import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
+import 'package:yatrikaa/Frontend/views/widgets/add_review_sheet.dart';
+import 'package:yatrikaa/Frontend/views/widgets/review_card.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
+import 'package:yatrikaa/Frontend/core/models/review_model.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
   final String packageId;
@@ -152,89 +158,153 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: appWhite,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          context.read<TravelBloc>().add(
-            TravelPackageDetailRequested(widget.package.id),
-          );
-        },
-        child: Stack(
-          children: [
-            CustomScrollView(
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
+    return BlocListener<TravelBloc, TravelState>(
+      listenWhen: (p, c) => p.actionStatus != c.actionStatus,
+      listener: (context, state) {
+        if (state.actionStatus == BookingActionStatus.success &&
+            state.actionSuccessMessage != null) {
+          CustomToast.showSuccess(context, state.actionSuccessMessage!);
+          context.read<TravelBloc>().add(const TravelStatusReset());
+        } else if (state.actionStatus == BookingActionStatus.failure &&
+            state.actionError != null) {
+          CustomToast.showError(context, state.actionError!);
+          context.read<TravelBloc>().add(const TravelStatusReset());
+        }
+      },
+      child: Scaffold(
+        backgroundColor: appWhite,
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(
+            bottom: 140,
+          ), // Position above booking bar
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => AddReviewSheet(
+                  id: widget.package.id,
+                  onSubmitted: (rating, comment) {
+                    context.read<TravelBloc>().add(
+                      TravelReviewAdded(
+                        packageId: widget.package.id,
+                        rating: rating,
+                        comment: comment,
+                      ),
+                    );
+                    Navigator.pop(context);
+                  },
+                ),
+              );
+            },
+            backgroundColor: primaryBlue,
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            icon: const Icon(Icons.rate_review_rounded, color: appWhite),
+            label: Text(
+              'Rate & Review',
+              style: GoogleFonts.outfit(
+                color: appWhite,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
               ),
-              slivers: [
-                _buildHero(context),
-                SliverToBoxAdapter(
-                  child: Container(
-                    decoration: const BoxDecoration(color: appWhite),
-                    child: Column(
-                      children: [
-                        // Section 2: Experience / About
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.m,
-                            AppSpacing.m,
-                            AppSpacing.m,
-                            AppSpacing.xs,
+            ),
+          ),
+        ),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            context.read<TravelBloc>().add(
+              TravelPackageDetailRequested(widget.package.id),
+            );
+          },
+          child: Stack(
+            children: [
+              CustomScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                slivers: [
+                  _buildHero(context),
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: const BoxDecoration(color: appWhite),
+                      child: Column(
+                        children: [
+                          // Section 2: Experience / About
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.m,
+                              AppSpacing.m,
+                              AppSpacing.m,
+                              AppSpacing.xs,
+                            ),
+                            child: _AboutSection(
+                              description: widget.package.description,
+                            ),
                           ),
-                          child: _AboutSection(
-                            description: widget.package.description,
-                          ),
-                        ),
 
-                        // Section 3: Stats Row
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.m,
-                            vertical: AppSpacing.xs,
-                          ),
-                          child: _buildStatsCard(),
-                        ),
-
-                        if (widget.package.itinerary.isNotEmpty) ...[
-                          _buildSectionDivider(),
+                          // Section 3: Stats Row
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.m,
                               vertical: AppSpacing.xs,
                             ),
-                            child: _buildItinerary(),
+                            child: _buildStatsCard(),
                           ),
+
+                          if (widget.package.itinerary.isNotEmpty) ...[
+                            _buildSectionDivider(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.m,
+                                vertical: AppSpacing.xs,
+                              ),
+                              child: _buildItinerary(),
+                            ),
+                          ],
+
+                          // Section 4: Inclusions
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.m,
+                              vertical: AppSpacing.xs,
+                            ),
+                            child: _buildInclusionsExclusions(),
+                          ),
+
+                          // Section 5: Guide
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.m,
+                              vertical: AppSpacing.xs,
+                            ),
+                            child: _buildGuideCard(),
+                          ),
+
+                          // Section 6: Reviews
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.m,
+                              vertical: AppSpacing.m,
+                            ),
+                            child: _buildReviewsSection(),
+                          ),
+
+                          const SizedBox(height: 250),
                         ],
-
-                        // Section 4: Inclusions
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.m,
-                            vertical: AppSpacing.xs,
-                          ),
-                          child: _buildInclusionsExclusions(),
-                        ),
-
-                        // Section 5: Guide
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.m,
-                            vertical: AppSpacing.xs,
-                          ),
-                          child: _buildGuideCard(),
-                        ),
-
-                        const SizedBox(height: 210),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            _buildStickyHeader(context),
-            _buildBookingBar(context),
-          ],
+                ],
+              ),
+              _buildStickyHeader(context),
+              _buildBookingBar(context),
+            ],
+          ),
         ),
       ),
     );
@@ -668,7 +738,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             child: !expanded
-                ? const SizedBox(width: double.infinity, height: 0)
+                ? const SizedBox.shrink()
                 : Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                     child: Column(
@@ -734,17 +804,8 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundImage: org.profileImage != null
-                    ? NetworkImage(org.profileImage!)
-                    : null,
+                backgroundImage: NetworkImage(org.profileUrl),
                 backgroundColor: primaryBlue.withAlpha(15),
-                child: org.profileImage == null
-                    ? const Icon(
-                        Icons.person_rounded,
-                        color: primaryBlue,
-                        size: 30,
-                      )
-                    : null,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -795,6 +856,182 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  // ──────────────────────── REVIEWS SECTION ─────────────────────────────────
+
+  Widget _buildReviewsSection() {
+    final reviews = widget.package.reviews;
+    if (reviews.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('Guest Reviews'),
+          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: primaryBlue.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: primaryBlue.withOpacity(0.1)),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.reviews_outlined,
+                  size: 48,
+                  color: primaryBlue.withOpacity(0.4),
+                ),
+                const SizedBox(height: 16),
+                AppText.body(
+                  'No reviews yet for this package.',
+                  color: appGrey,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 8),
+                AppText.caption(
+                  'Be the first to share your experience!',
+                  color: appGrey,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionTitle('Guest Reviews (${reviews.length})'),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: ratingColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star_rounded, color: ratingColor, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.package.averageRating.toStringAsFixed(1),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w900,
+                      color: ratingColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Builder(
+          builder: (context) {
+            final authState = context.read<AuthBloc>().state;
+            final currentUserId = authState is Authenticated ? authState.id : null;
+            
+            // Sort to show current user's review first
+            List<ReviewModel> displayReviews = List.from(reviews);
+            if (currentUserId != null) {
+              final userIndex = displayReviews.indexWhere((r) => r.userId == currentUserId);
+              if (userIndex != -1) {
+                final userReview = displayReviews.removeAt(userIndex);
+                displayReviews.insert(0, userReview);
+              }
+            }
+
+            return ListView.separated(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displayReviews.length > 5 ? 5 : displayReviews.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 16),
+              itemBuilder: (_, i) {
+                final review = displayReviews[i];
+
+                return ReviewCard(
+                  review: review,
+                  currentUserId: currentUserId,
+                  onEdit: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => AddReviewSheet(
+                        id: widget.package.id,
+                        initialRating: review.rating,
+                        initialComment: review.text,
+                        onSubmitted: (rating, comment) {
+                          context.read<TravelBloc>().add(
+                                TravelReviewUpdated(
+                                  packageId: widget.package.id,
+                                  reviewId: review.id!,
+                                  rating: rating,
+                                  comment: comment,
+                                ),
+                              );
+                          Navigator.pop(context);
+                        },
+                      ),
+                    );
+                  },
+                  onDelete: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Delete Review'),
+                        content: const Text('Are you sure you want to delete this review?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              context.read<TravelBloc>().add(
+                                    TravelReviewDeleted(
+                                      packageId: widget.package.id,
+                                      reviewId: review.id!,
+                                    ),
+                                  );
+                              Navigator.pop(ctx);
+                            },
+                            child: const Text('Delete',
+                                style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
+        if (reviews.length > 5)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Center(
+              child: TextButton(
+                onPressed: () {
+                  // Future: show all reviews screen
+                },
+                child: AppText.body(
+                  "View All ${reviews.length} Reviews",
+                  color: primaryBlue,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -1206,7 +1443,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                       duration: const Duration(milliseconds: 450),
                       curve: Curves.fastOutSlowIn,
                       child: !_expanded
-                          ? const SizedBox(width: double.infinity, height: 0)
+                          ? const SizedBox.shrink()
                           : Padding(
                               padding: const EdgeInsets.only(top: 12),
                               child: Column(
@@ -1303,7 +1540,6 @@ class _ItineraryTileState extends State<_ItineraryTile> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: primaryBlue),
           const SizedBox(width: 6),

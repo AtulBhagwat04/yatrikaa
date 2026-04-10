@@ -5,11 +5,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
 import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 /// Guide / Admin dashboard showing all their own travel packages,
 /// with real data fetched from the backend via TravelBloc.
@@ -71,13 +73,7 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
       listener: (context, state) {
         if (state.actionStatus == BookingActionStatus.success &&
             state.actionSuccessMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.actionSuccessMessage!),
-              backgroundColor: successColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.success(context, state.actionSuccessMessage!);
           // Refresh list if it was a deletion
           if (state.actionSuccessMessage!.contains('deleted')) {
             context.read<TravelBloc>().add(TravelMyPackagesRequested());
@@ -85,13 +81,7 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
           context.read<TravelBloc>().add(TravelStatusReset());
         } else if (state.actionStatus == BookingActionStatus.failure &&
             state.actionError != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.actionError!),
-              backgroundColor: errorColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.error(context, state.actionError!);
           context.read<TravelBloc>().add(TravelStatusReset());
         }
       },

@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema({
     enum: ['None', 'Pending', 'Approved', 'Rejected'],
     default: 'None'
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
   tripsCount: {
     type: Number,
     default: 0

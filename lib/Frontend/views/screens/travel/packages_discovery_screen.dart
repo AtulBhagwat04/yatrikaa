@@ -8,6 +8,7 @@ import 'package:yatrikaa/Frontend/core/services/packages_service.dart';
 import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
 import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 import 'package:yatrikaa/Frontend/views/widgets/category_chip.dart';
 import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
@@ -44,6 +45,7 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
   // ── Lazy-load state ─────────────────────────────────────────────────────────
   final PackagesService _service = PackagesService();
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
   final List<TravelPackageModel> _packages = [];
   int _currentPage = 1;
   bool _isLoadingInitial = true;
@@ -51,6 +53,7 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
   bool _hasMore = false;
   bool _hasError = false;
   String _selectedCategory = 'All';
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -65,6 +68,7 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -97,6 +101,7 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
     try {
       final result = await _service.getPackagesPaginated(
         category: _selectedCategory == 'All' ? null : _selectedCategory,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
         page: page,
         limit: _kPackagesPageSize,
       );
@@ -134,6 +139,13 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
     _fetchPage(1, reset: true);
   }
 
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+    _fetchPage(1, reset: true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,6 +163,23 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
             slivers: [
               // ── Modern Header ─────────────────────────────────────────────
               _buildHeader(context),
+
+              // ── Search Bar ────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: ModernSearchBar(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    suggestionsEnabled: true,
+                    suggestionType: SuggestionType.packages,
+                    onSuggestionSelected: (suggestion) {
+                      _searchController.text = suggestion;
+                      _onSearchChanged(suggestion);
+                    },
+                  ),
+                ),
+              ),
 
               // ── Category chips ────────────────────────────────────────────
               SliverToBoxAdapter(
@@ -218,7 +247,11 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
               // ── "Load more" shimmer at bottom ──────────────────────────────
               if (_isLoadingMore) _buildLoadMoreShimmer(),
 
-              const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
+              const SliverPadding(
+                padding: EdgeInsets.only(
+                  bottom: AppSpacing.xxxl + AppSpacing.l,
+                ),
+              ),
             ],
           ),
         ),
@@ -252,8 +285,8 @@ class _PackagesDiscoveryScreenState extends State<PackagesDiscoveryScreen> {
                 const SizedBox(height: 2),
                 AppText.caption(
                   AppStrings.packSubtitle,
-                  color: appGrey,
-                  fontWeight: FontWeight.w500,
+                  color: appGreyDark, // Improved contrast
+                  fontWeight: FontWeight.w600,
                   size: 13,
                 ),
               ],
@@ -435,20 +468,30 @@ class _PackageCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: isFull
-                              ? Colors.red.shade700
-                              : Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(20),
+                              ? errorColor.withOpacity(0.9)
+                              : Colors.black.withOpacity(0.55),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                            )
+                          ],
                         ),
                         child: Text(
                           package.isComingSoon
-                              ? 'Coming Soon'
+                              ? 'COMING SOON'
                               : isFull
-                                  ? 'Fully Booked'
-                                  : '$seatsLeft seats left',
+                                  ? 'FULLY BOOKED'
+                                  : '$seatsLeft SEATS LEFT',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
@@ -486,8 +529,9 @@ class _PackageCard extends StatelessWidget {
                             '₹${package.price.toInt()}',
                             style: const TextStyle(
                               color: primaryBlue,
-                              fontSize: 16,
+                              fontSize: 18, // increased from 16
                               fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
                             ),
                           ),
                         ],

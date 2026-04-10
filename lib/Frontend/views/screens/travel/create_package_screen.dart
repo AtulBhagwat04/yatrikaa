@@ -12,6 +12,8 @@ import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 /// Screen for guides / admins to create a new travel package.
 /// All data is submitted to the backend via [PackagesService].
@@ -393,13 +395,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: errorColorDark,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    CustomToast.error(context, msg);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -412,13 +408,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
       listenWhen: (p, c) => p.actionStatus != c.actionStatus,
       listener: (context, state) {
         if (state.actionStatus == BookingActionStatus.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.actionSuccessMessage ?? 'Success!'),
-              backgroundColor: successColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.success(context, state.actionSuccessMessage ?? 'Success!');
           context.read<TravelBloc>().add(TravelStatusReset());
           Navigator.pop(context);
         } else if (state.actionStatus == BookingActionStatus.failure) {
@@ -1280,33 +1270,12 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
+            child: ModernLocationField(
               controller: ctl,
-              focusNode: node,
-              style: GoogleFonts.montserrat(fontSize: 12),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: GoogleFonts.montserrat(
-                  color: appGreyLight,
-                  fontSize: 11,
-                ),
-                filled: true,
-                fillColor: Colors.black.withOpacity(0.04),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                prefixIcon: Icon(
-                  icon,
-                  size: 14,
-                  color: primaryBlue.withOpacity(0.5),
-                ),
-                isDense: true,
-              ),
+              hint: hint,
+              icon: icon,
+              showLabel: false,
+              isDense: true,
             ),
           ),
           IconButton(

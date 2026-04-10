@@ -78,6 +78,15 @@ const travelPackageSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  reviews: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    author_name: String,
+    profile_photo_url: String,
+    rating: Number,
+    text: String,
+    relative_time_description: String,
+    time: Number
+  }],
   ratings: {
     average: { type: Number, default: 0 },
     count: { type: Number, default: 0 },

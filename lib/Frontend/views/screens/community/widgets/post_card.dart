@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
@@ -9,6 +10,7 @@ import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/views/screens/community/widgets/comments_sheet.dart';
 import 'package:yatrikaa/Frontend/views/screens/community/widgets/post_detail_popup.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:yatrikaa/Frontend/views/screens/community/widgets/edit_post_sheet.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
@@ -37,6 +39,8 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   late bool _isLiked;
   late int _likeCount;
+  Timer? _debounceTimer;
+  StateSetter? _dialogRebuildCallback;
 
   @override
   void initState() {
@@ -48,18 +52,36 @@ class _PostCardState extends State<PostCard> {
   }
 
   @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   void didUpdateWidget(PostCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.post.likes != widget.post.likes) {
-      _isLiked =
+
+    if (_debounceTimer == null) {
+      final newIsLiked =
           widget.currentUserId != null &&
           widget.post.likes.contains(widget.currentUserId);
-      _likeCount = widget.post.likes.length;
+      final newLikeCount = widget.post.likes.length;
+
+      if (newIsLiked != _isLiked || newLikeCount != _likeCount) {
+        setState(() {
+          _isLiked = newIsLiked;
+          _likeCount = newLikeCount;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _dialogRebuildCallback?.call(() {});
+        });
+      }
     }
   }
 
   void _handleLike() async {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.lightImpact();
     setState(() {
       if (_isLiked) {
         _likeCount--;
@@ -69,18 +91,42 @@ class _PostCardState extends State<PostCard> {
       _isLiked = !_isLiked;
     });
 
-    final updatedPost = await PostService().likePost(widget.post.id);
-    if (updatedPost != null) {
-      widget.onUpdate(updatedPost);
-    } else {
-      if (mounted) {
-        setState(() {
-          _isLiked =
-              widget.currentUserId != null &&
-              widget.post.likes.contains(widget.currentUserId);
-          _likeCount = widget.post.likes.length;
-        });
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () async {
+      final initialIsLiked =
+          widget.currentUserId != null &&
+          widget.post.likes.contains(widget.currentUserId);
+
+      if (_isLiked != initialIsLiked) {
+        try {
+          final updatedPost = await PostService().likePost(widget.post.id);
+          _debounceTimer = null;
+          if (updatedPost != null) {
+            widget.onUpdate(updatedPost);
+          } else {
+            _rollbackLike();
+          }
+        } catch (e) {
+          _debounceTimer = null;
+          _rollbackLike();
+        }
+      } else {
+        _debounceTimer = null;
       }
+    });
+  }
+
+  void _rollbackLike() {
+    if (mounted) {
+      setState(() {
+        _isLiked =
+            widget.currentUserId != null &&
+            widget.post.likes.contains(widget.currentUserId);
+        _likeCount = widget.post.likes.length;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _dialogRebuildCallback?.call(() {});
+      });
     }
   }
 
@@ -128,77 +174,52 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _showPostOptions() {
+    FocusManager.instance.primaryFocus?.unfocus();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: const BoxDecoration(
           color: appWhite,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          boxShadow: [
+            BoxShadow(color: Colors.black12, blurRadius: 20, spreadRadius: 5),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 12),
             Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: appGreyVeryLight,
+                color: appGreyLight.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: primaryBlue.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.edit_outlined,
-                  color: primaryBlue,
-                  size: 20,
-                ),
-              ),
-              title: const Text(
-                "Edit Journey",
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-              ),
+            const SizedBox(height: 16),
+            _OptionTile(
+              icon: Icons.edit_outlined,
+              label: "Edit Journey",
+              iconColor: primaryBlue,
               onTap: () {
                 Navigator.pop(context);
                 _handleEdit();
               },
             ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: errorColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: errorColor,
-                  size: 20,
-                ),
-              ),
-              title: const Text(
-                "Delete Journey",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: errorColor,
-                ),
-              ),
+            _OptionTile(
+              icon: Icons.delete_outline_rounded,
+              label: "Delete Journey",
+              iconColor: errorColor,
               onTap: () {
                 Navigator.pop(context);
                 _handleDelete();
               },
+              isDestructive: true,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -214,10 +235,13 @@ class _PostCardState extends State<PostCard> {
       pageBuilder: (dialogContext, anim1, anim2) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            _dialogRebuildCallback = setDialogState;
             return PostDetailPopUp(
               post: widget.post,
               currentUserId: widget.currentUserId,
               currentUserRole: widget.currentUserRole,
+              isLiked: _isLiked,
+              likeCount: _likeCount,
               onLike: () {
                 _handleLike();
                 setDialogState(() {});
@@ -246,7 +270,9 @@ class _PostCardState extends State<PostCard> {
       transitionBuilder: (context, anim1, anim2, child) {
         return ScaleTransition(scale: anim1, child: child);
       },
-    );
+    ).then((_) {
+      _dialogRebuildCallback = null;
+    });
   }
 
   String _timeAgo(DateTime dateTime) {
@@ -449,6 +475,7 @@ class _PostCardState extends State<PostCard> {
                   icon: Icons.chat_bubble_outline_rounded,
                   label: '${p.comments.length}',
                   onTap: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
@@ -495,6 +522,47 @@ class _PostCardState extends State<PostCard> {
   }
 }
 
+class _OptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color iconColor;
+  final VoidCallback onTap;
+  final bool isDestructive;
+
+  const _OptionTile({
+    required this.icon,
+    required this.label,
+    required this.iconColor,
+    required this.onTap,
+    this.isDestructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: iconColor, size: 22),
+      ),
+      title: Text(
+        label,
+        style: GoogleFonts.montserrat(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: isDestructive ? errorColor : appBlack,
+        ),
+      ),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+  }
+}
+
 class _PillButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -513,27 +581,40 @@ class _PillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active ? (activeColor ?? primaryBlue) : appGrey;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? color.withOpacity(0.08) : appGreyVeryLight,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
+    return Material(
+      color: active ? color.withOpacity(0.08) : appGreyVeryLight,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: color.withOpacity(0.1),
+        highlightColor: color.withOpacity(0.05),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: active
+                  ? color.withOpacity(0.2)
+                  : appGreyLight.withOpacity(0.4),
+              width: 0.8,
             ),
-          ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

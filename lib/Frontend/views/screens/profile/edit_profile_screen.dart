@@ -12,6 +12,7 @@ import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -120,22 +121,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           );
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile updated successfully'),
-              backgroundColor: successColor,
-            ),
-          );
+          CustomToast.success(context, 'Profile updated successfully');
           Navigator.pop(context);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
-              backgroundColor: errorColor,
-            ),
-          );
+          CustomToast.error(context, e.toString().replaceAll('Exception: ', ''));
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);

@@ -15,6 +15,9 @@ import 'package:yatrikaa/Frontend/views/Routes/route_observer.dart';
 import 'package:yatrikaa/Frontend/core/services/notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+/// Global future to track app initialization status across the app.
+late Future<void> appInitialization;
+
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -23,95 +26,74 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Start initialization immediately but don't await here 
+  // to allow the UI to render its first frame instantly.
+  appInitialization = _initializeCore();
+  
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-  @override
-  State<MyApp> createState() => _MyAppState();
+Future<void> _initializeCore() async {
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    NotificationService().initialize();
+    await BackendHealthManager.instance.initialize(useLocal: true);
+    
+    // Ensure at least 2 seconds for services to soak
+    await Future.delayed(const Duration(seconds: 2));
+  } catch (e) {
+    debugPrint('Initialization error: $e');
+  }
 }
 
-class _MyAppState extends State<MyApp> {
-  late Future<void> _initFuture;
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-  @override
-  void initState() {
-    super.initState();
-    _initFuture = _initialize();
-  }
-
-  Future<void> _initialize() async {
-    try {
-      await Firebase.initializeApp();
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      NotificationService().initialize();
-      BackendHealthManager.instance.initialize(useLocal: true);
-    } catch (e) {
-      debugPrint('Bootstrap error: $e');
-    }
-  }
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _initFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const MaterialApp(
+    return MultiBlocProvider(
+      key: const ValueKey('AppRoot'),
+      providers: [
+        BlocProvider(create: (_) => AuthBloc()..add(AppStarted())),
+        BlocProvider(create: (_) => TravelBloc()),
+        BlocProvider(
+          create: (_) => ConnectivityBloc()..add(ConnectivityStarted()),
+        ),
+      ],
+      child: Builder(
+        builder: (context) {
+          return MaterialApp(
+            navigatorKey: MyApp.navigatorKey,
             debugShowCheckedModeBanner: false,
-            home: SplashLoadingView(),
-          );
-        }
-
-        return MultiBlocProvider(
-          key: const ValueKey('AppRoot'),
-          providers: [
-            BlocProvider(create: (_) => AuthBloc()..add(AppStarted())),
-            BlocProvider(create: (_) => TravelBloc()),
-            BlocProvider(
-              create: (_) => ConnectivityBloc()..add(ConnectivityStarted()),
+            theme: ThemeData(
+              useMaterial3: true,
+              textTheme: GoogleFonts.montserratTextTheme(
+                Theme.of(context).textTheme,
+              ),
+              colorSchemeSeed: primaryBlue,
             ),
-          ],
-          child: Builder(
-            builder: (context) {
-              return MaterialApp(
-                navigatorKey: MyApp.navigatorKey,
-                debugShowCheckedModeBanner: false,
-                theme: ThemeData(
-                  useMaterial3: true,
-                  textTheme: GoogleFonts.montserratTextTheme(
-                    Theme.of(context).textTheme,
-                  ),
-                  colorSchemeSeed: primaryBlue,
-                ),
-                initialRoute: RouteNames.splash,
-                onGenerateRoute: AppRoutes.generateRoute,
-                navigatorObservers: [
-                  ConnectivityRouteObserver(context.read<ConnectivityBloc>()),
-                ],
-                builder: (context, child) {
-                  return Column(
-                    children: [
-                      Expanded(child: child ?? const SizedBox()),
-                      const GlobalConnectivityBanner(),
-                    ],
-                  );
-                },
-              );
+            initialRoute: RouteNames.splash,
+            onGenerateRoute: AppRoutes.generateRoute,
+            navigatorObservers: [
+              ConnectivityRouteObserver(context.read<ConnectivityBloc>()),
+            ],
+            builder: (context, child) {
+              return child ?? const SizedBox();
             },
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
 
-class SplashLoadingView extends StatelessWidget {
-  const SplashLoadingView({super.key});
+class StaticSplashView extends StatelessWidget {
+  const StaticSplashView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -121,20 +103,24 @@ class SplashLoadingView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Image.asset(
+              'assets/logo/LogoPadded.png',
+              width: 150,
+            ),
+            const SizedBox(height: 24),
+            Text(
               'YATRIKAA',
-              style: TextStyle(
+              style: GoogleFonts.montserrat(
                 fontSize: 44,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 5,
                 color: Colors.white,
-                fontFamily: 'Montserrat',
               ),
             ),
             const SizedBox(height: 10),
             Text(
               'Discover • Plan • Travel',
-              style: TextStyle(
+              style: GoogleFonts.montserrat(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 4,

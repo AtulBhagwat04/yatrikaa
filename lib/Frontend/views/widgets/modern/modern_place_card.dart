@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
@@ -20,7 +20,7 @@ class ModernPlaceCard extends StatelessWidget {
     required this.onTap,
     this.width,
     this.height,
-    this.radius = 12,
+    this.radius = 14,
     this.margin,
   });
 
@@ -29,8 +29,17 @@ class ModernPlaceCard extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      margin: margin ?? const EdgeInsets.only(right: AppSpacing.m, bottom: 8),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(radius)),
+      margin: margin ?? const EdgeInsets.only(right: AppSpacing.m, bottom: 8, top: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),
         child: InkWell(
@@ -51,7 +60,7 @@ class ModernPlaceCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Gradient Overlay
+              // Standardized Gradient Overlay
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -59,25 +68,25 @@ class ModernPlaceCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.05),
-                      Colors.black.withOpacity(0.8),
+                      Colors.black.withOpacity(0.15),
+                      Colors.black.withOpacity(0.85),
                     ],
-                    stops: const [0.4, 0.6, 1.0],
+                    stops: const [0.4, 0.7, 1.0],
                   ),
                 ),
               ),
               // Ratings (Top Right)
               Positioned(
-                top: 12,
-                right: 12,
+                top: 14,
+                right: 14,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 10,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -93,7 +102,7 @@ class ModernPlaceCard extends StatelessWidget {
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
@@ -102,7 +111,7 @@ class ModernPlaceCard extends StatelessWidget {
               ),
               // Content (Bottom)
               Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(AppSpacing.m),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,11 +120,11 @@ class ModernPlaceCard extends StatelessWidget {
                       place.name,
                       color: Colors.white,
                       size: 18,
-                      fontWeight: FontWeight.w700,
-                      maxLines: 1,
+                      fontWeight: FontWeight.w800,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     if (place.city != null)
                       Row(
                         children: [
@@ -129,7 +138,7 @@ class ModernPlaceCard extends StatelessWidget {
                             child: AppText.caption(
                               place.city!,
                               color: Colors.white70,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                               size: 13,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

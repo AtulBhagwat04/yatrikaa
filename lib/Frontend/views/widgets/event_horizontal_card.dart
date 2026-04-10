@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
@@ -18,7 +18,7 @@ class EventHorizontalCard extends StatelessWidget {
     required this.event,
     required this.onTap,
     this.width = 250,
-    this.radius = 16,
+    this.radius = 14, // Standardized Radius
     this.margin,
   });
   final EdgeInsetsGeometry? margin;
@@ -27,14 +27,14 @@ class EventHorizontalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: width,
-      margin: margin ?? const EdgeInsets.only(right: AppSpacing.m, bottom: 8),
+      margin: margin ?? const EdgeInsets.only(right: AppSpacing.m, bottom: 8, top: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
         boxShadow: [
           BoxShadow(
-            color: shadowColorDark,
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -57,6 +57,7 @@ class EventHorizontalCard extends StatelessWidget {
                   ),
                 ),
               ),
+              // Standardized Gradient Overlay
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -64,10 +65,10 @@ class EventHorizontalCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      appBlack.withAlpha(25),
-                      appBlack.withAlpha(200),
+                      Colors.black.withOpacity(0.15),
+                      Colors.black.withOpacity(0.85),
                     ],
-                    stops: const [0.5, 0.7, 1.0],
+                    stops: const [0.4, 0.7, 1.0],
                   ),
                 ),
               ),
@@ -86,7 +87,7 @@ class EventHorizontalCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: appBlack.withAlpha(25),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -122,43 +123,45 @@ class EventHorizontalCard extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
+                        horizontal: 8,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: appWhite.withAlpha(51),
-                        borderRadius: BorderRadius.circular(4),
+                        color: appWhite.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      child: AppText.caption(
+                      child: Text(
                         event.category.toUpperCase(),
-                        color: appWhite.withAlpha(230),
-                        size: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     AppText.heading(
                       event.title,
                       color: appWhite,
-                      size: 16,
+                      size: 18,
                       fontWeight: FontWeight.w800,
                       maxLines: 2,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Icon(
                           Icons.location_on_rounded,
-                          color: appWhite.withAlpha(204),
-                          size: 12,
+                          color: appWhite.withOpacity(0.7),
+                          size: 14,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: AppText.caption(
                             event.venue,
-                            color: appWhite.withAlpha(230),
-                            fontWeight: FontWeight.w500,
+                            color: appWhite.withOpacity(0.8),
+                            fontWeight: FontWeight.w600,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),

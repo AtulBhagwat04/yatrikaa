@@ -7,6 +7,7 @@ import 'package:yatrikaa/Frontend/core/models/booking_model.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class BookingRequestsScreen extends StatefulWidget {
   final String? packageId;
@@ -46,13 +47,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen>
       listenWhen: (p, c) => p.actionStatus != c.actionStatus,
       listener: (context, state) {
         if (state.actionStatus == BookingActionStatus.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.actionSuccessMessage ?? 'Action successful'),
-              backgroundColor: successColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.success(context, state.actionSuccessMessage ?? 'Action successful');
           if (widget.packageId != null) {
             context.read<TravelBloc>().add(
               TravelPackageParticipantsRequested(widget.packageId!),
@@ -62,13 +57,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen>
           }
           context.read<TravelBloc>().add(TravelStatusReset());
         } else if (state.actionStatus == BookingActionStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.actionError ?? 'Action failed'),
-              backgroundColor: errorColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.error(context, state.actionError ?? 'Action failed');
           context.read<TravelBloc>().add(TravelStatusReset());
         }
       },
