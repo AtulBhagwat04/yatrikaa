@@ -16,50 +16,31 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Standard bottom padding
-      padding: EdgeInsets.only(
-        bottom:
-            MediaQuery.of(context).padding.bottom +
-            8, // Tighter bottom safe area
-        left: 11,
-        right: 11,
-      ),
-      color: Colors.transparent,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: 4, // Reduce from 8 to 4 for tighter edges
-            ), // Tighter vertical
-            decoration: BoxDecoration(
-              color: appWhite,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: primaryBlue.withOpacity(0.30),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _navItem(0, Icons.home_rounded, AppStrings.navHome),
-                _navItem(1, Icons.near_me_rounded, AppStrings.navNearby),
-                _navItem(2, Icons.groups_rounded, AppStrings.navCommunity),
-                _navItem(3, Icons.luggage_rounded, AppStrings.navPackages),
-                _navItem(4, Icons.person_rounded, AppStrings.navProfile),
-              ],
-            ),
+      clipBehavior: Clip.antiAlias,
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+      decoration: BoxDecoration(
+        color: appWhite,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        border: Border.all(color: primaryBlue.withOpacity(0.3), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
           ),
+        ],
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _navItem(0, Icons.home_rounded, AppStrings.navHome),
+            _navItem(1, Icons.near_me_rounded, AppStrings.navNearby),
+            _navItem(2, Icons.groups_rounded, AppStrings.navCommunity),
+            _navItem(3, Icons.luggage_rounded, AppStrings.navPackages),
+            _navItem(4, Icons.person_rounded, AppStrings.navProfile),
+          ],
         ),
       ),
     );
@@ -68,9 +49,8 @@ class AppBottomNav extends StatelessWidget {
   Widget _navItem(int index, IconData icon, String label) {
     bool isActive = selectedIndex == index;
     // We use a Flexible here to ensure the Row doesn't overflow if multiple items
-    // are in a transitional state (one expanding, one shrinking).
     return Flexible(
-      flex: isActive ? 0 : 0,
+      flex: isActive ? 1 : 0,
       child: GestureDetector(
         onTap: () => onItemSelected(index),
         behavior: HitTestBehavior.opaque,
@@ -78,14 +58,12 @@ class AppBottomNav extends StatelessWidget {
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOut,
           padding: EdgeInsets.symmetric(
-            horizontal: isActive
-                ? 12
-                : 8, // Tighter horizontal for overflow safety
-            vertical: 10,
+            horizontal: isActive ? 14 : 8,
+            vertical: 8,
           ),
           decoration: BoxDecoration(
             color: isActive ? primaryBlue : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
                 color: isActive
@@ -105,21 +83,22 @@ class AppBottomNav extends StatelessWidget {
                 duration: const Duration(milliseconds: 300),
                 child: Icon(
                   icon,
-                  color: isActive ? Colors.white : appGreyDark.withOpacity(0.7),
-                  size: 20, // Slightly smaller for production safety
+                  color: isActive ? Colors.white : appGreyDark,
+                  size: 24,
                 ),
               ),
               if (isActive) ...[
-                const SizedBox(width: 6), // Smaller gap
+                const SizedBox(width: 6),
                 Flexible(
                   child: Text(
                     label,
                     maxLines: 1,
-                    overflow: TextOverflow.clip, // Clip if literally no space
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 11, // Tighter font for production safety
-                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: -0.4,
                     ),
                   ),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
@@ -6,6 +6,7 @@ import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class ReviewModerationScreen extends StatefulWidget {
   const ReviewModerationScreen({super.key});
@@ -181,9 +182,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Review approved')),
-                      );
+                      CustomToast.success(context, 'Review approved');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: travelSectionColor,
@@ -243,9 +242,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
 
       if (response.statusCode == 200) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Review deleted successfully')),
-          );
+          CustomToast.success(context, 'Review deleted successfully');
         }
         _fetchReviews();
       } else {
@@ -253,9 +250,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: errorColor),
-        );
+        CustomToast.error(context, 'Error: $e');
       }
       setState(() => _isLoading = false);
     }

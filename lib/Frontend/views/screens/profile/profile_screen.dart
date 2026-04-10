@@ -12,6 +12,7 @@ import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/core/services/packages_service.dart';
 import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 // ─── Role configuration model ───────────────────────────────────
 class _RoleConfig {
@@ -223,7 +224,9 @@ class ProfileScreen extends StatelessWidget {
                   child: _LogoutTile(onTap: () => _showLogoutDialog(context)),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: AppSpacing.xxxl + AppSpacing.l),
+                ),
               ],
             ),
           ),
@@ -387,12 +390,7 @@ class ProfileScreen extends StatelessWidget {
         final success = await PackagesService().requestGuideRole();
         if (success && context.mounted) {
           context.read<AuthBloc>().add(AppStarted());
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Guide request sent successfully!'),
-              backgroundColor: successColorDark,
-            ),
-          );
+          CustomToast.success(context, 'Guide request sent successfully!');
         }
       },
     );

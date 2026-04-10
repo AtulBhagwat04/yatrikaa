@@ -1,3 +1,4 @@
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -119,25 +120,14 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
       listener: (ctx, state) {
         if (state.actionStatus == BookingActionStatus.success) {
           Navigator.pop(ctx); // close sheet
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(
-                state.actionSuccessMessage ??
-                    'Booking request sent! ⏳ Please wait for ${widget.guideName} to approve your booking.',
-              ),
-              backgroundColor: successColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
+          CustomToast.success(
+            ctx,
+            state.actionSuccessMessage ??
+                'Booking request sent! ⏳ Please wait for ${widget.guideName} to approve your booking.',
           );
           ctx.read<TravelBloc>().add(TravelStatusReset());
         } else if (state.actionStatus == BookingActionStatus.failure) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.actionError ?? 'Something went wrong'),
-              backgroundColor: errorColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.error(ctx, state.actionError ?? 'Something went wrong');
           ctx.read<TravelBloc>().add(TravelStatusReset());
         }
       },

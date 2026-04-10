@@ -49,8 +49,8 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     await Future.delayed(const Duration(milliseconds: 300));
     emit(state.copyWith(showText: true));
 
-    // Step 3: Hold for full brand experience (Total ~2.0s)
-    await Future.delayed(const Duration(milliseconds: 400));
+    // Step 3: Hold for full brand experience (Extended to meet user request of 3-4s)
+    await Future.delayed(const Duration(milliseconds: 3150));
 
     // Step 4: Finalize and trigger navigation
     emit(state.copyWith(navigationReady: true));

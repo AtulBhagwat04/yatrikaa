@@ -5,11 +5,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
+import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
 import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 /// Guide / Admin dashboard showing all their own travel packages,
 /// with real data fetched from the backend via TravelBloc.
@@ -26,6 +28,8 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
   final ScrollController _upcomingScrollController = ScrollController();
   final ScrollController _activeScrollController = ScrollController();
   final ScrollController _completedScrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -60,6 +64,7 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
     _upcomingScrollController.dispose();
     _activeScrollController.dispose();
     _completedScrollController.dispose();
+    _searchController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -71,13 +76,7 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
       listener: (context, state) {
         if (state.actionStatus == BookingActionStatus.success &&
             state.actionSuccessMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.actionSuccessMessage!),
-              backgroundColor: successColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.success(context, state.actionSuccessMessage!);
           // Refresh list if it was a deletion
           if (state.actionSuccessMessage!.contains('deleted')) {
             context.read<TravelBloc>().add(TravelMyPackagesRequested());
@@ -85,13 +84,7 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
           context.read<TravelBloc>().add(TravelStatusReset());
         } else if (state.actionStatus == BookingActionStatus.failure &&
             state.actionError != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.actionError!),
-              backgroundColor: errorColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.error(context, state.actionError!);
           context.read<TravelBloc>().add(TravelStatusReset());
         }
       },
@@ -103,16 +96,24 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
           final allPackages = state.myPackages;
           final hasMore = state.myPackagesHasMore;
 
+          // Filter by search query
+          final List<TravelPackageModel> filteredAll = _searchQuery.isEmpty 
+            ? allPackages 
+            : allPackages.where((p) => 
+                p.title.toLowerCase().contains(_searchQuery.toLowerCase()) || 
+                p.destinationName.toLowerCase().contains(_searchQuery.toLowerCase())
+              ).toList();
+
           // Split by status for tabs
-          final upcoming = allPackages
+          final upcoming = filteredAll
               .where((p) => p.status == 'Published' || p.status == 'Draft')
               .toList();
-          final active = allPackages
+          final active = filteredAll
               .where(
                 (p) => p.currentParticipants > 0 && p.status == 'Published',
               )
               .toList();
-          final completed = allPackages
+          final completed = filteredAll
               .where((p) => p.status == 'Completed')
               .toList();
 
@@ -136,6 +137,21 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
                         size: 22,
                       ),
                       centerTitle: true,
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: ModernSearchBar(
+                          controller: _searchController,
+                          onChanged: (v) => setState(() => _searchQuery = v),
+                          suggestionsEnabled: true,
+                          suggestionType: SuggestionType.packages,
+                          onSuggestionSelected: (suggestion) {
+                            _searchController.text = suggestion;
+                            setState(() => _searchQuery = suggestion);
+                          },
+                        ),
+                      ),
                     ),
                     SliverPersistentHeader(
                       pinned: true,

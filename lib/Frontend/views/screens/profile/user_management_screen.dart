@@ -9,6 +9,7 @@ import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -716,13 +717,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
 
       if (response.statusCode == 200) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('User deleted successfully'),
-              backgroundColor: successColor,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.success(context, 'User deleted successfully');
           setState(() {
             _travelers.removeWhere((u) => u['_id'] == userId);
             _guides.removeWhere((u) => u['_id'] == userId);
@@ -735,13 +730,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: errorColor,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        CustomToast.error(context, 'Error: $e');
       }
       setState(() => _isLoading = false);
     }

@@ -10,6 +10,7 @@ import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
 import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class UserBookingsScreen extends StatefulWidget {
   const UserBookingsScreen({super.key});
@@ -42,26 +43,10 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
       listener: (ctx, state) {
         if (state.actionStatus == BookingActionStatus.success &&
             state.actionSuccessMessage != null) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.actionSuccessMessage!),
-              backgroundColor: successColorDark,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
+          CustomToast.success(ctx, state.actionSuccessMessage!);
         } else if (state.actionStatus == BookingActionStatus.failure &&
             state.actionError != null) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.actionError!),
-              backgroundColor: errorColorDark,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
+          CustomToast.error(ctx, state.actionError!);
         }
       },
       child: BlocBuilder<TravelBloc, TravelState>(
@@ -298,12 +283,7 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
   void _confirmCancel(BuildContext ctx, BookingModel booking) {
     final startDate = booking.package?.startDate;
     if (startDate != null && DateTime.now().isAfter(startDate)) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot cancel tour after it has started.'),
-          backgroundColor: errorColorDark,
-        ),
-      );
+      CustomToast.error(ctx, 'Cannot cancel tour after it has started.');
       return;
     }
 

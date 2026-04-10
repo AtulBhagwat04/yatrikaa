@@ -13,6 +13,7 @@ import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/views/screens/auth/bloc/login_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/auth/bloc/login_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/auth/bloc/login_state.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -99,16 +100,7 @@ class _LoginScreenState extends State<LoginScreen>
           listener: (context, state) {
             if (state is ForgotPasswordSuccess) {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: successColor,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              );
+              CustomToast.success(context, state.message);
             }
           },
           builder: (context, state) {
@@ -299,52 +291,12 @@ class _LoginScreenState extends State<LoginScreen>
                         BlocConsumer<LoginBloc, LoginState>(
                           listener: (context, state) {
                             if (state is LoginFailure) {
-                              ScaffoldMessenger.of(
-                                context,
-                              ).hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.error_outline,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          state.message,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  backgroundColor: errorColorDark,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  margin: const EdgeInsets.all(AppSpacing.m),
-                                  duration: const Duration(seconds: 4),
-                                ),
-                              );
+                              CustomToast.error(context, state.message);
                             }
 
                             if (state is ForgotPasswordSuccess &&
                                 ModalRoute.of(context)?.isCurrent == true) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(state.message),
-                                  backgroundColor: successColor,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              );
+                              CustomToast.success(context, state.message);
                             }
 
                             if (state is LoginSuccess) {

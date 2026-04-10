@@ -24,7 +24,7 @@ class AuthService {
   static const String _genderKey = 'user_gender';
   static const String _profilePictureKey = 'user_profile_picture';
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {

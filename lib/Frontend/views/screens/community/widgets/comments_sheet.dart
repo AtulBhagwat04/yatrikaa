@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
+import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/models/post_model.dart';
 import 'package:yatrikaa/Frontend/core/services/post_service.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
@@ -86,9 +87,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
         _currentPost = updatedPost;
       });
       widget.onUpdate(updatedPost);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.commCommentDeleted)),
-      );
+      CustomToast.success(context, AppStrings.commCommentDeleted);
     }
   }
 

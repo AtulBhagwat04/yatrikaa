@@ -11,6 +11,8 @@ import 'package:yatrikaa/Frontend/core/models/guide_request_model.dart';
 import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
+
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
 
@@ -47,23 +49,11 @@ class _AdminApprovalQueueScreenState extends State<AdminApprovalQueueScreen>
       listener: (ctx, state) {
         if (state.actionStatus == BookingActionStatus.success &&
             state.actionSuccessMessage != null) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.actionSuccessMessage!),
-              backgroundColor: successColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.success(ctx, state.actionSuccessMessage!);
           ctx.read<TravelBloc>().add(TravelStatusReset());
         } else if (state.actionStatus == BookingActionStatus.failure &&
             state.actionError != null) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.actionError!),
-              backgroundColor: errorColorDark,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          CustomToast.error(ctx, state.actionError!);
           ctx.read<TravelBloc>().add(TravelStatusReset());
         }
       },

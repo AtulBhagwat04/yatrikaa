@@ -9,6 +9,7 @@ class CustomToast extends StatelessWidget {
   final String message;
   final ToastType type;
   final VoidCallback? onClose;
+  final double? progressValue; // 0.0 to 1.0
 
   const CustomToast({
     super.key,
@@ -16,136 +17,141 @@ class CustomToast extends StatelessWidget {
     required this.message,
     required this.type,
     this.onClose,
+    this.progressValue,
   });
 
   @override
   Widget build(BuildContext context) {
-    late Color backgroundColor;
+    late Color accentColor;
     late IconData iconData;
-    late Color iconColor;
+    late Color lightAccent;
 
     switch (type) {
       case ToastType.success:
-        backgroundColor = successColorLight;
+        accentColor = successColorDark;
+        lightAccent = successColorLight;
         iconData = Icons.check_circle_rounded;
-        iconColor = successColorDark;
         break;
       case ToastType.error:
-        backgroundColor = errorColorLight;
+        accentColor = errorColorDark;
+        lightAccent = errorColorLight;
         iconData = Icons.error_rounded;
-        iconColor = errorColorDark;
         break;
       case ToastType.warning:
-        backgroundColor = warningColorLight;
+        accentColor = warningColorDark;
+        lightAccent = warningColorLight;
         iconData = Icons.warning_rounded;
-        iconColor = warningColorDark;
         break;
       case ToastType.info:
-        backgroundColor = onboardingBlueVeryLight;
+        accentColor = primaryBlue;
+        lightAccent = onboardingBlueVeryLight;
         iconData = Icons.info_rounded;
-        iconColor = primaryBlue;
         break;
       case ToastType.progress:
-        backgroundColor = onboardingBlueVeryLight;
+        accentColor = primaryBlue;
+        lightAccent = onboardingBlueVeryLight;
         iconData = Icons.sync_rounded;
-        iconColor = primaryBlue;
         break;
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        color: appWhite,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: iconColor.withOpacity(0.12),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: accentColor.withOpacity(0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: iconColor.withOpacity(0.1), width: 1),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            children: [
-              // Accent Bar
-              Container(width: 6, color: iconColor),
-              const SizedBox(width: 16),
-              // Icon Container
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  shape: BoxShape.circle,
-                ),
-                child: type == ToastType.progress
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(iconColor),
-                        ),
-                      )
-                    : Icon(iconData, color: iconColor, size: 22),
-              ),
-              const SizedBox(width: 16),
-              // Text Content
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: AppTextStyles.body.copyWith(
-                          color: appBlack.withOpacity(0.87),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        message,
-                        style: AppTextStyles.caption.copyWith(
-                          color: appBlack.withOpacity(0.54),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+              child: Row(
+                children: [
+                  // Icon
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: lightAccent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: type == ToastType.progress
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                            ),
+                          )
+                        : Icon(iconData, color: accentColor, size: 22),
                   ),
-                ),
-              ),
-              // Close Button
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    onClose?.call();
-                  },
-                  borderRadius: const BorderRadius.horizontal(
-                    right: Radius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Center(
-                      child: Icon(
-                        Icons.close_rounded,
-                        color: appGrey,
-                        size: 20,
-                      ),
+                  const SizedBox(width: 16),
+                  // Text Content
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: AppTextStyles.body.copyWith(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          message,
+                          style: AppTextStyles.caption.copyWith(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w500,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  // Close Button
+                  IconButton(
+                    onPressed: onClose,
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: Colors.black26,
+                      size: 20,
+                    ),
+                    splashRadius: 20,
+                  ),
+                ],
+              ),
+            ),
+            // Progress Bar (Life indicator)
+            if (progressValue != null)
+              SizedBox(
+                height: 3,
+                width: double.infinity,
+                child: LinearProgressIndicator(
+                  value: progressValue,
+                  backgroundColor: lightAccent.withOpacity(0.3),
+                  valueColor: AlwaysStoppedAnimation<Color>(accentColor.withOpacity(0.7)),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -159,23 +165,23 @@ class CustomToast extends StatelessWidget {
     Duration duration = const Duration(seconds: 4),
     VoidCallback? onClose,
   }) {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    scaffoldMessenger.hideCurrentSnackBar();
-    scaffoldMessenger.showSnackBar(
-      SnackBar(
-        content: CustomToast(
-          title: title,
-          message: message,
-          type: type,
-          onClose: onClose,
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => _ToastWidget(
+        title: title,
+        message: message,
+        type: type,
         duration: duration,
-        padding: EdgeInsets.zero,
+        onRemove: () {
+          overlayEntry.remove();
+          onClose?.call();
+        },
       ),
     );
+
+    overlay.insert(overlayEntry);
   }
 
   // Helper methods for easy access
@@ -222,6 +228,116 @@ class CustomToast extends StatelessWidget {
       message: message,
       type: ToastType.progress,
       duration: const Duration(seconds: 10),
+    );
+  }
+}
+
+class _ToastWidget extends StatefulWidget {
+  final String title;
+  final String message;
+  final ToastType type;
+  final Duration duration;
+  final VoidCallback onRemove;
+
+  const _ToastWidget({
+    required this.title,
+    required this.message,
+    required this.type,
+    required this.duration,
+    required this.onRemove,
+  });
+
+  @override
+  State<_ToastWidget> createState() => _ToastWidgetState();
+}
+
+class _ToastWidgetState extends State<_ToastWidget>
+    with TickerProviderStateMixin {
+  late AnimationController _controller;
+  late AnimationController _progressController;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _progressAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _progressController = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    );
+
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, -1.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+      reverseCurve: Curves.easeInBack,
+    ));
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    );
+
+    _progressAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(_progressController);
+
+    // Initial enter
+    _controller.forward();
+
+    // Start progress bar and handle removal
+    _progressController.forward().then((_) {
+      if (mounted) {
+        _controller.reverse().then((_) => widget.onRemove());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _progressController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 10,
+      left: 0,
+      right: 0,
+      child: Material(
+        color: Colors.transparent,
+        child: SlideTransition(
+          position: _offsetAnimation,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: AnimatedBuilder(
+              animation: _progressAnimation,
+              builder: (context, child) {
+                return CustomToast(
+                  title: widget.title,
+                  message: widget.message,
+                  type: widget.type,
+                  progressValue: _progressAnimation.value,
+                  onClose: () {
+                    _controller.reverse().then((_) => widget.onRemove());
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -46,11 +46,14 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.13.1
+  image: ^4.8.0
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/logo/logoSquare.png"
+  image_path: "assets/logo/LogoPadded.png"
+  adaptive_icon_background: "#0093E9"
+  adaptive_icon_foreground: "assets/logo/LogoPadded.png"
   min_sdk_android: 21 # android min sdk version
 
 flutter:

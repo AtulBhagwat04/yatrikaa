@@ -23,6 +23,7 @@ import 'package:yatrikaa/Frontend/views/screens/profile/profile_screen.dart';
 import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 import 'package:yatrikaa/Frontend/views/widgets/app_bottom_nav.dart';
 import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
+import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:yatrikaa/Frontend/views/widgets/event_horizontal_card.dart';
 import 'package:yatrikaa/Frontend/views/widgets/place_nearby_card.dart';
 import 'package:yatrikaa/Frontend/core/models/event_model.dart';
@@ -116,12 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
         now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
       _lastBackPressTime = now;
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Press back again to exit'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        CustomToast.success(context, 'Press back again to exit');
       }
       return;
     }
@@ -150,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 canPop: false,
                 onPopInvokedWithResult: (didPop, result) => _handlePop(didPop),
                 child: Scaffold(
+                  resizeToAvoidBottomInset: false,
                   extendBody: true,
                   extendBodyBehindAppBar: true,
                   backgroundColor: onboardingBlueVeryLight,
@@ -161,16 +158,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           final bool active = _selectedIndex == index;
                           return IgnorePointer(
                             ignoring: !active,
-                            child: AnimatedOpacity(
-                              opacity: active ? 1.0 : 0.0,
-                              duration: const Duration(milliseconds: 400),
-                              child: AnimatedSlide(
-                                offset: active
-                                    ? Offset.zero
-                                    : const Offset(0.02, 0), // Subtle shift
+                            child: FocusScope(
+                              canRequestFocus: active,
+                              child: AnimatedOpacity(
+                                opacity: active ? 1.0 : 0.0,
                                 duration: const Duration(milliseconds: 400),
-                                curve: Curves.easeOutCubic,
-                                child: _getTabContent(index),
+                                child: AnimatedSlide(
+                                  offset: active
+                                      ? Offset.zero
+                                      : const Offset(0.02, 0), // Subtle shift
+                                  duration: const Duration(milliseconds: 400),
+                                  curve: Curves.easeOutCubic,
+                                  child: _getTabContent(index),
+                                ),
                               ),
                             ),
                           );
@@ -276,7 +276,7 @@ class _HomeTabState extends State<_HomeTab> {
                           top: AppSpacing.ms,
                           left: AppSpacing.ms,
                           right: AppSpacing.ms,
-                          bottom: 110,
+                          bottom: AppSpacing.xxxl + AppSpacing.l,
                         ),
                         children: [
                           AppAnimations.fadeIn(

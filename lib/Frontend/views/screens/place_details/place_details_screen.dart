@@ -102,9 +102,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppStrings.error}: $urlString')),
-        );
+        CustomToast.error(context, '${AppStrings.error}: $urlString');
       }
     }
   }
@@ -255,17 +253,9 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               backgroundColor: appWhite,
               floatingActionButton: FloatingActionButton.extended(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'This feature is coming soon! Get ready to share your experience at ${place.name}!',
-                      ),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: appBlack,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                  CustomToast.info(
+                    context,
+                    'This feature is coming soon! Get ready to share your experience at ${place.name}!',
                   );
                 },
                 backgroundColor: primaryBlue,

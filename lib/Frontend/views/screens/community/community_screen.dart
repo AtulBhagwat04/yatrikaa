@@ -22,17 +22,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
   final _postService = PostService();
   List<PostModel> _posts = [];
   bool _isLoading = true;
-  // Removed local variables, will fetch from AuthBloc state in build
 
   @override
   void initState() {
     super.initState();
-    _fetchInitialData();
-  }
-
-  Future<void> _fetchInitialData() async {
-    // Relying on AuthBloc for user info, so we just fetch posts
-    await _fetchPosts();
+    _fetchPosts();
   }
 
   Future<void> _fetchPosts() async {
@@ -88,7 +82,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     AppSpacing.ms,
                     12,
                     AppSpacing.ms,
-                    8,
+                    16,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -133,13 +127,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.auto_stories_outlined,
                           size: 64,
                           color: appGreyLight,
                         ),
                         const SizedBox(height: 16),
-                        AppText.body(AppStrings.commNoJourneys, color: appGrey),
+                        AppText.body(
+                          AppStrings.commNoJourneys,
+                          color: appGrey,
+                        ),
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: _fetchPosts,
@@ -151,7 +148,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(
+                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.ms,
                   ),
                   sliver: SliverList(
@@ -185,7 +182,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     }, childCount: _posts.length),
                   ),
                 ),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: AppSpacing.xxxl + AppSpacing.l),
+              ),
             ],
           ),
         ),

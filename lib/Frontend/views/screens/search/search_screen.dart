@@ -280,6 +280,12 @@ class _SearchScreenState extends State<SearchScreen>
         onChanged: _performSearch,
         focusNode: _searchFocusNode,
         autoFocus: false,
+        suggestionsEnabled: true,
+        onSuggestionSelected: (suggestion) {
+          _searchController.text = suggestion;
+          _performSearch(suggestion, force: true);
+          _searchFocusNode.unfocus();
+        },
       ),
     );
 

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yatrikaa/main.dart';
 import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
@@ -15,6 +16,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
+    
+    // Ensure Firebase and background services are ready before continuing
+    await appInitialization;
+    
     final isLoggedIn = await _authService.isLoggedIn();
     if (isLoggedIn) {
       final role = await _authService.getRole();
