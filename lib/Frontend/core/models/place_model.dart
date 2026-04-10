@@ -1,32 +1,8 @@
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
+import 'review_model.dart';
 
-class ReviewModel {
-  final String authorName;
-  final String? profilePhotoUrl;
-  final double rating;
-  final String relativeTimeDescription;
-  final String text;
-
-  ReviewModel({
-    required this.authorName,
-    this.profilePhotoUrl,
-    required this.rating,
-    required this.relativeTimeDescription,
-    required this.text,
-  });
-
-  factory ReviewModel.fromJson(Map<String, dynamic> json) {
-    return ReviewModel(
-      authorName: json['author_name'] ?? AppStrings.pdAnonymous,
-      profilePhotoUrl: json['profile_photo_url'],
-      rating: (json['rating'] ?? 0.0).toDouble(),
-      relativeTimeDescription: json['relative_time_description'] ?? '',
-      text: json['text'] ?? '',
-    );
-  }
-}
 
 class PlaceModel {
   final String id;

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
@@ -77,6 +78,10 @@ class _HomeScreenState extends State<HomeScreen> {
     HapticFeedback.selectionClick();
     if (_selectedIndex != i) {
       setState(() => _selectedIndex = i);
+      // Refresh profile data when clicking Profile tab
+      if (i == 4) {
+        context.read<AuthBloc>().add(SyncAuthCounts());
+      }
     }
   }
 
@@ -401,7 +406,8 @@ class _HomeTabState extends State<_HomeTab> {
                                 const SizedBox(height: AppSpacing.ms),
                                 NotificationListener<ScrollNotification>(
                                   onNotification: (notification) {
-                                    if (notification is ScrollUpdateNotification) {
+                                    if (notification
+                                        is ScrollUpdateNotification) {
                                       final atEnd =
                                           notification.metrics.extentAfter < 50;
                                       if (atEnd != _packagesAtEnd) {

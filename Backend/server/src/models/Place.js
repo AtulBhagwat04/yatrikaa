@@ -28,7 +28,15 @@ const placeSchema = new mongoose.Schema({
     weekday_text: [String]
   },
   website: String,
-  reviews: [Object],
+  reviews: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    author_name: String,
+    profile_photo_url: String,
+    rating: Number,
+    text: String,
+    relative_time_description: String,
+    time: Number
+  }],
   entry_fee: String,
   best_time: String,
   difficulty: String,

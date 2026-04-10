@@ -205,4 +205,52 @@ class TravelCancelTravelerRequested extends TravelEvent {
 }
 
 /// Clear any error / join success state after it has been consumed.
-class TravelStatusReset extends TravelEvent {}
+class TravelStatusReset extends TravelEvent {
+  const TravelStatusReset();
+}
+
+class TravelReviewAdded extends TravelEvent {
+  final String packageId;
+  final double rating;
+  final String comment;
+
+  const TravelReviewAdded({
+    required this.packageId,
+    required this.rating,
+    required this.comment,
+  });
+
+  @override
+  List<Object?> get props => [packageId, rating, comment];
+}
+
+class TravelReviewUpdated extends TravelEvent {
+  final String packageId;
+  final String reviewId;
+  final double rating;
+  final String comment;
+
+  const TravelReviewUpdated({
+    required this.packageId,
+    required this.reviewId,
+    required this.rating,
+    required this.comment,
+  });
+
+  @override
+  List<Object?> get props => [packageId, reviewId, rating, comment];
+}
+
+class TravelReviewDeleted extends TravelEvent {
+  final String packageId;
+  final String reviewId;
+
+  const TravelReviewDeleted({
+    required this.packageId,
+    required this.reviewId,
+  });
+
+  @override
+  List<Object?> get props => [packageId, reviewId];
+}
+

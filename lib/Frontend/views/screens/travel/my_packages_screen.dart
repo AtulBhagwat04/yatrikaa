@@ -28,8 +28,6 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
   final ScrollController _upcomingScrollController = ScrollController();
   final ScrollController _activeScrollController = ScrollController();
   final ScrollController _completedScrollController = ScrollController();
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
 
   @override
   void initState() {
@@ -64,7 +62,6 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
     _upcomingScrollController.dispose();
     _activeScrollController.dispose();
     _completedScrollController.dispose();
-    _searchController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -96,24 +93,16 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
           final allPackages = state.myPackages;
           final hasMore = state.myPackagesHasMore;
 
-          // Filter by search query
-          final List<TravelPackageModel> filteredAll = _searchQuery.isEmpty 
-            ? allPackages 
-            : allPackages.where((p) => 
-                p.title.toLowerCase().contains(_searchQuery.toLowerCase()) || 
-                p.destinationName.toLowerCase().contains(_searchQuery.toLowerCase())
-              ).toList();
-
           // Split by status for tabs
-          final upcoming = filteredAll
+          final upcoming = allPackages
               .where((p) => p.status == 'Published' || p.status == 'Draft')
               .toList();
-          final active = filteredAll
+          final active = allPackages
               .where(
                 (p) => p.currentParticipants > 0 && p.status == 'Published',
               )
               .toList();
-          final completed = filteredAll
+          final completed = allPackages
               .where((p) => p.status == 'Completed')
               .toList();
 
@@ -137,21 +126,6 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
                         size: 22,
                       ),
                       centerTitle: true,
-                    ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: ModernSearchBar(
-                          controller: _searchController,
-                          onChanged: (v) => setState(() => _searchQuery = v),
-                          suggestionsEnabled: true,
-                          suggestionType: SuggestionType.packages,
-                          onSuggestionSelected: (suggestion) {
-                            _searchController.text = suggestion;
-                            setState(() => _searchQuery = suggestion);
-                          },
-                        ),
-                      ),
                     ),
                     SliverPersistentHeader(
                       pinned: true,

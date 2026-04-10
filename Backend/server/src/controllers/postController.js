@@ -26,7 +26,7 @@ class PostController {
       // Increment user postsCount
       await User.findByIdAndUpdate(req.user._id, { $inc: { postsCount: 1 } });
 
-      const populatedPost = await Post.findById(post._id).populate('author', 'name');
+      const populatedPost = await Post.findById(post._id).populate('author', 'name profilePicture');
 
       res.status(201).json(populatedPost);
     } catch (error) {
@@ -37,8 +37,8 @@ class PostController {
   async getAllPosts(req, res, next) {
     try {
       const posts = await Post.find({})
-        .populate('author', 'name')
-        .populate('comments.user', 'name')
+        .populate('author', 'name profilePicture')
+        .populate('comments.user', 'name profilePicture')
         .sort({ createdAt: -1 });
       res.json(posts);
     } catch (error) {
@@ -76,8 +76,8 @@ class PostController {
       }
 
       const populatedPost = await Post.findById(post._id)
-        .populate('author', 'name')
-        .populate('comments.user', 'name');
+        .populate('author', 'name profilePicture')
+        .populate('comments.user', 'name profilePicture');
       res.json(populatedPost);
     } catch (error) {
       next(error);
@@ -111,8 +111,8 @@ class PostController {
       }
 
       const populatedPost = await Post.findById(post._id)
-        .populate('author', 'name')
-        .populate('comments.user', 'name');
+        .populate('author', 'name profilePicture')
+        .populate('comments.user', 'name profilePicture');
       res.json(populatedPost);
     } catch (error) {
       next(error);
@@ -139,8 +139,8 @@ class PostController {
       await post.save();
       
       const populatedPost = await Post.findById(postId)
-        .populate('author', 'name')
-        .populate('comments.user', 'name');
+        .populate('author', 'name profilePicture')
+        .populate('comments.user', 'name profilePicture');
       res.json(populatedPost);
     } catch (error) {
       next(error);
@@ -170,8 +170,8 @@ class PostController {
       }
 
       const populatedPost = await Post.findById(postId)
-        .populate('author', 'name')
-        .populate('comments.user', 'name');
+        .populate('author', 'name profilePicture')
+        .populate('comments.user', 'name profilePicture');
       res.json(populatedPost);
     } catch (error) {
       next(error);
@@ -270,8 +270,8 @@ class PostController {
       post.editedAt = Date.now();
       await post.save();
       const populatedPost = await Post.findById(post._id)
-        .populate('author', 'name')
-        .populate('comments.user', 'name');
+        .populate('author', 'name profilePicture')
+        .populate('comments.user', 'name profilePicture');
       
       res.json(populatedPost);
     } catch (error) {

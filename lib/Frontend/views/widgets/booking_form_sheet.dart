@@ -9,6 +9,8 @@ import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
+import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
 
 /// A bottom-sheet booking form that collects traveler details.
 /// Shows success / error feedback from the Bloc.
@@ -119,6 +121,8 @@ class _BookingFormSheetState extends State<BookingFormSheet> {
       listenWhen: (prev, curr) => prev.actionStatus != curr.actionStatus,
       listener: (ctx, state) {
         if (state.actionStatus == BookingActionStatus.success) {
+          // Sync profile counts after successful booking
+          ctx.read<AuthBloc>().add(SyncAuthCounts());
           Navigator.pop(ctx); // close sheet
           CustomToast.success(
             ctx,

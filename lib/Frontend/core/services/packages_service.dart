@@ -575,4 +575,70 @@ class PackagesService {
       return false;
     }
   }
+
+  Future<TravelPackageModel?> addReview(String packageId, double rating, String text) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await BackendHealthManager.instance.post(
+        '${ApiConstants.baseUrl}/packages/$packageId/reviews',
+        headers: headers,
+        body: jsonEncode({
+          'rating': rating,
+          'text': text,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return TravelPackageModel.fromJson(data['result']);
+      }
+      return null;
+    } catch (e) {
+      print('Error adding review to package: $e');
+      return null;
+    }
+  }
+
+  Future<TravelPackageModel?> updateReview(String packageId, String reviewId, double rating, String text) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await BackendHealthManager.instance.put(
+        '${ApiConstants.baseUrl}/packages/$packageId/reviews/$reviewId',
+        headers: headers,
+        body: jsonEncode({
+          'rating': rating,
+          'text': text,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return TravelPackageModel.fromJson(data['result']);
+      }
+      return null;
+    } catch (e) {
+      print('Error updating review for package: $e');
+      return null;
+    }
+  }
+
+  Future<TravelPackageModel?> deleteReview(String packageId, String reviewId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await BackendHealthManager.instance.delete(
+        '${ApiConstants.baseUrl}/packages/$packageId/reviews/$reviewId',
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return TravelPackageModel.fromJson(data['result']);
+      }
+      return null;
+    } catch (e) {
+      print('Error deleting review for package: $e');
+      return null;
+    }
+  }
 }
+

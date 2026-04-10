@@ -35,9 +35,112 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     on<TravelCancelTravelerRequested>(_onCancelTravelerRequested);
     on<TravelStatusReset>(_onStatusReset);
     on<TravelLoadMorePackages>(_onLoadMorePackages);
+    on<TravelReviewAdded>(_onReviewAdded);
+    on<TravelReviewUpdated>(_onReviewUpdated);
+    on<TravelReviewDeleted>(_onReviewDeleted);
 
     // Initial polling setup
     _startPolling();
+  }
+
+  Future<void> _onReviewAdded(
+    TravelReviewAdded event,
+    Emitter<TravelState> emit,
+  ) async {
+    emit(state.copyWith(actionStatus: BookingActionStatus.loading));
+    try {
+      final updatedPkg = await _service.addReview(
+        event.packageId,
+        event.rating,
+        event.comment,
+      );
+
+      if (updatedPkg != null) {
+        emit(state.copyWith(
+          actionStatus: BookingActionStatus.success,
+          actionSuccessMessage: "Review submitted successfully!",
+          selectedPackage: updatedPkg,
+        ));
+        // Refresh the list as well
+        add(const TravelPackagesRequested(isSilent: true));
+      } else {
+        emit(state.copyWith(
+          actionStatus: BookingActionStatus.failure,
+          actionError: "Error submitting review",
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        actionStatus: BookingActionStatus.failure,
+        actionError: e.toString().replaceAll('Exception: ', ''),
+      ));
+    }
+  }
+
+  Future<void> _onReviewUpdated(
+    TravelReviewUpdated event,
+    Emitter<TravelState> emit,
+  ) async {
+    emit(state.copyWith(actionStatus: BookingActionStatus.loading));
+    try {
+      final updatedPkg = await _service.updateReview(
+        event.packageId,
+        event.reviewId,
+        event.rating,
+        event.comment,
+      );
+
+      if (updatedPkg != null) {
+        emit(state.copyWith(
+          actionStatus: BookingActionStatus.success,
+          actionSuccessMessage: "Review updated successfully!",
+          selectedPackage: updatedPkg,
+        ));
+        add(const TravelPackagesRequested(isSilent: true));
+      } else {
+        emit(state.copyWith(
+          actionStatus: BookingActionStatus.failure,
+          actionError: "Error updating review",
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        actionStatus: BookingActionStatus.failure,
+        actionError: e.toString().replaceAll('Exception: ', ''),
+      ));
+    }
+  }
+
+  Future<void> _onReviewDeleted(
+    TravelReviewDeleted event,
+    Emitter<TravelState> emit,
+  ) async {
+    emit(state.copyWith(actionStatus: BookingActionStatus.loading));
+    try {
+      final updatedPkg = await _service.deleteReview(
+        event.packageId,
+        event.reviewId,
+      );
+
+      if (updatedPkg != null) {
+        emit(state.copyWith(
+          actionStatus: BookingActionStatus.success,
+          actionSuccessMessage: "Review deleted successfully!",
+          selectedPackage: updatedPkg,
+        ));
+        add(const TravelPackagesRequested(isSilent: true));
+      } else {
+        emit(state.copyWith(
+          actionStatus: BookingActionStatus.failure,
+          actionError: "Error deleting review",
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        actionStatus: BookingActionStatus.failure,
+        actionError: e.toString().replaceAll('Exception: ', ''),
+      ));
+    }
   }
 
   Timer? _pollTimer;

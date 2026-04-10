@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/models/place_model.dart';
@@ -56,10 +56,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
       // Sync global count with reality
       final authState = context.read<AuthBloc>().state;
-      if (authState is Authenticated && authState.savedCount != places.length) {
-        context.read<AuthBloc>().add(
-          UpdateAuthCounts(savedCount: places.length),
-        );
+      if (authState is Authenticated) {
+        context.read<AuthBloc>().add(SyncAuthCounts());
       }
     } catch (e) {
       if (!mounted) return;

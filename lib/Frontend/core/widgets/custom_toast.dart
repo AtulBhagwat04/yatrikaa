@@ -230,6 +230,13 @@ class CustomToast extends StatelessWidget {
       duration: const Duration(seconds: 10),
     );
   }
+
+  // Aliases for compatibility
+  static void showSuccess(BuildContext context, String message, {String title = 'Success'}) =>
+      success(context, message, title: title);
+
+  static void showError(BuildContext context, String message, {String title = 'Error'}) =>
+      error(context, message, title: title);
 }
 
 class _ToastWidget extends StatefulWidget {

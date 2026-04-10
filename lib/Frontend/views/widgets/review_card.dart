@@ -1,18 +1,32 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
-import 'package:yatrikaa/Frontend/core/models/place_model.dart';
+import 'package:yatrikaa/Frontend/core/models/review_model.dart';
 
 class ReviewCard extends StatelessWidget {
   final ReviewModel review;
+  final String? currentUserId;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
-  const ReviewCard({super.key, required this.review});
+  const ReviewCard({
+    super.key,
+    required this.review,
+    this.currentUserId,
+    this.onEdit,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final bool isOwner = currentUserId != null &&
+        review.userId != null &&
+        currentUserId!.trim() == review.userId!.trim();
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
+      // ... same decoration ...
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -32,12 +46,7 @@ class ReviewCard extends StatelessWidget {
               CircleAvatar(
                 radius: 20,
                 backgroundColor: primaryBlue.withAlpha(25),
-                backgroundImage: review.profilePhotoUrl != null
-                    ? NetworkImage(review.profilePhotoUrl!)
-                    : null,
-                child: review.profilePhotoUrl == null
-                    ? const Icon(Icons.person, size: 24, color: primaryBlue)
-                    : null,
+                backgroundImage: NetworkImage(review.displayProfilePhoto),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -55,19 +64,69 @@ class ReviewCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _buildStarRating(review.rating),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildStarRating(review.rating),
+                      if (isOwner) ...[
+                        const SizedBox(width: 4),
+                        _buildMoreMenu(context),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 16),
           AppText.body(
             review.text,
             color: Colors.grey[700],
-            maxLines: 3,
+            maxLines: 5, // Increased maxLines
             size: 14,
             overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMoreMenu(BuildContext context) {
+    return PopupMenuButton<String>(
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 120),
+      icon: Icon(Icons.more_vert_rounded, color: Colors.grey[600], size: 22), // More prominent icon
+      onSelected: (value) {
+        if (value == 'edit' && onEdit != null) onEdit!();
+        if (value == 'delete' && onDelete != null) onDelete!();
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'edit',
+          height: 40,
+          child: Row(
+            children: [
+              const Icon(Icons.edit_outlined, size: 18, color: primaryBlue),
+              const SizedBox(width: 10),
+              AppText.body('Edit', size: 14),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'delete',
+          height: 40,
+          child: Row(
+            children: [
+              const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
+              const SizedBox(width: 10),
+              AppText.body('Delete', size: 14, color: Colors.red),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

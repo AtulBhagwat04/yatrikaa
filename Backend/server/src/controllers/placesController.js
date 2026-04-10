@@ -315,23 +315,70 @@ class PlacesController {
   }
 
   async deleteReview(req, res, next) {
-    const { placeId, authorName, time } = req.params;
+    const { placeId, reviewId } = req.params;
     try {
-      const place = await Place.findOneAndUpdate(
-        { place_id: placeId },
-        { 
-          $pull: { 
-            reviews: { 
-              author_name: authorName,
-              time: parseInt(time)
-            } 
-          } 
-        },
-        { new: true }
-      );
-
+      const place = await Place.findOne({ place_id: placeId });
       if (!place) return res.status(404).json({ error: "Place not found" });
+
+      const review = place.reviews.id(reviewId);
+      if (!review) return res.status(404).json({ error: "Review not found" });
+
+      if (review.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: "Unauthorized to delete this review" });
+      }
+
+      const reviewRating = review.rating;
+      review.remove();
+
+      // Recalculate ratings
+      const newCount = place.user_ratings_total - 1;
+      if (newCount > 0) {
+        const totalRatingValue = (place.rating * place.user_ratings_total) - reviewRating;
+        place.rating = parseFloat((totalRatingValue / newCount).toFixed(1));
+        place.user_ratings_total = newCount;
+      } else {
+        place.rating = 0;
+        place.user_ratings_total = 0;
+      }
+
+      await place.save();
+
+      // Update User review count
+      await User.findByIdAndUpdate(req.user._id, { $inc: { reviewsCount: -1 } });
+
       res.status(200).json({ status: "OK", message: "Review deleted successfully", result: place });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateReview(req, res, next) {
+    const { placeId, reviewId } = req.params;
+    const { rating, text } = req.body;
+
+    try {
+      const place = await Place.findOne({ place_id: placeId });
+      if (!place) return res.status(404).json({ error: "Place not found" });
+
+      const review = place.reviews.id(reviewId);
+      if (!review) return res.status(404).json({ error: "Review not found" });
+
+      if (review.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: "Unauthorized to update this review" });
+      }
+
+      const oldRating = review.rating;
+      review.rating = parseFloat(rating);
+      review.text = text;
+      review.time = Math.floor(Date.now() / 1000);
+      review.relative_time_description = "Edited just now";
+
+      // Re-calculate average rating
+      const totalRatingValue = (place.rating * place.user_ratings_total) - oldRating + parseFloat(rating);
+      place.rating = parseFloat((totalRatingValue / place.user_ratings_total).toFixed(1));
+
+      await place.save();
+      res.status(200).json({ status: "OK", result: place });
     } catch (error) {
       next(error);
     }
@@ -454,6 +501,50 @@ class PlacesController {
       next(error);
     }
   }
+
+  async addReview(req, res, next) {
+    const { id } = req.params;
+    const { rating, text } = req.body;
+    const userId = req.user._id;
+    const authorName = req.user.name;
+    const profilePhotoUrl = req.user.profilePicture;
+
+    try {
+      const place = await Place.findOne({ place_id: id });
+      if (!place) return res.status(404).json({ error: "Place not found" });
+
+      const newReview = {
+        user: userId,
+        author_name: authorName,
+        profile_photo_url: profilePhotoUrl,
+        rating: parseFloat(rating),
+        text: text,
+        relative_time_description: "Just now",
+        time: Math.floor(Date.now() / 1000)
+      };
+
+      // Update ratings
+      const currentRating = place.rating || 0;
+      const currentCount = place.user_ratings_total || 0;
+      const newCount = currentCount + 1;
+      const newRating = (currentRating * currentCount + parseFloat(rating)) / newCount;
+
+      if (!place.reviews) place.reviews = [];
+      place.reviews.push(newReview);
+      place.rating = parseFloat(newRating.toFixed(1));
+      place.user_ratings_total = newCount;
+
+      await place.save();
+
+      // Update User review count
+      await User.findByIdAndUpdate(req.user._id, { $inc: { reviewsCount: 1 } });
+
+      res.status(201).json({ status: "OK", result: place });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new PlacesController();
+

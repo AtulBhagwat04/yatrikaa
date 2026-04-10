@@ -93,7 +93,7 @@ const getPackages = async (req, res, next) => {
     }
 
     const baseQuery = TravelPackage.find(filter)
-      .populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus')
+      .populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus')
       .sort({ isPopular: -1, createdAt: -1 });
 
     let packages;
@@ -131,7 +131,7 @@ const getPackages = async (req, res, next) => {
 const getPackageDetails = async (req, res, next) => {
   try {
     const pkg = await TravelPackage.findById(req.params.id)
-      .populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus');
+      .populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus');
 
     if (!pkg) return res.status(404).json({ success: false, error: 'Travel package not found' });
 
@@ -163,7 +163,7 @@ const createPackage = async (req, res, next) => {
     });
 
     // Populate organizer for response
-    await pkg.populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus');
+    await pkg.populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus');
 
     // Increment organizer's packagesCount
     await User.findByIdAndUpdate(req.user._id, { $inc: { packagesCount: 1 } });
@@ -209,7 +209,7 @@ const updatePackage = async (req, res, next) => {
       req.params.id,
       body,
       { new: true, runValidators: true }
-    ).populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus');
+    ).populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus');
 
     res.status(200).json({ success: true, result: updated });
   } catch (err) {
@@ -280,7 +280,7 @@ const getMyPackages = async (req, res, next) => {
 
     const filter = { organizer: req.user._id };
     const baseQuery = TravelPackage.find(filter)
-      .populate('organizer', 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus')
+      .populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus')
       .sort({ createdAt: -1 });
 
     let packages;
@@ -392,7 +392,7 @@ const getMyBookings = async (req, res, next) => {
       .populate('package', 'title images destination duration price organizer')
       .populate({
         path: 'package',
-        populate: { path: 'organizer', select: 'name profileImage role tripsCount packagesCount isVerified guideRequestStatus' },
+        populate: { path: 'organizer', select: 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus' },
       })
       .sort({ createdAt: -1 });
 
@@ -585,7 +585,7 @@ const getPackageParticipants = async (req, res, next) => {
     if (!isOwner && !isAdmin) return res.status(403).json({ success: false, error: 'Not authorised' });
 
     const bookings = await Booking.find({ package: req.params.id })
-      .populate('user', 'name email profileImage contactNumber')
+      .populate('user', 'name email profilePicture contactNumber')
       .populate('package', 'title');
 
     res.status(200).json({ success: true, count: bookings.length, results: bookings });
@@ -603,7 +603,7 @@ const getAllPackagesAdmin = async (req, res, next) => {
 
     const filter = status ? { status } : {};
     const baseQuery = TravelPackage.find(filter)
-      .populate('organizer', 'name email profileImage role tripsCount packagesCount isVerified guideRequestStatus')
+      .populate('organizer', 'name email profilePicture role tripsCount packagesCount isVerified guideRequestStatus')
       .sort({ createdAt: -1 });
 
     let packages;
@@ -633,7 +633,7 @@ const getGuideBookings = async (req, res, next) => {
     const packageIds = packages.map(p => p._id);
 
     const bookings = await Booking.find({ package: { $in: packageIds } })
-      .populate('user', 'name email profileImage contactNumber')
+      .populate('user', 'name email profilePicture contactNumber')
       .populate('package', 'title images destination duration price')
       .sort({ createdAt: -1 });
 
@@ -716,6 +716,127 @@ const handleTravelerStatus = async (req, res, next) => {
   }
 };
 
+// @desc  Add a review to a package
+// @route POST /api/packages/:id/reviews
+// @route POST /api/packages/:id/reviews
+const addReview = async (req, res, next) => {
+  const { id } = req.params;
+  const { rating, text } = req.body;
+  const userId = req.user._id;
+  const authorName = req.user.name;
+  const profilePhotoUrl = req.user.profilePicture;
+
+  try {
+    const pkg = await TravelPackage.findById(id);
+    if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
+
+    const newReview = {
+      user: userId,
+      author_name: authorName,
+      profile_photo_url: profilePhotoUrl,
+      rating: parseFloat(rating),
+      text: text,
+      relative_time_description: "Just now",
+      time: Math.floor(Date.now() / 1000)
+    };
+
+    // Update ratings
+    const currentRating = pkg.ratings?.average || 0;
+    const currentCount = pkg.ratings?.count || 0;
+    const newCount = currentCount + 1;
+    const newRating = (currentRating * currentCount + parseFloat(rating)) / newCount;
+
+    if (!pkg.reviews) pkg.reviews = [];
+    pkg.reviews.push(newReview);
+    
+    if (!pkg.ratings) pkg.ratings = { average: 0, count: 0 };
+    pkg.ratings.average = parseFloat(newRating.toFixed(1));
+    pkg.ratings.count = newCount;
+
+    await pkg.save();
+
+    // Update User review count
+    await User.findByIdAndUpdate(req.user._id, { $inc: { reviewsCount: 1 } });
+
+    res.status(201).json({ success: true, result: pkg });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @route PUT /api/packages/:id/reviews/:reviewId
+const updateReview = async (req, res, next) => {
+  const { id, reviewId } = req.params;
+  const { rating, text } = req.body;
+
+  try {
+    const pkg = await TravelPackage.findById(id);
+    if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
+
+    const review = pkg.reviews.id(reviewId);
+    if (!review) return res.status(404).json({ success: false, error: 'Review not found' });
+
+    if (review.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, error: 'Unauthorized to update this review' });
+    }
+
+    const oldRating = review.rating;
+    review.rating = parseFloat(rating);
+    review.text = text;
+    review.time = Math.floor(Date.now() / 1000);
+    review.relative_time_description = "Edited just now";
+
+    // Re-calculate average rating
+    const totalRatingValue = (pkg.ratings.average * pkg.ratings.count) - oldRating + parseFloat(rating);
+    pkg.ratings.average = parseFloat((totalRatingValue / pkg.ratings.count).toFixed(1));
+
+    await pkg.save();
+    res.status(200).json({ success: true, result: pkg });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @route DELETE /api/packages/:id/reviews/:reviewId
+const deleteReview = async (req, res, next) => {
+  const { id, reviewId } = req.params;
+
+  try {
+    const pkg = await TravelPackage.findById(id);
+    if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
+
+    const review = pkg.reviews.id(reviewId);
+    if (!review) return res.status(404).json({ success: false, error: 'Review not found' });
+
+    if (review.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, error: 'Unauthorized to delete this review' });
+    }
+
+    const reviewRating = review.rating;
+    review.remove();
+
+    // Re-calculate ratings
+    const newCount = pkg.ratings.count - 1;
+    if (newCount > 0) {
+      const totalRatingValue = (pkg.ratings.average * pkg.ratings.count) - reviewRating;
+      pkg.ratings.average = parseFloat((totalRatingValue / newCount).toFixed(1));
+      pkg.ratings.count = newCount;
+    } else {
+      pkg.ratings.average = 0;
+      pkg.ratings.count = 0;
+    }
+
+    await pkg.save();
+
+    // Update User review count
+    await User.findByIdAndUpdate(req.user._id, { $inc: { reviewsCount: -1 } });
+
+    res.status(200).json({ success: true, result: pkg });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getPackages,
   getPackageDetails,
@@ -732,4 +853,8 @@ module.exports = {
   getAllPackagesAdmin,
   getGuideBookings,
   handleTravelerStatus,
+  addReview,
+  updateReview,
+  deleteReview,
 };
+

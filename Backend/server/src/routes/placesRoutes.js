@@ -16,8 +16,11 @@ router.post('/', protect, authorize('admin'), upload.array('images', 10), (req, 
 router.put('/:id', protect, authorize('admin'), upload.array('images', 10), (req, res, next) => placesController.editPlace(req, res, next));
 router.delete('/:id', protect, authorize('admin'), (req, res, next) => placesController.deletePlace(req, res, next));
 
-// Moderation
-router.delete('/:placeId/reviews/:authorName/:time', protect, authorize('admin'), (req, res, next) => placesController.deleteReview(req, res, next));
+// Reviews
+router.post('/:id/reviews', protect, (req, res, next) => placesController.addReview(req, res, next));
+router.put('/:placeId/reviews/:reviewId', protect, (req, res, next) => placesController.updateReview(req, res, next));
+router.delete('/:placeId/reviews/:reviewId', protect, (req, res, next) => placesController.deleteReview(req, res, next));
+
 
 // Favorites
 router.get('/favorites', protect, (req, res, next) => placesController.getFavoritePlaces(req, res, next));
