@@ -122,19 +122,12 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         event.reviewId,
       );
 
-      if (updatedPkg != null) {
-        emit(state.copyWith(
-          actionStatus: BookingActionStatus.success,
-          actionSuccessMessage: "Review deleted successfully!",
-          selectedPackage: updatedPkg,
-        ));
-        add(const TravelPackagesRequested(isSilent: true));
-      } else {
-        emit(state.copyWith(
-          actionStatus: BookingActionStatus.failure,
-          actionError: "Error deleting review",
-        ));
-      }
+      emit(state.copyWith(
+        actionStatus: BookingActionStatus.success,
+        actionSuccessMessage: "Review deleted successfully!",
+        selectedPackage: updatedPkg,
+      ));
+      add(const TravelPackagesRequested(isSilent: true));
     } catch (e) {
       emit(state.copyWith(
         actionStatus: BookingActionStatus.failure,

@@ -1,4 +1,4 @@
-﻿import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
+import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
 
 class ApiConstants {
   // Local Backend URL (uses the current system IP for device testing)
@@ -6,7 +6,7 @@ class ApiConstants {
 
   // Render (primary) and Railway (fallback) backend URLs
   static const String renderUrl =
-      'https://bhatkanti-backend-8msl.onrender.com/api';
+      'https://yatrikaa-backend.onrender.com/api';
   static const String railwayUrl =
       'https://bhatkanti-backend.up.railway.app/api';
 

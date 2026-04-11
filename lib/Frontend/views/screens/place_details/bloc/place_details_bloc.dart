@@ -270,18 +270,15 @@ class PlaceDetailsBloc extends Bloc<PlaceDetailsEvent, PlaceDetailsState> {
         state.place!.id,
         event.reviewId,
       );
-      if (updatedPlace != null) {
-        emit(
-          state.copyWith(
-            place: updatedPlace,
-            toastMessage: "Review deleted successfully!",
-          ),
-        );
-      } else {
-        emit(state.copyWith(toastMessage: "Error: Could not delete review"));
-      }
+      emit(
+        state.copyWith(
+          place: updatedPlace,
+          toastMessage: "Review deleted successfully!",
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(toastMessage: "Error: $e"));
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      emit(state.copyWith(toastMessage: "Error: $msg"));
     }
   }
 }

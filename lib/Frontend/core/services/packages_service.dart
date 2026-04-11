@@ -625,19 +625,22 @@ class PackagesService {
   Future<TravelPackageModel?> deleteReview(String packageId, String reviewId) async {
     try {
       final headers = await _authHeaders();
+      final url = '${ApiConstants.baseUrl}/packages/$packageId/reviews/$reviewId';
+      print('[PackagesService] DELETE Review URL: $url');
       final response = await BackendHealthManager.instance.delete(
-        '${ApiConstants.baseUrl}/packages/$packageId/reviews/$reviewId',
+        url,
         headers: headers,
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return TravelPackageModel.fromJson(data['result']);
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to delete review');
       }
-      return null;
     } catch (e) {
       print('Error deleting review for package: $e');
-      return null;
+      rethrow;
     }
   }
 }
