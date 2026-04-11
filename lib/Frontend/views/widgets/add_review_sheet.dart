@@ -48,6 +48,17 @@ class _AddReviewSheetState extends State<AddReviewSheet> {
       return;
     }
 
+    final comment = _commentController.text.trim();
+    if (comment.isEmpty) {
+      CustomToast.error(context, 'Please write a review comment');
+      return;
+    }
+
+    if (comment.length < 2) {
+      CustomToast.error(context, 'Review must be at least 2 characters');
+      return;
+    }
+
     setState(() => _isSubmitting = true);
     await widget.onSubmitted(_rating, _commentController.text.trim());
     if (mounted) {

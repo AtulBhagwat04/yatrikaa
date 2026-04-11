@@ -2,6 +2,7 @@ const Place = require('../models/Place');
 const User = require('../models/User');
 const googlePlacesService = require('../services/placesService');
 const notificationService = require('../services/notificationService');
+const { uploadImage } = require('../services/cloudinaryService');
 
 class PlacesController {
   /**
@@ -35,7 +36,8 @@ class PlacesController {
         totalCount = places.length;
       } else {
         totalCount = await Place.countDocuments(filter);
-        places     = await baseQuery.skip((page - 1) * limit).limit(limit);
+        places     = await baseQuery.skip((page - 1) * limit).limit(limit)
+          .populate('reviews.user', 'name profilePicture');
       }
 
       const totalPages = limit > 0 ? Math.ceil(totalCount / limit) : 1;
@@ -158,7 +160,8 @@ class PlacesController {
     const { placeId } = req.params;
     try {
       // 1. Check DB first
-      const dbPlace = await Place.findOne({ place_id: placeId });
+      const dbPlace = await Place.findOne({ place_id: placeId })
+        .populate('reviews.user', 'name profilePicture');
       if (dbPlace) {
         return res.status(200).json({
           status: "OK",
@@ -191,7 +194,6 @@ class PlacesController {
   // Admin CRUD Operations
   async addPlace(req, res, next) {
     try {
-      const { uploadImage } = require('../services/cloudinaryService');
       let body = { ...req.body };
       
       // Multi-part form-data sends everything as strings. Parse nested JSON.
@@ -248,7 +250,6 @@ class PlacesController {
 
   async editPlace(req, res, next) {
     try {
-      const { uploadImage } = require('../services/cloudinaryService');
       let body = { ...req.body };
 
       // Multi-part form-data sends everything as strings. Parse nested JSON.
@@ -317,23 +318,47 @@ class PlacesController {
   async deleteReview(req, res, next) {
     const { placeId, reviewId } = req.params;
     try {
-      const place = await Place.findOne({ place_id: placeId });
-      if (!place) return res.status(404).json({ error: "Place not found" });
+      let place = await Place.findOne({ place_id: placeId });
+      
+      // FALLBACK: If not found in the suggested place, search globally in all places
+      if (!place || !place.reviews.id(reviewId)) {
+        place = await Place.findOne({ "reviews._id": reviewId });
+      }
+
+      if (!place) {
+        console.log(`[deleteReview] Review ${reviewId} not found globally in any place`);
+        return res.status(404).json({ error: "Review not found" });
+      }
 
       const review = place.reviews.id(reviewId);
-      if (!review) return res.status(404).json({ error: "Review not found" });
+      if (!review) {
+        console.log(`[deleteReview] Review ${reviewId} not found in place ${placeId}`);
+        console.log(`[deleteReview] Available reviews in this place:`);
+        place.reviews.forEach(r => {
+          console.log(`  - ID: ${r._id}, Author: ${r.author_name}, Text: ${r.text}`);
+        });
+        return res.status(404).json({ error: "Review not found" });
+      }
 
-      if (review.user.toString() !== req.user._id.toString()) {
+      // 3. Verify Ownership (Must be owner OR admin)
+      const isOwner = review.user && review.user.toString() === req.user._id.toString();
+      const isAdmin = req.user.role === 'admin';
+      
+      console.log(`[deleteReview] ReviewUser: ${review.user}, ReqUser: ${req.user._id}, isOwner: ${isOwner}, isAdmin: ${isAdmin}`);
+
+      if (!isOwner && !isAdmin) {
         return res.status(403).json({ error: "Unauthorized to delete this review" });
       }
 
       const reviewRating = review.rating;
-      review.remove();
+      
+      // Use .pull() for robust removal
+      place.reviews.pull(reviewId);
 
-      // Recalculate ratings
-      const newCount = place.user_ratings_total - 1;
+      // 4. Recalculate ratings
+      const newCount = place.reviews.length;
       if (newCount > 0) {
-        const totalRatingValue = (place.rating * place.user_ratings_total) - reviewRating;
+        const totalRatingValue = (place.rating * (newCount + 1)) - reviewRating;
         place.rating = parseFloat((totalRatingValue / newCount).toFixed(1));
         place.user_ratings_total = newCount;
       } else {
@@ -510,6 +535,13 @@ class PlacesController {
     const profilePhotoUrl = req.user.profilePicture;
 
     try {
+      if (!text || text.trim().length < 2) {
+        return res.status(400).json({ error: "Review text is required and must be at least 2 characters long" });
+      }
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: "A valid rating between 1 and 5 is required" });
+      }
+
       const place = await Place.findOne({ place_id: id });
       if (!place) return res.status(404).json({ error: "Place not found" });
 

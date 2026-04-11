@@ -18,6 +18,7 @@ import 'package:yatrikaa/Frontend/views/widgets/review_card.dart';
 import 'package:yatrikaa/Frontend/views/widgets/rating_badge.dart';
 import 'package:yatrikaa/Frontend/views/widgets/external_action_card.dart';
 import 'package:yatrikaa/Frontend/views/widgets/add_review_sheet.dart';
+import 'package:yatrikaa/Frontend/views/widgets/all_reviews_sheet.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'full_screen_gallery.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -247,38 +248,48 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
             final place = state.place!;
             return Scaffold(
               backgroundColor: appWhite,
-              floatingActionButton: FloatingActionButton.extended(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => AddReviewSheet(
-                      id: place.id,
-                      onSubmitted: (rating, comment) {
-                        context.read<PlaceDetailsBloc>().add(
-                              PlaceReviewAdded(rating: rating, comment: comment),
+              floatingActionButton: BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, authState) {
+                  if (authState is! Authenticated)
+                    return const SizedBox.shrink();
+                  return FloatingActionButton.extended(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => AddReviewSheet(
+                          id: place.id,
+                          isPackage: false,
+                          onSubmitted: (rating, comment) {
+                            context.read<PlaceDetailsBloc>().add(
+                              PlaceReviewAdded(
+                                rating: rating,
+                                comment: comment,
+                              ),
                             );
-                        Navigator.pop(context);
-                      },
+                            Navigator.pop(context);
+                          },
+                        ),
+                      );
+                    },
+                    backgroundColor: primaryBlue,
+                    elevation: 4,
+                    highlightElevation: 8,
+                    icon: const Icon(
+                      Icons.rate_review_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    label: AppText.body(
+                      "Add Review",
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      size: 14,
                     ),
                   );
                 },
-                backgroundColor: primaryBlue,
-                elevation: 10,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                icon: const Icon(Icons.rate_review_rounded, color: appWhite),
-                label: AppText.button(
-                  "Rate & Review",
-                  color: appWhite,
-                  fontWeight: FontWeight.w800,
-                  size: 14,
-                  letterSpacing: 1.2,
-                ),
               ),
-
               body: Stack(
                 children: [
                   CustomScrollView(
@@ -1160,134 +1171,186 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            AppText.subHeading(
-              "Reviews (${place.reviews.length})",
-              fontWeight: FontWeight.w800,
-              size: 18,
+            Row(
+              children: [
+                AppText.subHeading(
+                  "Reviews",
+                  fontWeight: FontWeight.w900,
+                  size: 20,
+                ),
+              ],
             ),
-            TextButton.icon(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => AddReviewSheet(
-                    id: place.id,
-                    isPackage: false,
-                    onSubmitted: (rating, comment) {
-                      context.read<PlaceDetailsBloc>().add(
-                            PlaceReviewAdded(rating: rating, comment: comment),
-                          );
-                      Navigator.pop(context);
-                    },
-                  ),
-                );
-              },
-              icon: const Icon(Icons.add_comment_rounded, size: 18),
-              label: AppText.body(
-                "Write Review",
-                color: primaryBlue,
-                fontWeight: FontWeight.w800,
-                size: 14,
+            if (place.reviews.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  final authState = context.read<AuthBloc>().state;
+                  final currentUserId = authState is Authenticated
+                      ? authState.id
+                      : null;
+                  final isAdmin =
+                      authState is Authenticated && authState.role == 'admin';
+
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => AllReviewsSheet(
+                      title: 'All Reviews',
+                      reviews: place.reviews,
+                      currentUserId: currentUserId,
+                      isAdmin: isAdmin,
+                    ),
+                  );
+                },
+                child: AppText.small(
+                  "View All",
+                  color: primaryBlue,
+                  fontWeight: FontWeight.w800,
+                  size: 14,
+                ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 16),
-        // Sort to show current user's review first, then limit to 3 for preview
-        ...(() {
-          final authState = context.read<AuthBloc>().state;
-          final currentUserId = authState is Authenticated ? authState.id : null;
-          
-          List<ReviewModel> sortedReviews = List.from(place.reviews);
-          if (currentUserId != null) {
-            final userIndex = sortedReviews.indexWhere((r) => r.userId == currentUserId);
-            if (userIndex != -1) {
-              final userReview = sortedReviews.removeAt(userIndex);
-              sortedReviews.insert(0, userReview);
-            }
-          }
-          return sortedReviews.take(3);
-        })().map((review) {
-          final authState = context.read<AuthBloc>().state;
-          final currentUserId = authState is Authenticated ? authState.id : null;
+        // Sort to show current user's review first, then limit to 5 for horizontal preview
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          clipBehavior: Clip.none,
+          child: Row(
+            children:
+                (() {
+                  final authState = context.read<AuthBloc>().state;
+                  final currentUserId = authState is Authenticated
+                      ? authState.id
+                      : null;
 
-          return ReviewCard(
-            review: review,
-            currentUserId: currentUserId,
-            onEdit: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => AddReviewSheet(
-                  id: place.id,
-                  initialRating: review.rating,
-                  initialComment: review.text,
-                  onSubmitted: (rating, comment) {
-                    context.read<PlaceDetailsBloc>().add(
-                          PlaceReviewUpdated(
-                            reviewId: review.id!,
-                            rating: rating,
-                            comment: comment,
-                          ),
-                        );
-                    Navigator.pop(context);
-                  },
-                ),
-              );
-            },
-            onDelete: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Delete Review'),
-                  content: const Text('Are you sure you want to delete this review?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        context.read<PlaceDetailsBloc>().add(
-                              PlaceReviewDeleted(reviewId: review.id!),
+                  List<ReviewModel> sortedReviews = place.reviews.where((r) {
+                    // Filter for "Top Reviews" (4+ stars) and non-empty quality text
+                    final isHighRating = (r.rating ?? 0) >= 4;
+                    final hasText = r.text != null && r.text!.trim().isNotEmpty;
+                    return isHighRating && hasText;
+                  }).toList();
+
+                  if (currentUserId != null) {
+                    final userIndex = sortedReviews.indexWhere(
+                      (r) => r.userId == currentUserId,
+                    );
+                    if (userIndex != -1) {
+                      final userReview = sortedReviews.removeAt(userIndex);
+                      sortedReviews.insert(0, userReview);
+                    }
+                  }
+                  return sortedReviews.take(5);
+                })().map((review) {
+                  final authState = context.read<AuthBloc>().state;
+                  final currentUserId = authState is Authenticated
+                      ? authState.id
+                      : null;
+
+                  final isAdmin =
+                      authState is Authenticated && authState.role == 'admin';
+
+                  return ReviewCard(
+                    width: MediaQuery.of(context).size.width * 0.85,
+                    review: review,
+                    currentUserId: currentUserId,
+                    isAdmin: isAdmin,
+                    onEdit: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => AddReviewSheet(
+                          id: place.id,
+                          initialRating: review.rating,
+                          initialComment: review.text,
+                          onSubmitted: (rating, comment) {
+                            context.read<PlaceDetailsBloc>().add(
+                              PlaceReviewUpdated(
+                                reviewId: review.id!,
+                                rating: rating,
+                                comment: comment,
+                              ),
                             );
-                        Navigator.pop(ctx);
-                      },
-                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        }),
+                            Navigator.pop(context);
+                          },
+                        ),
+                      );
+                    },
+                    onDelete: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Review'),
+                          content: const Text(
+                            'Are you sure you want to delete this review?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                context.read<PlaceDetailsBloc>().add(
+                                  PlaceReviewDeleted(reviewId: review.id!),
+                                );
+                                Navigator.pop(ctx);
+                              },
+                              child: const Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+          ),
+        ),
         if (place.reviews.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.04),
+              color: appGrey.withOpacity(0.05),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
               children: [
-                Icon(Icons.reviews_outlined, size: 40, color: appGrey.withOpacity(0.5)),
+                Icon(
+                  Icons.reviews_outlined,
+                  size: 40,
+                  color: appGrey.withOpacity(0.5),
+                ),
                 const SizedBox(height: 12),
-                AppText.body("No reviews yet", color: appGrey, fontWeight: FontWeight.w600),
+                AppText.body(
+                  "No reviews yet",
+                  color: appGrey,
+                  fontWeight: FontWeight.w600,
+                ),
                 const SizedBox(height: 4),
-                AppText.caption("Be the first to share your experience!", color: appGrey),
+                AppText.caption(
+                  "Be the first to share your experience!",
+                  color: appGrey,
+                ),
               ],
             ),
           ),
-        if (place.reviews.length > 3)
+        if (place.reviews.length > 5)
           Center(
             child: TextButton(
               onPressed: () {
                 // Navigate to full reviews screen
               },
-              child: AppText.body("View All ${place.reviews.length} Reviews", color: primaryBlue, fontWeight: FontWeight.w700),
+              child: AppText.body(
+                "View All ${place.reviews.length} Reviews",
+                color: primaryBlue,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
       ],

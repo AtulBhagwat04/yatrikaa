@@ -94,6 +94,7 @@ const getPackages = async (req, res, next) => {
 
     const baseQuery = TravelPackage.find(filter)
       .populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus')
+      .populate('reviews.user', 'name profilePicture')
       .sort({ isPopular: -1, createdAt: -1 });
 
     let packages;
@@ -131,7 +132,8 @@ const getPackages = async (req, res, next) => {
 const getPackageDetails = async (req, res, next) => {
   try {
     const pkg = await TravelPackage.findById(req.params.id)
-      .populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus');
+      .populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus')
+      .populate('reviews.user', 'name profilePicture');
 
     if (!pkg) return res.status(404).json({ success: false, error: 'Travel package not found' });
 
@@ -209,7 +211,8 @@ const updatePackage = async (req, res, next) => {
       req.params.id,
       body,
       { new: true, runValidators: true }
-    ).populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus');
+    ).populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus')
+     .populate('reviews.user', 'name profilePicture');
 
     res.status(200).json({ success: true, result: updated });
   } catch (err) {
@@ -281,6 +284,7 @@ const getMyPackages = async (req, res, next) => {
     const filter = { organizer: req.user._id };
     const baseQuery = TravelPackage.find(filter)
       .populate('organizer', 'name profilePicture role tripsCount packagesCount isVerified guideRequestStatus')
+      .populate('reviews.user', 'name profilePicture')
       .sort({ createdAt: -1 });
 
     let packages;
@@ -604,6 +608,7 @@ const getAllPackagesAdmin = async (req, res, next) => {
     const filter = status ? { status } : {};
     const baseQuery = TravelPackage.find(filter)
       .populate('organizer', 'name email profilePicture role tripsCount packagesCount isVerified guideRequestStatus')
+      .populate('reviews.user', 'name profilePicture')
       .sort({ createdAt: -1 });
 
     let packages;
@@ -718,7 +723,6 @@ const handleTravelerStatus = async (req, res, next) => {
 
 // @desc  Add a review to a package
 // @route POST /api/packages/:id/reviews
-// @route POST /api/packages/:id/reviews
 const addReview = async (req, res, next) => {
   const { id } = req.params;
   const { rating, text } = req.body;
@@ -727,6 +731,13 @@ const addReview = async (req, res, next) => {
   const profilePhotoUrl = req.user.profilePicture;
 
   try {
+    if (!text || text.trim().length < 2) {
+      return res.status(400).json({ success: false, error: 'Review text is required' });
+    }
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, error: 'Rating must be between 1 and 5' });
+    }
+
     const pkg = await TravelPackage.findById(id);
     if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
 
@@ -802,23 +813,37 @@ const deleteReview = async (req, res, next) => {
   const { id, reviewId } = req.params;
 
   try {
-    const pkg = await TravelPackage.findById(id);
-    if (!pkg) return res.status(404).json({ success: false, error: 'Package not found' });
+    let pkg = await TravelPackage.findById(id);
+    
+    // FALLBACK: If not found in primary package, search globally
+    if (!pkg || !pkg.reviews.id(reviewId)) {
+      pkg = await TravelPackage.findOne({ "reviews._id": reviewId });
+    }
+
+    if (!pkg) {
+      return res.status(404).json({ success: false, error: 'Review not found' });
+    }
 
     const review = pkg.reviews.id(reviewId);
     if (!review) return res.status(404).json({ success: false, error: 'Review not found' });
 
-    if (review.user.toString() !== req.user._id.toString()) {
+    // 3. Verify Ownership (Must be owner OR admin)
+    const isOwner = review.user && review.user.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, error: 'Unauthorized to delete this review' });
     }
 
     const reviewRating = review.rating;
-    review.remove();
+    
+    // Use .pull() for robust subdocument removal
+    pkg.reviews.pull(reviewId);
 
-    // Re-calculate ratings
-    const newCount = pkg.ratings.count - 1;
+    // 4. Re-calculate ratings
+    const newCount = pkg.reviews.length; 
     if (newCount > 0) {
-      const totalRatingValue = (pkg.ratings.average * pkg.ratings.count) - reviewRating;
+      const totalRatingValue = (pkg.ratings.average * (newCount + 1)) - reviewRating;
       pkg.ratings.average = parseFloat((totalRatingValue / newCount).toFixed(1));
       pkg.ratings.count = newCount;
     } else {

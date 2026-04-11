@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 
@@ -6,13 +6,12 @@ class BackendHealthManager {
   BackendHealthManager._();
   static final BackendHealthManager instance = BackendHealthManager._();
 
-  static const String _renderBase =
-      'https://bhatkanti-backend-8msl.onrender.com/api';
+  static const String _renderBase = 'https://yatrikaa-backend.onrender.com/api';
   static const String _railwayBase =
       'https://bhatkanti-backend.up.railway.app/api';
 
   static const String _renderHealth =
-      'https://bhatkanti-backend-8msl.onrender.com/health';
+      'https://yatrikaa-backend.onrender.com/health';
 
   static const Duration _renderPingTimeout = Duration(seconds: 5);
   static const Duration _renderRequestTimeout = Duration(seconds: 4);
@@ -39,7 +38,7 @@ class BackendHealthManager {
     _useLocalPreference = useLocal;
 
     if (_useLocalPreference) {
-      print('[BackendHealthManager] 🏠 Attempting Local detection...');
+      print('[BackendHealthManager] Attempting Local detection...');
       final localHealthUrl = ApiConstants.localUrl.replaceFirst(
         '/api',
         '/health',
@@ -52,10 +51,10 @@ class BackendHealthManager {
       if (isLocalUp) {
         _usingLocal = true;
         _usingRailway = false;
-        print('[BackendHealthManager] ✅ Starting on Local Backend.');
+        print('[BackendHealthManager] Starting on Local Backend.');
         return;
       }
-      print('[BackendHealthManager] ⏩ Local not detected. Using Cloud.');
+      print('[BackendHealthManager] Local not detected. Using Cloud.');
     }
 
     _usingLocal = false;
@@ -105,7 +104,7 @@ class BackendHealthManager {
               resolved = true;
               completer.complete(cloudResponse);
               print(
-                '[BackendHealthManager] ⏩ Local is slow/down. Cloud (Railway) won the race.',
+                '[BackendHealthManager] Local is slow/down. Cloud (Railway) won the race.',
               );
               _usingLocal = false;
               _usingRailway = true;
@@ -183,7 +182,7 @@ class BackendHealthManager {
       );
       if (localUp) {
         print(
-          '[BackendHealthManager] 🏠 Local backend detected! Switching to Local.',
+          '[BackendHealthManager] Local backend detected! Switching to Local.',
         );
         _usingLocal = true;
         _usingRailway = false;

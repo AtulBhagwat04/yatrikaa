@@ -380,8 +380,10 @@ class PlacesService {
   Future<PlaceModel?> deleteReview(String placeId, String reviewId) async {
     try {
       final token = await _authService.getToken();
+      final url = '${ApiConstants.baseUrl}/places/$placeId/reviews/$reviewId';
+      print('[PlacesService] DELETE Review URL: $url');
       final response = await http.delete(
-        Uri.parse('${ApiConstants.baseUrl}/places/$placeId/reviews/$reviewId'),
+        Uri.parse(url),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -390,11 +392,13 @@ class PlacesService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return PlaceModel.fromJson(data['result']);
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to delete review');
       }
-      return null;
     } catch (e) {
       print('Error deleting review: $e');
-      return null;
+      rethrow;
     }
   }
 }

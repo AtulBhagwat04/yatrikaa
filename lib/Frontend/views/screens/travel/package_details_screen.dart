@@ -16,6 +16,7 @@ import 'package:yatrikaa/Frontend/views/widgets/rating_badge.dart';
 import 'package:yatrikaa/Frontend/core/utils/app_animations.dart';
 import 'package:yatrikaa/Frontend/views/widgets/add_review_sheet.dart';
 import 'package:yatrikaa/Frontend/views/widgets/review_card.dart';
+import 'package:yatrikaa/Frontend/views/widgets/all_reviews_sheet.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:yatrikaa/Frontend/core/models/review_model.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
@@ -173,47 +174,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
       },
       child: Scaffold(
         backgroundColor: appWhite,
-        floatingActionButton: Padding(
-          padding: const EdgeInsets.only(
-            bottom: 140,
-          ), // Position above booking bar
-          child: FloatingActionButton.extended(
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => AddReviewSheet(
-                  id: widget.package.id,
-                  onSubmitted: (rating, comment) {
-                    context.read<TravelBloc>().add(
-                      TravelReviewAdded(
-                        packageId: widget.package.id,
-                        rating: rating,
-                        comment: comment,
-                      ),
-                    );
-                    Navigator.pop(context);
-                  },
-                ),
-              );
-            },
-            backgroundColor: primaryBlue,
-            elevation: 10,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            icon: const Icon(Icons.rate_review_rounded, color: appWhite),
-            label: Text(
-              'Rate & Review',
-              style: GoogleFonts.outfit(
-                color: appWhite,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-        ),
+        floatingActionButton: null,
         body: RefreshIndicator(
           onRefresh: () async {
             context.read<TravelBloc>().add(
@@ -545,7 +506,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                       const SizedBox(height: 8),
                       AppText.small(
                         item.$2,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: appBlack,
                         size: 13,
                         align: TextAlign.center,
@@ -555,7 +516,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                         item.$3,
                         color: appGrey,
                         size: 10,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ],
                   ),
@@ -605,26 +566,30 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 24,
-          decoration: BoxDecoration(
-            color: primaryBlue,
-            borderRadius: BorderRadius.circular(2),
+  Widget _buildSectionTitle(
+    String title, {
+    VoidCallback? onTap,
+    Widget? trailing,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      splashColor: primaryBlue.withOpacity(0.05),
+      highlightColor: Colors.transparent,
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 24,
+            decoration: BoxDecoration(
+              color: primaryBlue,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: AppText.subHeading(
-            title,
-            fontWeight: FontWeight.w800,
-            size: 20,
-          ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          AppText.subHeading(title, fontWeight: FontWeight.w700, size: 18),
+          if (trailing != null) trailing,
+        ],
+      ),
     );
   }
 
@@ -816,7 +781,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                       children: [
                         AppText.body(
                           org.name,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           size: 18,
                         ),
                         if (org.isVerified)
@@ -868,7 +833,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Guest Reviews'),
+          _buildSectionTitle('Reviews'),
           const SizedBox(height: 24),
           Container(
             width: double.infinity,
@@ -909,26 +874,79 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildSectionTitle('Guest Reviews (${reviews.length})'),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: ratingColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+            Expanded(
+              child: _buildSectionTitle(
+                'Reviews',
+                onTap: reviews.isNotEmpty
+                    ? () {
+                        final authState = context.read<AuthBloc>().state;
+                        final currentUserId = authState is Authenticated
+                            ? authState.id
+                            : null;
+                        final isAdmin =
+                            authState is Authenticated &&
+                            authState.role == 'admin';
+
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => AllReviewsSheet(
+                            title: 'All Reviews',
+                            reviews: reviews,
+                            currentUserId: currentUserId,
+                            isAdmin: isAdmin,
+                          ),
+                        );
+                      }
+                    : null,
+                trailing: reviews.isNotEmpty
+                    ? const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: primaryBlue,
+                        size: 24,
+                      )
+                    : null,
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.star_rounded, color: ratingColor, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    widget.package.averageRating.toStringAsFixed(1),
-                    style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.w900,
-                      color: ratingColor,
-                    ),
+            ),
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, authState) {
+                if (authState is! Authenticated) return const SizedBox.shrink();
+                return TextButton(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => AddReviewSheet(
+                        id: widget.package.id,
+                        isPackage: true,
+                        onSubmitted: (rating, comment) {
+                          context.read<TravelBloc>().add(
+                            TravelReviewAdded(
+                              packageId: widget.package.id,
+                              rating: rating,
+                              comment: comment,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        },
+                      ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                ],
-              ),
+                  child: AppText.small(
+                    "Add Yours",
+                    color: primaryBlue,
+                    fontWeight: FontWeight.w900,
+                    size: 14,
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -936,83 +954,98 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
         Builder(
           builder: (context) {
             final authState = context.read<AuthBloc>().state;
-            final currentUserId = authState is Authenticated ? authState.id : null;
-            
-            // Sort to show current user's review first
-            List<ReviewModel> displayReviews = List.from(reviews);
+            final currentUserId = authState is Authenticated
+                ? authState.id
+                : null;
+
+            // Filter for "Top Reviews" (4+ stars) and non-empty quality text
+            List<ReviewModel> displayReviews = reviews.where((r) {
+              final isHighRating = (r.rating ?? 0) >= 4;
+              final hasText = r.text != null && r.text!.trim().isNotEmpty;
+              return isHighRating && hasText;
+            }).toList();
+
             if (currentUserId != null) {
-              final userIndex = displayReviews.indexWhere((r) => r.userId == currentUserId);
+              final userIndex = displayReviews.indexWhere(
+                (r) => r.userId == currentUserId,
+              );
               if (userIndex != -1) {
                 final userReview = displayReviews.removeAt(userIndex);
                 displayReviews.insert(0, userReview);
               }
             }
 
-            return ListView.separated(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: displayReviews.length > 5 ? 5 : displayReviews.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
-              itemBuilder: (_, i) {
-                final review = displayReviews[i];
-
-                return ReviewCard(
-                  review: review,
-                  currentUserId: currentUserId,
-                  onEdit: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => AddReviewSheet(
-                        id: widget.package.id,
-                        initialRating: review.rating,
-                        initialComment: review.text,
-                        onSubmitted: (rating, comment) {
-                          context.read<TravelBloc>().add(
-                                TravelReviewUpdated(
-                                  packageId: widget.package.id,
-                                  reviewId: review.id!,
-                                  rating: rating,
-                                  comment: comment,
-                                ),
-                              );
-                          Navigator.pop(context);
-                        },
-                      ),
-                    );
-                  },
-                  onDelete: () {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Delete Review'),
-                        content: const Text('Are you sure you want to delete this review?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Cancel'),
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              clipBehavior: Clip.none,
+              child: Row(
+                children: displayReviews.take(5).map((review) {
+                  final isAdmin =
+                      authState is Authenticated && authState.role == 'admin';
+                  return ReviewCard(
+                    width: MediaQuery.of(context).size.width * 0.85,
+                    review: review,
+                    currentUserId: currentUserId,
+                    isAdmin: isAdmin,
+                    onEdit: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => AddReviewSheet(
+                          id: widget.package.id,
+                          initialRating: review.rating,
+                          initialComment: review.text,
+                          onSubmitted: (rating, comment) {
+                            context.read<TravelBloc>().add(
+                              TravelReviewUpdated(
+                                packageId: widget.package.id,
+                                reviewId: review.id!,
+                                rating: rating,
+                                comment: comment,
+                              ),
+                            );
+                            Navigator.pop(context);
+                          },
+                        ),
+                      );
+                    },
+                    onDelete: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Review'),
+                          content: const Text(
+                            'Are you sure you want to delete this review?',
                           ),
-                          TextButton(
-                            onPressed: () {
-                              context.read<TravelBloc>().add(
-                                    TravelReviewDeleted(
-                                      packageId: widget.package.id,
-                                      reviewId: review.id!,
-                                    ),
-                                  );
-                              Navigator.pop(ctx);
-                            },
-                            child: const Text('Delete',
-                                style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                context.read<TravelBloc>().add(
+                                  TravelReviewDeleted(
+                                    packageId: widget.package.id,
+                                    reviewId: review.id!,
+                                  ),
+                                );
+                                Navigator.pop(ctx);
+                              },
+                              child: const Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              ),
             );
           },
         ),
@@ -1078,7 +1111,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.7),
                           fontSize: 9,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
                         ),
                       ),
@@ -1112,7 +1145,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w700,
                                 letterSpacing: 0.2,
                               ),
                             ),
@@ -1129,7 +1162,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.7),
                           fontSize: 9,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
                         ),
                       ),
@@ -1182,7 +1215,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                                 ? Colors.white38
                                 : primaryBlue,
                             size: 14,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
                           ),
                           if (!isFull && !isComingSoon)
@@ -1246,7 +1279,7 @@ class _AboutSectionState extends State<_AboutSection> {
             Text(
               'Package Details',
               style: GoogleFonts.outfit(
-                fontSize: 22,
+                fontSize: 18,
                 fontWeight: FontWeight.w900,
                 color: appBlack,
                 letterSpacing: -0.5,
@@ -1394,8 +1427,8 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                                 widget.step.title,
                                 style: GoogleFonts.outfit(
                                   color: appBlack,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 19,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
                                   letterSpacing: -0.3,
                                   height: 1.25,
                                 ),
@@ -1428,7 +1461,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                                         style: GoogleFonts.outfit(
                                           color: appGrey,
                                           fontSize: 12,
-                                          fontWeight: FontWeight.w600,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                     ],
@@ -1524,7 +1557,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                   widget.step.day.toString(),
                   style: GoogleFonts.outfit(
                     color: _expanded ? appWhite : primaryBlue,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     fontSize: 14,
                   ),
                 ),
@@ -1551,7 +1584,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
               style: GoogleFonts.outfit(
                 color: appBlack.withOpacity(0.7),
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -1584,7 +1617,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                   style: GoogleFonts.outfit(
                     color: appGrey,
                     fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -1593,7 +1626,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                   style: GoogleFonts.outfit(
                     color: appBlack,
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
