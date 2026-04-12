@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
@@ -80,7 +80,7 @@ class PlaceNearbyCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize
@@ -110,7 +110,7 @@ class PlaceNearbyCard extends StatelessWidget {
                           place.name,
                           fontWeight: FontWeight.w800,
                           maxLines: 2,
-                          size: 16,
+                          size: 14,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -129,6 +129,7 @@ class PlaceNearbyCard extends StatelessWidget {
                                   .where((s) => s != null && s.isNotEmpty)
                                   .join(", "),
                               color: appGrey,
+                              size: 11,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
