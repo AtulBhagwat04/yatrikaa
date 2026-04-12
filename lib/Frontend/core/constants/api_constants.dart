@@ -5,8 +5,7 @@ class ApiConstants {
   static const String localUrl = 'http://10.197.55.64:3000/api';
 
   // Render (primary) and Railway (fallback) backend URLs
-  static const String renderUrl =
-      'https://yatrikaa-backend.onrender.com/api';
+  static const String renderUrl = 'https://yatrikaa-backend.onrender.com/api';
   static const String railwayUrl =
       'https://bhatkanti-backend.up.railway.app/api';
 
@@ -43,8 +42,16 @@ class ApiConstants {
     return '$baseUrl/places/details/$placeId';
   }
 
-  static String getPopularPlacesUrl({int page = 1, int limit = 12}) {
-    return '$baseUrl/places/popular?page=$page&limit=$limit';
+  static String getPopularPlacesUrl({
+    int page = 1,
+    int limit = 12,
+    String? query,
+  }) {
+    String url = '$baseUrl/places/popular?page=$page&limit=$limit';
+    if (query != null && query.isNotEmpty) {
+      url += "&query=${Uri.encodeComponent(query)}";
+    }
+    return url;
   }
 
   static String getPhotoUrl(String photoReference) {

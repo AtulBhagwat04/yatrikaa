@@ -15,21 +15,32 @@ class PlacesService {
   /// Fetches popular places from DB. This is a legacy method.
   Future<List<PlaceModel>> getFamousMaharashtraPlaces({
     String? category,
+    String? search,
     int page = 1,
     int limit = 12,
   }) async {
-    final result = await getPlacesPaginated(category: category, page: page, limit: limit);
+    final result = await getPlacesPaginated(
+      category: category,
+      search: search,
+      page: page,
+      limit: limit,
+    );
     return result['places'] as List<PlaceModel>;
   }
 
   /// Modern paginated fetch returning a Map with 'places', 'hasMore', and 'totalCount'
   Future<Map<String, dynamic>> getPlacesPaginated({
     String? category,
+    String? search,
     int page = 1,
     int limit = 12,
   }) async {
     try {
-      String url = ApiConstants.getPopularPlacesUrl(page: page, limit: limit);
+      String url = ApiConstants.getPopularPlacesUrl(
+        page: page,
+        limit: limit,
+        query: search,
+      );
       if (category != null && category != AppStrings.catAll) {
         url += "&category=${Uri.encodeComponent(category)}";
       }
@@ -186,71 +197,92 @@ class PlacesService {
   Future<bool> editPlace(String id, Map<String, dynamic> body, {List<XFile>? imageFiles}) async {
     try {
       final token = await _authService.getToken();
-      final uri = Uri.parse('${ApiConstants.baseUrl}/places/$id');
-      var request = http.MultipartRequest('PUT', uri);
+      final originalUrl = '${ApiConstants.baseUrl}/places/$id';
       
-      request.headers['Authorization'] = 'Bearer $token';
+      final response = await BackendHealthManager.instance.executeWithFallback(
+        originalUrl,
+        (url) async {
+          var request = http.MultipartRequest('PUT', Uri.parse(url));
+          request.headers['Authorization'] = 'Bearer $token';
 
-      // Attach fields
-      body.forEach((key, value) {
-        if (value is Map || value is List) {
-          request.fields[key] = jsonEncode(value);
-        } else {
-          request.fields[key] = value.toString();
-        }
-      });
+          // Attach fields
+          body.forEach((key, value) {
+            if (value is Map || value is List) {
+              request.fields[key] = jsonEncode(value);
+            } else {
+              request.fields[key] = value.toString();
+            }
+          });
 
-      // Attach new images
-      if (imageFiles != null) {
-        for (var image in imageFiles) {
-          request.files.add(await http.MultipartFile.fromPath(
-            'images',
-            image.path,
-            contentType: MediaType('image', 'jpeg'),
-          ));
-        }
+          // Attach new images
+          if (imageFiles != null) {
+            for (var i = 0; i < imageFiles.length; i++) {
+              final file = imageFiles[i];
+              request.files.add(await http.MultipartFile.fromPath(
+                'images',
+                file.path,
+                contentType: MediaType('image', 'jpeg'),
+              ));
+            }
+          }
+
+          final streamedResponse = await request.send();
+          return await http.Response.fromStream(streamedResponse);
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('[PlacesService] Update failed. Status: ${response.statusCode}, Body: ${response.body}');
+        String errorMessage = 'Failed to update place (${response.statusCode})';
+        try {
+          final errorData = jsonDecode(response.body);
+          errorMessage = errorData['error'] ?? errorData['message'] ?? errorMessage;
+        } catch (_) {}
+        throw Exception(errorMessage);
       }
-
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      return response.statusCode == 200;
     } catch (e) {
-      print('Error editing place: $e');
-      return false;
+      print('[PlacesService] Error editing place: $e');
+      rethrow;
     }
   }
 
   Future<bool> addPlace(Map<String, dynamic> body, {List<XFile>? imageFiles}) async {
     try {
       final token = await _authService.getToken();
-      final uri = Uri.parse('${ApiConstants.baseUrl}/places');
-      var request = http.MultipartRequest('POST', uri);
+      final originalUrl = '${ApiConstants.baseUrl}/places';
       
-      request.headers['Authorization'] = 'Bearer $token';
+      final response = await BackendHealthManager.instance.executeWithFallback(
+        originalUrl,
+        (url) async {
+          var request = http.MultipartRequest('POST', Uri.parse(url));
+          request.headers['Authorization'] = 'Bearer $token';
 
-      // Attach fields
-      body.forEach((key, value) {
-        if (value is Map || value is List) {
-          request.fields[key] = jsonEncode(value);
-        } else {
-          request.fields[key] = value.toString();
-        }
-      });
+          // Attach fields
+          body.forEach((key, value) {
+            if (value is Map || value is List) {
+              request.fields[key] = jsonEncode(value);
+            } else {
+              request.fields[key] = value.toString();
+            }
+          });
 
-      // Attach images
-      if (imageFiles != null) {
-        for (var image in imageFiles) {
-          request.files.add(await http.MultipartFile.fromPath(
-            'images',
-            image.path,
-            contentType: MediaType('image', 'jpeg'),
-          ));
-        }
-      }
+          // Attach images
+          if (imageFiles != null) {
+            for (var image in imageFiles) {
+              request.files.add(await http.MultipartFile.fromPath(
+                'images',
+                image.path,
+                contentType: MediaType('image', 'jpeg'),
+              ));
+            }
+          }
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+          final streamedResponse = await request.send();
+          return await http.Response.fromStream(streamedResponse);
+        },
+      );
 
       if (response.statusCode == 201) {
         return true;
@@ -267,9 +299,16 @@ class PlacesService {
   Future<bool> deletePlace(String id) async {
     try {
       final token = await _authService.getToken();
-      final response = await http.delete(
-        Uri.parse('${ApiConstants.baseUrl}/places/$id'),
-        headers: {'Authorization': 'Bearer $token'},
+      final originalUrl = '${ApiConstants.baseUrl}/places/$id';
+      
+      final response = await BackendHealthManager.instance.executeWithFallback(
+        originalUrl,
+        (url) async {
+          return await http.delete(
+            Uri.parse(url),
+            headers: {'Authorization': 'Bearer $token'},
+          );
+        },
       );
       return response.statusCode == 200;
     } catch (e) {

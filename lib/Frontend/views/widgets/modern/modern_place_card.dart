@@ -29,7 +29,7 @@ class ModernPlaceCard extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      margin: margin ?? const EdgeInsets.only(right: AppSpacing.m, bottom: 8, top: 4),
+      margin: margin ?? const EdgeInsets.only(right: AppSpacing.s, bottom: 8, top: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
         boxShadow: [
@@ -111,7 +111,10 @@ class ModernPlaceCard extends StatelessWidget {
               ),
               // Content (Bottom)
               Padding(
-                padding: const EdgeInsets.all(AppSpacing.m),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s,
+                  vertical: AppSpacing.s,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +122,7 @@ class ModernPlaceCard extends StatelessWidget {
                     AppText.heading(
                       place.name,
                       color: Colors.white,
-                      size: 18,
+                      size: 15,
                       fontWeight: FontWeight.w800,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -139,7 +142,7 @@ class ModernPlaceCard extends StatelessWidget {
                               place.city!,
                               color: Colors.white70,
                               fontWeight: FontWeight.w600,
-                              size: 13,
+                              size: 11,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),

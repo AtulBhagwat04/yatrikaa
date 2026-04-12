@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
@@ -35,6 +37,7 @@ class _SearchScreenState extends State<SearchScreen>
   bool _isTrendingLoading = true;
   String _query = "";
   String _lastPerformedQuery = "";
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -53,6 +56,7 @@ class _SearchScreenState extends State<SearchScreen>
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -80,6 +84,7 @@ class _SearchScreenState extends State<SearchScreen>
   }) async {
     final trimmedQuery = query.trim();
     if (trimmedQuery.isEmpty) {
+      _debounceTimer?.cancel();
       if (mounted) {
         setState(() {
           _query = "";
@@ -91,18 +96,31 @@ class _SearchScreenState extends State<SearchScreen>
       return;
     }
 
-    // Avoid duplicate searches unless forced
     if (trimmedQuery == _lastPerformedQuery && !isCategory && !force) return;
 
-    // Clear existing results to show loading state for new query
-    if (mounted) {
-      setState(() {
-        _query = trimmedQuery;
-        _lastPerformedQuery = trimmedQuery;
-        _isLoading = true;
-        _searchResults = [];
-      });
+    if (isCategory || force) {
+      _debounceTimer?.cancel();
+      _executeSearch(trimmedQuery, isCategory: isCategory);
+      return;
     }
+
+    // DEBOUNCE: only start searching if user pauses for 600ms
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 600), () async {
+      _executeSearch(trimmedQuery, isCategory: isCategory);
+    });
+  }
+
+  Future<void> _executeSearch(String trimmedQuery, {bool isCategory = false}) async {
+    if (!mounted) return;
+
+    // Clear existing results to show loading state for new query
+    setState(() {
+      _query = trimmedQuery;
+      _lastPerformedQuery = trimmedQuery;
+      _isLoading = true;
+      _searchResults = [];
+    });
 
     try {
       List<PlaceModel> results = [];
@@ -126,7 +144,7 @@ class _SearchScreenState extends State<SearchScreen>
 
         // SMART SEARCH: If query is specific (like a city/state name),
         // fetch related attractions to show "Related Results"
-        if (trimmedQuery.length >= 3) {
+        if (trimmedQuery.length >= 3 && _query == trimmedQuery) {
           final isLikelyLocation = trimmedQuery.split(' ').length <= 2;
           if (isLikelyLocation) {
             final attractions = await _placesService.searchPlaces(
@@ -277,7 +295,7 @@ class _SearchScreenState extends State<SearchScreen>
       color: Colors.transparent,
       child: ModernSearchBar(
         controller: _searchController,
-        onChanged: _performSearch,
+        onChanged: (query) => _performSearch(query),
         focusNode: _searchFocusNode,
         autoFocus: false,
         suggestionsEnabled: true,

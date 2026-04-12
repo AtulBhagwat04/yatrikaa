@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -41,6 +42,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   static const int _pageSize = 12;
   bool _hasMore = false;
   bool _isMoreLoading = false;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -50,7 +52,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= 
+    if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 300) {
       if (!_isMoreLoading && _hasMore && !_isLoading) {
         _fetchPlaces(refresh: false);
@@ -60,15 +62,17 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
+    _debounceTimer?.cancel();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchPlaces({bool refresh = true}) async {
+  Future<void> _fetchPlaces({bool refresh = true, String? search}) async {
     if (!mounted) return;
-    
+
+    final currentSearch = search ?? _searchController.text.trim();
+
     setState(() {
       if (refresh) {
         _isLoading = true;
@@ -80,15 +84,29 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     });
 
     try {
-      final result = await _placesService.getPlacesPaginated(
-        page: refresh ? 1 : _currentPage + 1,
-        limit: _pageSize,
-      );
+      final List<PlaceModel> places;
+      final bool hasMore;
+
+      if (currentSearch.isNotEmpty) {
+        // Use the same search service as the suggestions for consistency
+        places = await _placesService.searchPlaces(currentSearch);
+        hasMore =
+            false; // Search results from this endpoint are currently non-paginated
+      } else {
+        // Use regular paginated fetch for the default view
+        final result = await _placesService.getPlacesPaginated(
+          page: refresh ? 1 : _currentPage + 1,
+          limit: _pageSize,
+        );
+        places = result['places'] ?? [];
+        hasMore = result['hasMore'] ?? false;
+      }
 
       if (!mounted) return;
-      
-      final List<PlaceModel> places = result['places'] ?? [];
-      final bool hasMore = result['hasMore'] ?? false;
+
+      // 🚨 CRITICAL: Check if search query has changed since we started.
+      final latestSearchCheck = _searchController.text.trim();
+      if (currentSearch != latestSearchCheck) return;
 
       setState(() {
         if (refresh) {
@@ -96,13 +114,25 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
           _currentPage = 1;
         } else {
           _allPlaces.addAll(places);
-          _currentPage++;
+          if (currentSearch.isEmpty) _currentPage++;
         }
         _hasMore = hasMore;
-        _filteredPlaces = _allPlaces;
+
+        // Re-apply filter
+        final query = _searchController.text.trim().toLowerCase();
+        if (query.isNotEmpty) {
+          _filteredPlaces = _allPlaces.where((place) {
+            final name = (place.name ?? '').toLowerCase();
+            final address = (place.formattedAddress ?? '').toLowerCase();
+            return name.contains(query) || address.contains(query);
+          }).toList();
+        } else {
+          _filteredPlaces = _allPlaces;
+        }
+
         _isLoading = false;
         _isMoreLoading = false;
-        _error = null; // Clear any previous errors
+        _error = null;
       });
     } catch (e) {
       if (!mounted) return;
@@ -116,13 +146,18 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   }
 
   void _filterPlaces(String query) {
+    if (!mounted) return;
+    final lowQuery = query.toLowerCase().trim();
     setState(() {
-      _filteredPlaces = _allPlaces.where((place) {
-        final name = place.name.toLowerCase();
-        final address = place.formattedAddress.toLowerCase();
-        return name.contains(query.toLowerCase()) ||
-            address.contains(query.toLowerCase());
-      }).toList();
+      if (lowQuery.isEmpty) {
+        _filteredPlaces = _allPlaces;
+      } else {
+        _filteredPlaces = _allPlaces.where((place) {
+          final name = (place.name ?? '').toLowerCase();
+          final address = (place.formattedAddress ?? '').toLowerCase();
+          return name.contains(lowQuery) || address.contains(lowQuery);
+        }).toList();
+      }
     });
   }
 
@@ -134,23 +169,24 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         top: false,
         child: RefreshIndicator(
           onRefresh: _fetchPlaces,
-          displacement: 80, // Moves the pull-to-refresh spinner below the AppBar
+          displacement:
+              80, // Moves the pull-to-refresh spinner below the AppBar
           color: primaryBlue,
           child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              _buildAppBar(),
+              _buildSearchBox(),
+              _buildList(),
+              if (_hasMore || _isMoreLoading) _buildLoadMoreIndicator(),
+              const SliverToBoxAdapter(child: SizedBox(height: 60)),
+            ],
           ),
-          slivers: [
-            _buildAppBar(),
-            _buildSearchBox(),
-            _buildList(),
-            if (_hasMore || _isMoreLoading) _buildLoadMoreIndicator(),
-            const SliverToBoxAdapter(child: SizedBox(height: 60)),
-          ],
         ),
       ),
-    ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.pushNamed(
@@ -215,21 +251,34 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
               ),
             ],
           ),
-            child: ModernSearchBar(
-              controller: _searchController,
-              onChanged: _filterPlaces,
-              suggestionsEnabled: false,
-              hint: "Search your places...",
-              icon: Icons.search_rounded,
-            ),
+          child: ModernSearchBar(
+            controller: _searchController,
+            onChanged: (val) {
+              _debounceTimer?.cancel();
+              // 1. Immediate local filter for responsiveness
+              _filterPlaces(val);
+
+              // 2. Debounced server-side search for accuracy
+              _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+                if (val.trim().isNotEmpty) {
+                  _fetchPlaces(refresh: true, search: val.trim());
+                } else {
+                  _fetchPlaces(refresh: true); // Reset to full list
+                }
+              });
+            },
+            suggestionsEnabled: false,
+            hint: "Search your places...",
+            icon: Icons.search_rounded,
+          ),
         ),
       ),
     );
   }
 
   Widget _buildList() {
-    // Only show full-screen loader if list is absolutely empty and we are loading
-    if (_isLoading && _allPlaces.isEmpty) {
+    // Show loading indicator if we are searching (and have no filtered items yet)
+    if (_isLoading && _filteredPlaces.isEmpty) {
       return const SliverFillRemaining(
         child: Center(child: CircularProgressIndicator(color: primaryBlue)),
       );
@@ -259,19 +308,39 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
       );
     }
 
-    if (_filteredPlaces.isEmpty) {
+    if (_filteredPlaces.isEmpty && !_isLoading) {
       return SliverFillRemaining(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.location_off_rounded,
+                _searchController.text.isEmpty
+                    ? Icons.location_off_rounded
+                    : Icons.search_off_rounded,
                 size: 64,
                 color: Colors.grey.shade300,
               ),
               const SizedBox(height: 16),
-              AppText.body("No places found", color: Colors.grey),
+              AppText.body(
+                _searchController.text.isEmpty
+                    ? "No places found"
+                    : "No results matching \"${_searchController.text.trim()}\"",
+                color: Colors.grey,
+              ),
+              if (_hasMore || _searchController.text.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: () => _fetchPlaces(refresh: false),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(
+                    _searchController.text.isEmpty
+                        ? "Load More"
+                        : "Search On Server",
+                  ),
+                  style: TextButton.styleFrom(foregroundColor: primaryBlue),
+                ),
+              ],
             ],
           ),
         ),
@@ -295,7 +364,10 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
           child: _isMoreLoading
-              ? const CircularProgressIndicator(color: primaryBlue, strokeWidth: 3)
+              ? const CircularProgressIndicator(
+                  color: primaryBlue,
+                  strokeWidth: 3,
+                )
               : const SizedBox.shrink(),
         ),
       ),
@@ -309,6 +381,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         : 'Place';
 
     return Container(
+      key: ValueKey(place.id ?? place.name),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -463,7 +536,9 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isDestructive ? Colors.white : Colors.black.withValues(alpha: 0.6),
+            color: isDestructive
+                ? Colors.white
+                : Colors.black.withValues(alpha: 0.6),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
@@ -506,11 +581,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
           builder: (context, setSheetState) {
             List<Map<String, dynamic>> combinedItems = [
               ...currentUrls.map(
-                (p) => {
-                  'url': _getPhotoUrl(p),
-                  'type': 'image',
-                  'data': p,
-                },
+                (p) => {'url': _getPhotoUrl(p), 'type': 'image', 'data': p},
               ),
             ];
             List<String> displayUrls = combinedItems
@@ -585,7 +656,9 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                     child: Stack(
                                       children: [
                                         ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                           child: CachedNetworkImage(
                                             imageUrl: url,
                                             height: 150,
@@ -617,7 +690,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                               }
                                               setSheetState(() {
                                                 currentUrls.remove(
-                                                    combinedItems[idx]['data']);
+                                                  combinedItems[idx]['data'],
+                                                );
                                                 combinedItems = [
                                                   ...currentUrls.map(
                                                     (p) => {
@@ -660,7 +734,9 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                     child: Stack(
                                       children: [
                                         ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                           child: Image.file(
                                             File(pickedFiles[i].path),
                                             height: 150,
@@ -723,12 +799,15 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                       color: onboardingBlueVeryLight,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: Colors.blue.withValues(alpha: 0.1),
+                                        color: Colors.blue.withValues(
+                                          alpha: 0.1,
+                                        ),
                                         style: BorderStyle.solid,
                                       ),
                                     ),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.add_photo_alternate_rounded,
@@ -791,31 +870,49 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                         return;
                                       }
 
-                                      setSheetState(() => isSheetLoading = true);
+                                      setSheetState(
+                                        () => isSheetLoading = true,
+                                      );
                                       final success = await _handleUpdate(
-                                          place.id!,
-                                          {
-                                            'name': nameController.text.trim(),
-                                            'editorial_summary': {
-                                              'overview': descriptionController
-                                                  .text
-                                                  .trim(),
-                                            },
-                                            'formatted_address':
-                                                addressController.text.trim(),
-                                            'photos': currentUrls
-                                                .map((p) =>
-                                                    {'photo_reference': p})
-                                                .toList(),
-                                            'images': currentUrls,
+                                        place.id!,
+                                        {
+                                          'place_id': place.id,
+                                          'name': nameController.text.trim(),
+                                          'description': descriptionController
+                                              .text
+                                              .trim(),
+                                          'editorial_summary': {
+                                            'overview': descriptionController
+                                                .text
+                                                .trim(),
                                           },
-                                          pickedFiles);
+                                          'formatted_address': addressController
+                                              .text
+                                              .trim(),
+                                          'address': addressController.text
+                                              .trim(),
+                                          'category': place.category,
+                                          'types': place.types,
+                                          'images': currentUrls,
+                                          // Only send photos as references if they aren't already full URLs
+                                          'photos': currentUrls
+                                              .where(
+                                                (p) => !p.startsWith('http'),
+                                              )
+                                              .map(
+                                                (p) => {'photo_reference': p},
+                                              )
+                                              .toList(),
+                                        },
+                                        pickedFiles,
+                                      );
 
                                       if (success && mounted) {
                                         Navigator.pop(ctx);
                                       } else if (mounted) {
                                         setSheetState(
-                                            () => isSheetLoading = false);
+                                          () => isSheetLoading = false,
+                                        );
                                       }
                                     },
                               style: ElevatedButton.styleFrom(
@@ -906,6 +1003,10 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         _refreshSinglePlace(id);
         return true;
       }
+
+      if (mounted) {
+        CustomToast.error(context, "Failed to update place. Please try again.");
+      }
       return false;
     } catch (e) {
       if (mounted) {
@@ -973,7 +1074,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     try {
       final updatedPlace = await _placesService.getPlaceDetails(id);
       if (!mounted) return;
-      
+
       setState(() {
         final index = _allPlaces.indexWhere((p) => p.id == id);
         if (index != -1) {

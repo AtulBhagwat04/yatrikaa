@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
@@ -50,6 +51,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     _scrollController.removeListener(_onScroll);
@@ -107,9 +109,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  Timer? _debounceTimer;
+
   Future<void> _performSearch(String query, {bool force = false}) async {
     final trimmedQuery = query.trim();
     if (trimmedQuery.isEmpty) {
+      _debounceTimer?.cancel();
       if (mounted) {
         setState(() {
           _query = "";
@@ -121,24 +126,37 @@ class _ExploreScreenState extends State<ExploreScreen> {
       return;
     }
 
-    if (trimmedQuery == _lastPerformedQuery && !force) return;
-
-    if (mounted) {
-      setState(() {
-        _query = trimmedQuery;
-        _lastPerformedQuery = trimmedQuery;
-        _isSearching = true;
-        _searchResults = [];
-      });
+    if (force) {
+      _debounceTimer?.cancel();
+      _executeSearch(trimmedQuery);
+      return;
     }
 
+    // DEBOUNCE: only start searching if user pauses for 600ms
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 600), () async {
+      _executeSearch(trimmedQuery);
+    });
+  }
+
+  Future<void> _executeSearch(String trimmedQuery) async {
+    if (!mounted) return;
+
+    setState(() {
+      _query = trimmedQuery;
+      _lastPerformedQuery = trimmedQuery;
+      _isSearching = true;
+      _searchResults = [];
+    });
+
     try {
+      // Execute main search
       List<PlaceModel> results = await _placesService.searchPlaces(
         trimmedQuery,
       );
 
-      // SMART SEARCH for Locations
-      if (trimmedQuery.length >= 3) {
+      // SMART SEARCH for Locations (only if the first search was for a city-like query)
+      if (trimmedQuery.length >= 3 && _query == trimmedQuery) {
         final isLikelyLocation = trimmedQuery.split(' ').length <= 2;
         if (isLikelyLocation) {
           final attractions = await _placesService.searchPlaces(

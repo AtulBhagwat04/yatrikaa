@@ -13,8 +13,8 @@ class BackendHealthManager {
   static const String _renderHealth =
       'https://yatrikaa-backend.onrender.com/health';
 
-  static const Duration _renderPingTimeout = Duration(seconds: 5);
-  static const Duration _renderRequestTimeout = Duration(seconds: 4);
+  static const Duration _renderPingTimeout = Duration(seconds: 10);
+  static const Duration _renderRequestTimeout = Duration(seconds: 8);
   static const Duration _renderCheckInterval = Duration(minutes: 2);
 
   static const Duration _localPingTimeout = Duration(seconds: 2);
@@ -153,7 +153,7 @@ class BackendHealthManager {
       final finalUrl = _convertToTargetUrl(originalUrl, finalBase);
       return await requestExecutor(
         finalUrl,
-      ).timeout(const Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 30));
     }
   }
 
