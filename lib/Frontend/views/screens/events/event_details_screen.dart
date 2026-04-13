@@ -105,8 +105,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   void _shareEvent(EventModel event) {
-    Share.share(
-      'Check out this event: ${event.title}\nDate: ${DateFormat.yMMMd().format(event.date)}\nVenue: ${event.venue}\nDetails on Yatrikaa!',
+    SharePlus.instance.share(
+      ShareParams(
+        text: 'Check out this event: ${event.title}\nDate: ${DateFormat.yMMMd().format(event.date)}\nVenue: ${event.venue}\nDetails on Yatrikaa!',
+      ),
     );
   }
 
@@ -384,7 +386,7 @@ class _EventDetailsView extends StatelessWidget {
           boxShadow: showAppBarTitle
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 15,
                     offset: const Offset(0, 4),
                   ),
@@ -435,10 +437,10 @@ class _EventDetailsView extends StatelessWidget {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            appGreyLight.withAlpha(0),
+            appGreyLight.withValues(alpha: 0),
             appGreyLight,
             appGreyLight,
-            appGreyLight.withAlpha(0),
+            appGreyLight.withValues(alpha: 0),
           ],
           stops: const [0.0, 0.2, 0.8, 1.0],
         ),
@@ -510,9 +512,9 @@ class _EventDetailsView extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      appBlack.withAlpha(80),
+                      appBlack.withValues(alpha: 80 / 255),
                       Colors.transparent,
-                      appBlack.withAlpha(180),
+                      appBlack.withValues(alpha: 180 / 255),
                     ],
                     stops: const [0.0, 0.4, 1.0],
                   ),
@@ -612,13 +614,13 @@ class _EventDetailsView extends StatelessWidget {
     Color textColor;
 
     if (isLive) {
-      badgeColor = Colors.red.withAlpha(20);
+      badgeColor = Colors.red.withValues(alpha: 20 / 255);
       textColor = Colors.red;
     } else if (isEnded) {
-      badgeColor = appGrey.withAlpha(20);
+      badgeColor = appGrey.withValues(alpha: 20 / 255);
       textColor = appGrey;
     } else {
-      badgeColor = Colors.green.withAlpha(20);
+      badgeColor = Colors.green.withValues(alpha: 20 / 255);
       textColor = Colors.green;
     }
 
@@ -629,9 +631,9 @@ class _EventDetailsView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: primaryBlue.withAlpha(25),
+              color: primaryBlue.withValues(alpha: 25 / 255),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: primaryBlue.withAlpha(50), width: 0.5),
+              border: Border.all(color: primaryBlue.withValues(alpha: 50 / 255), width: 0.5),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -655,7 +657,7 @@ class _EventDetailsView extends StatelessWidget {
           decoration: BoxDecoration(
             color: badgeColor,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: textColor.withAlpha(40), width: 0.5),
+            border: Border.all(color: textColor.withValues(alpha: 40 / 255), width: 0.5),
           ),
           child: AppText.caption(
             status.toUpperCase(),
@@ -678,7 +680,7 @@ class _EventDetailsView extends StatelessWidget {
         border: Border.all(color: appGreyLight),
         boxShadow: [
           BoxShadow(
-            color: shadowColor.withOpacity(0.05),
+            color: shadowColor.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -704,7 +706,7 @@ class _EventDetailsView extends StatelessWidget {
                       ),
                       child: CircleAvatar(
                         radius: 12,
-                        backgroundColor: primaryBlue.withAlpha(30),
+                        backgroundColor: primaryBlue.withValues(alpha: 30 / 255),
                         backgroundImage: NetworkImage(
                           'https://i.pravatar.cc/100?u=${event.id}_$index',
                         ),
@@ -758,7 +760,7 @@ class _EventDetailsView extends StatelessWidget {
         border: Border.all(color: appGreyLight),
         boxShadow: [
           BoxShadow(
-            color: shadowColor.withOpacity(0.05),
+            color: shadowColor.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -804,9 +806,9 @@ class _EventDetailsView extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          appGreyLight.withAlpha(0),
+                          appGreyLight.withValues(alpha: 0),
                           appGreyLight,
-                          appGreyLight.withAlpha(0),
+                          appGreyLight.withValues(alpha: 0),
                         ],
                       ),
                     ),
@@ -904,7 +906,7 @@ class _EventDetailsView extends StatelessWidget {
               border: Border.all(color: appGreyLight),
               boxShadow: [
                 BoxShadow(
-                  color: shadowColor.withOpacity(0.05),
+                  color: shadowColor.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -916,7 +918,7 @@ class _EventDetailsView extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: primaryBlue.withAlpha(20),
+                    color: primaryBlue.withValues(alpha: 20 / 255),
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
@@ -1049,16 +1051,16 @@ class _EventDetailsView extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.06),
+            color: color.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withOpacity(0.1)),
+            border: Border.all(color: color.withValues(alpha: 0.1)),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 40),
@@ -1114,7 +1116,7 @@ class _EventDetailsView extends StatelessWidget {
           color: appWhite,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),

@@ -326,7 +326,7 @@ class _PopularEventsViewState extends State<_PopularEventsView> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -405,7 +405,7 @@ class _TopBarDelegate extends SliverPersistentHeaderDelegate {
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -471,7 +471,7 @@ class _StatusDropdown extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -565,8 +565,8 @@ class _EventGridCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.02),
-                      Colors.black.withOpacity(0.85),
+                      Colors.black.withValues(alpha: 0.02),
+                      Colors.black.withValues(alpha: 0.85),
                     ],
                     stops: const [0.4, 0.6, 1.0],
                   ),
@@ -623,12 +623,12 @@ class _EventGridCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: appWhite.withOpacity(0.2),
+                          color: appWhite.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: AppText.caption(
                           event.category.toUpperCase(),
-                          color: appWhite.withOpacity(0.9),
+                          color: appWhite.withValues(alpha: 0.9),
                           size: 9,
                           fontWeight: FontWeight.w800,
                         ),
@@ -647,14 +647,14 @@ class _EventGridCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.location_on_rounded,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             size: 12,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: AppText.caption(
                               event.venue,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w500,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -691,7 +691,7 @@ class _EventListCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -737,7 +737,7 @@ class _EventListCard extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withOpacity(0.4),
+                              Colors.black.withValues(alpha: 0.4),
                             ],
                           ),
                         ),
@@ -754,7 +754,7 @@ class _EventListCard extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: primaryBlue.withOpacity(0.9),
+                          color: primaryBlue.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -902,7 +902,7 @@ class _EventInfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

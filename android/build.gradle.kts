@@ -19,6 +19,22 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Workaround for "this and base files have different roots" error on multi-drive systems
+subprojects {
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "com.android.support" && !requested.name.contains("multidex")) {
+                useVersion("26.1.0")
+            }
+        }
+    }
+    afterEvaluate {
+        tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+            enabled = false
+        }
+    }
+}
+
 subprojects {
     tasks.withType<JavaCompile>().configureEach {
         sourceCompatibility = "17"

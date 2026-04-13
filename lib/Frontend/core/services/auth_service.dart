@@ -62,8 +62,11 @@ class AuthService {
       String message = 'Login failed';
       if (e.code == 'user-not-found') {
         message = 'No user found for that email.';
-      } else if (e.code == 'wrong-password') message = 'Wrong password provided.';
-      else if (e.code == 'invalid-email') message = 'The email address is badly formatted.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Wrong password provided.';
+      } else if (e.code == 'invalid-email') {
+        message = 'The email address is badly formatted.';
+      }
       throw Exception(message);
     } catch (e) {
       throw Exception(e.toString());
@@ -169,7 +172,9 @@ class AuthService {
       String message = 'Registration failed';
       if (e.code == 'email-already-in-use') {
         message = 'The account already exists for that email.';
-      } else if (e.code == 'weak-password') message = 'The password provided is too weak.';
+      } else if (e.code == 'weak-password') {
+        message = 'The password provided is too weak.';
+      }
       throw Exception(message);
     } catch (e) {
       throw Exception(e.toString());

@@ -7,6 +7,7 @@ import '../constants/api_constants.dart';
 import '../services/auth_service.dart';
 import '../utils/app_cache.dart';
 import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 
 class EventsService {
   final AuthService _authService = AuthService();
@@ -66,7 +67,7 @@ class EventsService {
         throw Exception("Failed to fetch events");
       }
     } catch (e) {
-      print('Error fetching paginated events: $e');
+      Log.e('Error fetching paginated events: $e');
 
       // Fall back to cache only on first page
       if (page == 1 && (category == null || category == 'All')) {
@@ -116,7 +117,7 @@ class EventsService {
         throw Exception("Failed to fetch events");
       }
     } catch (e) {
-      print('Error fetching events: $e');
+      Log.e('Error fetching events: $e');
 
       // Try falling back to cache if it's a general request
       if (category == null || category == 'All') {
@@ -144,7 +145,7 @@ class EventsService {
       }
       return null;
     } catch (e) {
-      print('Error fetching event details: $e');
+      Log.e('Error fetching event details: $e');
       return null;
     }
   }
@@ -196,7 +197,7 @@ class EventsService {
       final data = json.decode(response.body);
       throw Exception(data['error'] ?? 'Failed to add event');
     } catch (e) {
-      print('Error adding event: $e');
+      Log.e('Error adding event: $e');
       rethrow;
     }
   }
@@ -215,7 +216,7 @@ class EventsService {
       }
       return null;
     } catch (e) {
-      print('Error toggling interest: $e');
+      Log.e('Error toggling interest: $e');
       return null;
     }
   }
@@ -271,7 +272,7 @@ class EventsService {
       final data = json.decode(response.body);
       throw Exception(data['error'] ?? 'Failed to update event');
     } catch (e) {
-      print('Error updating event: $e');
+      Log.e('Error updating event: $e');
       rethrow;
     }
   }

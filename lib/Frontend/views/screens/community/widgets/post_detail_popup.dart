@@ -86,7 +86,7 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
             borderRadius: BorderRadius.circular(13),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 30,
                 spreadRadius: 5,
               ),
@@ -146,10 +146,10 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withOpacity(0.3),
+                                Colors.black.withValues(alpha: 0.3),
                                 Colors.transparent,
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.5),
+                                Colors.black.withValues(alpha: 0.5),
                               ],
                               stops: const [0, 0.2, 0.7, 1],
                             ),
@@ -228,13 +228,13 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: primaryBlue.withOpacity(0.2),
+                                color: primaryBlue.withValues(alpha: 0.2),
                                 width: 1.5,
                               ),
                             ),
                             child: CircleAvatar(
                               radius: 14,
-                              backgroundColor: primaryBlue.withOpacity(0.1),
+                              backgroundColor: primaryBlue.withValues(alpha: 0.1),
                               child: Text(
                                 widget.post.author.name.isNotEmpty
                                     ? widget.post.author.name[0]
@@ -270,7 +270,7 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
                       AppText.body(
                         widget.post.caption,
                         size: 13,
-                        color: appBlack.withOpacity(0.8),
+                        color: appBlack.withValues(alpha: 0.8),
                         height: 1.4,
                       ),
                       const SizedBox(height: 15),
@@ -283,7 +283,7 @@ class _PostDetailPopUpState extends State<PostDetailPopUp> {
                           color: appGreyVeryLight,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: appGreyLight.withOpacity(0.5),
+                            color: appGreyLight.withValues(alpha: 0.5),
                             width: 1,
                           ),
                         ),

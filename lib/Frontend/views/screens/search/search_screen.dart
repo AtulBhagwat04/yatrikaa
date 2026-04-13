@@ -219,7 +219,7 @@ class _SearchScreenState extends State<SearchScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    primaryBlue.withOpacity(0.05),
+                    primaryBlue.withValues(alpha: 0.05),
                     onboardingBlueVeryLight,
                     onboardingBlueVeryLight,
                   ],
@@ -390,7 +390,7 @@ class _SearchScreenState extends State<SearchScreen>
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: primaryBlue.withOpacity(0.12),
+                color: primaryBlue.withValues(alpha: 0.12),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -420,8 +420,8 @@ class _SearchScreenState extends State<SearchScreen>
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        appBlack.withOpacity(0.0),
-                        appBlack.withOpacity(0.8),
+                        appBlack.withValues(alpha: 0.0),
+                        appBlack.withValues(alpha: 0.8),
                       ],
                       stops: const [0.5, 0.7, 1.0],
                     ),
@@ -440,7 +440,7 @@ class _SearchScreenState extends State<SearchScreen>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: appBlack.withOpacity(0.4),
+                          color: appBlack.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -489,7 +489,7 @@ class _SearchScreenState extends State<SearchScreen>
                           Expanded(
                             child: AppText.caption(
                               place.city ?? place.category ?? 'Maharashtra',
-                              color: appWhite.withOpacity(0.9),
+                              color: appWhite.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w600,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -550,7 +550,7 @@ class _SearchScreenState extends State<SearchScreen>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 18),
@@ -606,12 +606,12 @@ class _SearchScreenState extends State<SearchScreen>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.08),
+                      color: color.withValues(alpha: 0.08),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
-                  border: Border.all(color: color.withOpacity(0.15), width: 1),
+                  border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -619,7 +619,7 @@ class _SearchScreenState extends State<SearchScreen>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
+                        color: color.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(icon, color: color, size: 20),
@@ -630,7 +630,7 @@ class _SearchScreenState extends State<SearchScreen>
                         label,
                         fontWeight: FontWeight.w700,
                         size: 10,
-                        color: appBlack.withOpacity(0.8),
+                        color: appBlack.withValues(alpha: 0.8),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         align: TextAlign.center,
@@ -711,13 +711,13 @@ class _SearchScreenState extends State<SearchScreen>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.05),
+              color: primaryBlue.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.search_off_rounded,
               size: 60,
-              color: primaryBlue.withOpacity(0.5),
+              color: primaryBlue.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 24),

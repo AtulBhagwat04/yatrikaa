@@ -558,7 +558,7 @@ class _HomeTabState extends State<_HomeTab> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -569,7 +569,7 @@ class _HomeTabState extends State<_HomeTab> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: primaryBlue.withOpacity(0.1),
+                color: primaryBlue.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -697,10 +697,10 @@ class _HomeTabState extends State<_HomeTab> {
               decoration: BoxDecoration(
                 color: appWhite,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: primaryBlue.withOpacity(0.08)),
+                border: Border.all(color: primaryBlue.withValues(alpha: 0.08)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -711,7 +711,7 @@ class _HomeTabState extends State<_HomeTab> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: primaryBlue.withOpacity(0.08),
+                      color: primaryBlue.withValues(alpha: 0.08),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

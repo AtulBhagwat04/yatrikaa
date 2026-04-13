@@ -111,8 +111,10 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
   }
 
   void _sharePlace(PlaceModel place) {
-    Share.share(
-      '${AppStrings.pdShareMsgPrefix}${place.name}${AppStrings.pdShareMsgMid}${place.address ?? ""}',
+    SharePlus.instance.share(
+      ShareParams(
+        text: '${AppStrings.pdShareMsgPrefix}${place.name}${AppStrings.pdShareMsgMid}${place.address ?? ""}',
+      ),
     );
   }
 
@@ -250,8 +252,9 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
               backgroundColor: appWhite,
               floatingActionButton: BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, authState) {
-                  if (authState is! Authenticated)
+                  if (authState is! Authenticated) {
                     return const SizedBox.shrink();
+                  }
                   return FloatingActionButton.extended(
                     onPressed: () {
                       showModalBottomSheet(
@@ -558,9 +561,9 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      appBlack.withAlpha(120),
+                      appBlack.withValues(alpha: 120 / 255),
                       Colors.transparent,
-                      appBlack.withAlpha(200),
+                      appBlack.withValues(alpha: 200 / 255),
                     ],
                     stops: const [0.0, 0.4, 1.0],
                   ),
@@ -696,7 +699,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: onboardingBlueVeryLight.withAlpha(100),
+              color: onboardingBlueVeryLight.withValues(alpha: 100 / 255),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -773,9 +776,9 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      primaryBlue.withAlpha(20),
-                      primaryBlue.withAlpha(100),
-                      primaryBlue.withAlpha(20),
+                      primaryBlue.withValues(alpha: 20 / 255),
+                      primaryBlue.withValues(alpha: 100 / 255),
+                      primaryBlue.withValues(alpha: 20 / 255),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(2),
@@ -923,7 +926,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
             border: Border.all(color: appGreyVeryLight, width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: shadowColor.withAlpha(25),
+                color: shadowColor.withValues(alpha: 25 / 255),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -979,7 +982,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: shadowColor.withAlpha(30),
+                color: shadowColor.withValues(alpha: 30 / 255),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -1016,7 +1019,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                             ],
                           ),
                           Container(
-                            color: Colors.black.withAlpha(20),
+                            color: Colors.black.withValues(alpha: 20 / 255),
                             child: Center(
                               child: Container(
                                 padding: const EdgeInsets.all(12),
@@ -1227,8 +1230,8 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
 
                   List<ReviewModel> sortedReviews = place.reviews.where((r) {
                     // Filter for "Top Reviews" (4+ stars) and non-empty quality text
-                    final isHighRating = (r.rating ?? 0) >= 4;
-                    final hasText = r.text != null && r.text!.trim().isNotEmpty;
+                    final isHighRating = r.rating >= 4;
+                    final hasText = r.text.trim().isNotEmpty;
                     return isHighRating && hasText;
                   }).toList();
 
@@ -1316,7 +1319,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
             width: double.infinity,
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: appGrey.withOpacity(0.05),
+              color: appGrey.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -1324,7 +1327,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
                 Icon(
                   Icons.reviews_outlined,
                   size: 40,
-                  color: appGrey.withOpacity(0.5),
+                  color: appGrey.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 12),
                 AppText.body(
@@ -1365,7 +1368,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
     return Theme(
       data: Theme.of(context).copyWith(
         dividerColor: Colors.transparent,
-        splashColor: primaryBlue.withAlpha(5),
+        splashColor: primaryBlue.withValues(alpha: 5 / 255),
       ),
       child: ExpansionTile(
         dense: true,
@@ -1379,7 +1382,7 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: primaryBlue.withAlpha(15),
+            color: primaryBlue.withValues(alpha: 15 / 255),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: primaryBlue, size: 18),
@@ -1420,10 +1423,10 @@ class _PlaceDetailsViewState extends State<PlaceDetailsView> {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            appGreyLight.withAlpha(0),
+            appGreyLight.withValues(alpha: 0),
             appGreyLight,
             appGreyLight,
-            appGreyLight.withAlpha(0),
+            appGreyLight.withValues(alpha: 0),
           ],
           stops: const [0.0, 0.2, 0.8, 1.0],
         ),

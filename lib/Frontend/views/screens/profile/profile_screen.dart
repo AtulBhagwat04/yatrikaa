@@ -122,7 +122,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.person_outline_rounded,
                               label: 'Edit Profile',
-                              iconBgColor: Colors.blue.withOpacity(0.1),
+                              iconBgColor: Colors.blue.withValues(alpha: 0.1),
                               iconColor: Colors.blue,
                               onTap: () => Navigator.pushNamed(
                                 context,
@@ -132,7 +132,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.lock_outline_rounded,
                               label: 'Change Password',
-                              iconBgColor: Colors.blue.withOpacity(0.1),
+                              iconBgColor: Colors.blue.withValues(alpha: 0.1),
                               iconColor: Colors.blue,
                               onTap: () => Navigator.pushNamed(
                                 context,
@@ -149,7 +149,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.grid_view_rounded,
                               label: 'My Posts',
-                              iconBgColor: Colors.green.withOpacity(0.1),
+                              iconBgColor: Colors.green.withValues(alpha: 0.1),
                               iconColor: Colors.green,
                               onTap: () => Navigator.pushNamed(
                                 context,
@@ -159,7 +159,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.map_outlined,
                               label: 'My Trips',
-                              iconBgColor: Colors.green.withOpacity(0.1),
+                              iconBgColor: Colors.green.withValues(alpha: 0.1),
                               iconColor: Colors.green,
                               onTap: () => Navigator.pushNamed(
                                 context,
@@ -169,7 +169,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.favorite_outline_rounded,
                               label: 'Liked Places',
-                              iconBgColor: Colors.teal.withOpacity(0.1),
+                              iconBgColor: Colors.teal.withValues(alpha: 0.1),
                               iconColor: Colors.teal,
                               onTap: () => Navigator.pushNamed(
                                 context,
@@ -179,7 +179,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.star_outline_rounded,
                               label: 'My Reviews',
-                              iconBgColor: Colors.teal.withOpacity(0.1),
+                              iconBgColor: Colors.teal.withValues(alpha: 0.1),
                               iconColor: Colors.teal,
                               onTap: () => Navigator.pushNamed(
                                 context,
@@ -199,7 +199,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.help_outline_rounded,
                               label: 'Help Center',
-                              iconBgColor: Colors.deepPurple.withOpacity(0.1),
+                              iconBgColor: Colors.deepPurple.withValues(alpha: 0.1),
                               iconColor: Colors.deepPurple,
                               onTap: () => Navigator.pushNamed(
                                 context,
@@ -209,7 +209,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.shield_outlined,
                               label: 'Privacy Policy',
-                              iconBgColor: Colors.deepPurple.withOpacity(0.1),
+                              iconBgColor: Colors.deepPurple.withValues(alpha: 0.1),
                               iconColor: Colors.deepPurple,
                               onTap: () => Navigator.pushNamed(
                                 context,
@@ -219,7 +219,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.info_outline_rounded,
                               label: 'About Yatrikaa',
-                              iconBgColor: Colors.deepPurple.withOpacity(0.1),
+                              iconBgColor: Colors.deepPurple.withValues(alpha: 0.1),
                               iconColor: Colors.deepPurple,
                               onTap: () => Navigator.pushNamed(
                                 context,
@@ -236,7 +236,7 @@ class ProfileScreen extends StatelessWidget {
                             _ProfileItem(
                               icon: Icons.logout_rounded,
                               label: 'Sign Out',
-                              iconBgColor: Colors.red.withOpacity(0.1),
+                              iconBgColor: Colors.red.withValues(alpha: 0.1),
                               iconColor: Colors.red,
                               labelColor: Colors.redAccent,
                               showArrow: true,
@@ -269,7 +269,7 @@ class ProfileScreen extends StatelessWidget {
             _ProfileItem(
               icon: Icons.verified_user_outlined,
               label: 'Become a Guide',
-              iconBgColor: Colors.orange.withOpacity(0.1),
+              iconBgColor: Colors.orange.withValues(alpha: 0.1),
               iconColor: Colors.orange,
               onTap: () => _showGuideRequestDialog(context),
             ),
@@ -286,14 +286,14 @@ class ProfileScreen extends StatelessWidget {
             _ProfileItem(
               icon: Icons.flag_outlined,
               label: 'Manage Tours',
-              iconBgColor: Colors.orange.withOpacity(0.1),
+              iconBgColor: Colors.orange.withValues(alpha: 0.1),
               iconColor: Colors.orange,
               onTap: () => Navigator.pushNamed(context, RouteNames.manageTours),
             ),
             _ProfileItem(
               icon: Icons.assignment_outlined,
               label: 'Bookings',
-              iconBgColor: Colors.orange.withOpacity(0.1),
+              iconBgColor: Colors.orange.withValues(alpha: 0.1),
               iconColor: Colors.orange,
               onTap: () =>
                   Navigator.pushNamed(context, RouteNames.bookingRequests),
@@ -311,7 +311,7 @@ class ProfileScreen extends StatelessWidget {
             _ProfileItem(
               icon: Icons.people_outline_rounded,
               label: 'User Management',
-              iconBgColor: Colors.red.withOpacity(0.05),
+              iconBgColor: Colors.red.withValues(alpha: 0.05),
               iconColor: Colors.red,
               onTap: () =>
                   Navigator.pushNamed(context, RouteNames.userManagement),
@@ -319,7 +319,7 @@ class ProfileScreen extends StatelessWidget {
             _ProfileItem(
               icon: Icons.add_location_alt_outlined,
               label: 'Manage Places',
-              iconBgColor: Colors.red.withOpacity(0.05),
+              iconBgColor: Colors.red.withValues(alpha: 0.05),
               iconColor: Colors.red,
               onTap: () =>
                   Navigator.pushNamed(context, RouteNames.managePlaces),
@@ -327,7 +327,7 @@ class ProfileScreen extends StatelessWidget {
             _ProfileItem(
               icon: Icons.calendar_today_outlined,
               label: 'Manage Events',
-              iconBgColor: Colors.red.withOpacity(0.05),
+              iconBgColor: Colors.red.withValues(alpha: 0.05),
               iconColor: Colors.red,
               onTap: () =>
                   Navigator.pushNamed(context, RouteNames.manageEvents),
@@ -335,7 +335,7 @@ class ProfileScreen extends StatelessWidget {
             _ProfileItem(
               icon: Icons.rate_review_outlined,
               label: 'Review Moderation',
-              iconBgColor: Colors.red.withOpacity(0.05),
+              iconBgColor: Colors.red.withValues(alpha: 0.05),
               iconColor: Colors.red,
               onTap: () =>
                   Navigator.pushNamed(context, RouteNames.reviewModeration),
@@ -343,7 +343,7 @@ class ProfileScreen extends StatelessWidget {
             _ProfileItem(
               icon: Icons.checklist_rtl_rounded,
               label: 'Global Approval Queue',
-              iconBgColor: Colors.red.withOpacity(0.05),
+              iconBgColor: Colors.red.withValues(alpha: 0.05),
               iconColor: Colors.red,
               onTap: () =>
                   Navigator.pushNamed(context, RouteNames.adminApprovalQueue),
@@ -418,7 +418,7 @@ class _ProfileHeader extends StatelessWidget {
             ),
             child: CircleAvatar(
               radius: 54,
-              backgroundColor: primaryBlue.withOpacity(0.1),
+              backgroundColor: primaryBlue.withValues(alpha: 0.1),
               child:
                   state.profilePicture != null &&
                       state.profilePicture!.isNotEmpty
@@ -476,7 +476,7 @@ class _StatsSummary extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: appBlack.withOpacity(0.04),
+              color: appBlack.withValues(alpha: 0.04),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -581,7 +581,7 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: appBlack.withOpacity(0.03),
+            color: appBlack.withValues(alpha: 0.03),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -653,7 +653,7 @@ class _ProfileItem extends StatelessWidget {
             if (showArrow)
               Icon(
                 Icons.chevron_right_rounded,
-                color: appGrey.withOpacity(0.3),
+                color: appGrey.withValues(alpha: 0.3),
                 size: 20,
               ),
           ],

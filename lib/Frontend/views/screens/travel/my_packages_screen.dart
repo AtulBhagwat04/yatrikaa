@@ -5,7 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
-import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
 import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
@@ -184,10 +183,12 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
             floatingActionButton: FloatingActionButton(
               onPressed: () =>
                   Navigator.pushNamed(context, RouteNames.createPackage).then(
-                    (_) => context.read<TravelBloc>().add(
-                      TravelMyPackagesRequested(),
-                    ),
-                  ),
+                (_) {
+                  final ctx = context;
+                  if (!ctx.mounted) return;
+                  ctx.read<TravelBloc>().add(TravelMyPackagesRequested());
+                },
+              ),
               backgroundColor: primaryBlue,
               elevation: 6,
               shape: RoundedRectangleBorder(
@@ -376,9 +377,12 @@ class _MyPackagesScreenState extends State<MyPackagesScreen>
                           'heroTag': 'package_${type}_${packages[i].id}',
                         },
                       ).then(
-                        (_) => ctx.read<TravelBloc>().add(
-                          TravelMyPackagesRequested(),
-                        ),
+                        (_) {
+                          if (!ctx.mounted) return;
+                          ctx.read<TravelBloc>().add(
+                                TravelMyPackagesRequested(),
+                              );
+                        },
                       ),
                   onEdit: () => Navigator.pushNamed(
                     ctx,
@@ -505,13 +509,13 @@ class _PackageCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: shadowColorLight.withOpacity(0.08),
+              color: shadowColorLight.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
           ],
           border: Border.all(
-            color: appGreyVeryLight.withOpacity(0.5),
+            color: appGreyVeryLight.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -557,7 +561,7 @@ class _PackageCard extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.7),
+                                color: Colors.black.withValues(alpha: 0.7),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
@@ -594,7 +598,7 @@ class _PackageCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: primaryBlue.withOpacity(0.9),
+                                color: primaryBlue.withValues(alpha: 0.9),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -641,10 +645,10 @@ class _PackageCard extends StatelessWidget {
                                       vertical: 3,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: _statusColor.withOpacity(0.12),
+                                      color: _statusColor.withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: _statusColor.withOpacity(0.3),
+                                        color: _statusColor.withValues(alpha: 0.3),
                                         width: 0.5,
                                       ),
                                     ),
@@ -778,10 +782,10 @@ class _PackageCard extends StatelessWidget {
               // Action buttons Footer
               Container(
                 decoration: BoxDecoration(
-                  color: appGreyVeryLight.withOpacity(0.15),
+                  color: appGreyVeryLight.withValues(alpha: 0.15),
                   border: Border(
                     top: BorderSide(
-                      color: appGreyVeryLight.withOpacity(0.5),
+                      color: appGreyVeryLight.withValues(alpha: 0.5),
                       width: 0.5,
                     ),
                   ),
@@ -850,8 +854,8 @@ class _PackageCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.05),
-            border: Border.all(color: color.withOpacity(0.15), width: 1.2),
+            color: color.withValues(alpha: 0.05),
+            border: Border.all(color: color.withValues(alpha: 0.15), width: 1.2),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(

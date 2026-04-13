@@ -384,7 +384,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
           boxShadow: _showAppBarTitle
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 15,
                     offset: const Offset(0, 4),
                   ),
@@ -484,7 +484,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
         border: Border.all(color: appGreyLight),
         boxShadow: [
           BoxShadow(
-            color: shadowColor.withOpacity(0.05),
+            color: shadowColor.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -573,7 +573,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
   }) {
     return InkWell(
       onTap: onTap,
-      splashColor: primaryBlue.withOpacity(0.05),
+      splashColor: primaryBlue.withValues(alpha: 0.05),
       highlightColor: Colors.transparent,
       child: Row(
         children: [
@@ -587,7 +587,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
           ),
           const SizedBox(width: 8),
           AppText.subHeading(title, fontWeight: FontWeight.w700, size: 18),
-          if (trailing != null) trailing,
+          ?trailing,
         ],
       ),
     );
@@ -839,16 +839,16 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
             width: double.infinity,
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.04),
+              color: primaryBlue.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: primaryBlue.withOpacity(0.1)),
+              border: Border.all(color: primaryBlue.withValues(alpha: 0.1)),
             ),
             child: Column(
               children: [
                 Icon(
                   Icons.reviews_outlined,
                   size: 48,
-                  color: primaryBlue.withOpacity(0.4),
+                  color: primaryBlue.withValues(alpha: 0.4),
                 ),
                 const SizedBox(height: 16),
                 AppText.body(
@@ -960,8 +960,8 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
 
             // Filter for "Top Reviews" (4+ stars) and non-empty quality text
             List<ReviewModel> displayReviews = reviews.where((r) {
-              final isHighRating = (r.rating ?? 0) >= 4;
-              final hasText = r.text != null && r.text!.trim().isNotEmpty;
+              final isHighRating = r.rating >= 4;
+              final hasText = r.text.trim().isNotEmpty;
               return isHighRating && hasText;
             }).toList();
 
@@ -1091,7 +1091,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -1109,7 +1109,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                       Text(
                         'AVAILABILITY',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
@@ -1122,7 +1122,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -1160,7 +1160,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                       Text(
                         'PER PERSON',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
@@ -1376,7 +1376,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
               child: Container(
                 width: 2.5,
                 decoration: BoxDecoration(
-                  color: primaryBlue.withOpacity(0.12),
+                  color: primaryBlue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -1399,15 +1399,15 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _expanded
-                        ? primaryBlue.withOpacity(0.5)
-                        : appGreyLight.withOpacity(0.8),
+                        ? primaryBlue.withValues(alpha: 0.5)
+                        : appGreyLight.withValues(alpha: 0.8),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: _expanded
-                          ? primaryBlue.withOpacity(0.08)
-                          : Colors.black.withOpacity(0.02),
+                          ? primaryBlue.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.02),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -1487,7 +1487,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                                     ),
                                     child: Divider(
                                       height: 1,
-                                      color: primaryBlue.withOpacity(0.2),
+                                      color: primaryBlue.withValues(alpha: 0.2),
                                     ),
                                   ),
                                   if (widget.step.places.isNotEmpty)
@@ -1517,7 +1517,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                                       ),
                                       child: Divider(
                                         height: 1,
-                                        color: primaryBlue.withOpacity(0.3),
+                                        color: primaryBlue.withValues(alpha: 0.3),
                                       ),
                                     ),
                                   ...widget.step.activities.map(
@@ -1582,7 +1582,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.outfit(
-                color: appBlack.withOpacity(0.7),
+                color: appBlack.withValues(alpha: 0.7),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -1602,7 +1602,7 @@ class _ItineraryTileState extends State<_ItineraryTile> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.08),
+              color: primaryBlue.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 14, color: primaryBlue),

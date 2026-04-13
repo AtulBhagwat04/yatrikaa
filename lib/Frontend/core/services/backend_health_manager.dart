@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 
 class BackendHealthManager {
   BackendHealthManager._();
@@ -17,7 +18,6 @@ class BackendHealthManager {
   static const Duration _renderRequestTimeout = Duration(seconds: 8);
   static const Duration _renderCheckInterval = Duration(minutes: 2);
 
-  static const Duration _localPingTimeout = Duration(seconds: 2);
   static const Duration _localDiscoveryInterval = Duration(seconds: 15);
 
   bool _usingRailway = true;
@@ -38,7 +38,7 @@ class BackendHealthManager {
     _useLocalPreference = useLocal;
 
     if (_useLocalPreference) {
-      print('[BackendHealthManager] Attempting Local detection...');
+      Log.d('[BackendHealthManager] Attempting Local detection...');
       final localHealthUrl = ApiConstants.localUrl.replaceFirst(
         '/api',
         '/health',
@@ -51,10 +51,12 @@ class BackendHealthManager {
       if (isLocalUp) {
         _usingLocal = true;
         _usingRailway = false;
-        print('[BackendHealthManager] Starting on Local Backend.');
+        Log.i('[BackendHealthManager] Starting on Local Backend.');
         return;
+      } else {
+        Log.v('[BackendHealthManager] Discovery ping failed.');
       }
-      print('[BackendHealthManager] Local not detected. Using Cloud.');
+      Log.d('[BackendHealthManager] Local not detected. Using Cloud.');
     }
 
     _usingLocal = false;
@@ -103,7 +105,7 @@ class BackendHealthManager {
             if (!resolved) {
               resolved = true;
               completer.complete(cloudResponse);
-              print(
+              Log.i(
                 '[BackendHealthManager] Local is slow/down. Cloud (Railway) won the race.',
               );
               _usingLocal = false;
@@ -145,7 +147,7 @@ class BackendHealthManager {
     try {
       return await requestExecutor(cloudUrl).timeout(_renderRequestTimeout);
     } catch (e) {
-      print(
+      Log.w(
         '[BackendHealthManager] 🔄 Cloud request failed/timedout. Trying final fallback.',
       );
       _usingRailway = !_usingRailway; // Flip between Render/Railway
@@ -181,7 +183,7 @@ class BackendHealthManager {
         const Duration(seconds: 1),
       );
       if (localUp) {
-        print(
+        Log.i(
           '[BackendHealthManager] Local backend detected! Switching to Local.',
         );
         _usingLocal = true;
@@ -199,7 +201,7 @@ class BackendHealthManager {
       final alive = await _pingBackend(_renderHealth, _renderPingTimeout);
       if (alive) {
         _usingRailway = false;
-        print('[BackendHealthManager] Render is UP → Switch back to Render');
+        Log.d('[BackendHealthManager] Render is UP → Switch back to Render');
       }
     }
   }

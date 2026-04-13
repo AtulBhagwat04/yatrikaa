@@ -47,7 +47,7 @@ class GenericManagementScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: themeColor.withOpacity(0.1),
+                  color: themeColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: themeColor, size: 48),

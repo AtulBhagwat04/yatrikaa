@@ -134,7 +134,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: primaryBlue.withOpacity(0.1),
+                    backgroundColor: primaryBlue.withValues(alpha: 0.1),
                     child: Text(
                       author[0].toUpperCase(),
                       style: const TextStyle(
@@ -207,7 +207,7 @@ class _ReviewModerationScreenState extends State<ReviewModerationScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: ratingColor.withOpacity(0.1),
+        color: ratingColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

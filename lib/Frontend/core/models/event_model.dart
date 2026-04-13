@@ -3,6 +3,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
 
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
+
 class EventModel extends Equatable {
   final String id;
   final String title;
@@ -126,7 +128,7 @@ class EventModel extends Equatable {
             : [],
       );
     } catch (e) {
-      print('Error parsing EventModel: $e');
+      Log.e('Error parsing EventModel: $e');
       rethrow;
     }
   }

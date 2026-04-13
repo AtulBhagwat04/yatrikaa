@@ -40,7 +40,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<PlaceModel> _searchResults = [];
   bool _isSearching = false;
   String _query = "";
-  String _lastPerformedQuery = "";
 
   @override
   void initState() {
@@ -118,7 +117,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       if (mounted) {
         setState(() {
           _query = "";
-          _lastPerformedQuery = "";
           _searchResults = [];
           _isSearching = false;
         });
@@ -144,7 +142,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     setState(() {
       _query = trimmedQuery;
-      _lastPerformedQuery = trimmedQuery;
       _isSearching = true;
       _searchResults = [];
     });

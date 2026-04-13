@@ -20,9 +20,11 @@ class AboutScreen extends StatelessWidget {
   }
 
   void _shareApp() {
-    Share.share(
-      'Discover travel destinations with Yatrikaa! Download now from Play Store: https://play.google.com/store/apps/details?id=com.yatrikaa.travel',
-      subject: 'Yatrikaa - Your Travel Companion',
+    SharePlus.instance.share(
+      ShareParams(
+        text: 'Discover travel destinations with Yatrikaa! Download now from Play Store: https://play.google.com/store/apps/details?id=com.yatrikaa.travel',
+        subject: 'Yatrikaa - Your Travel Companion',
+      ),
     );
   }
 
@@ -75,7 +77,7 @@ class AboutScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: primaryBlue.withOpacity(0.1),
+                  color: primaryBlue.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -98,7 +100,7 @@ class AboutScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
           decoration: BoxDecoration(
-            color: primaryBlue.withOpacity(0.1),
+            color: primaryBlue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(13),
           ),
           child: AppText.caption(
@@ -118,9 +120,9 @@ class AboutScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: primaryBlue.withOpacity(0.05),
+          color: primaryBlue.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryBlue.withOpacity(0.1)),
+          border: Border.all(color: primaryBlue.withValues(alpha: 0.1)),
         ),
         child: Column(
           children: [
@@ -130,7 +132,7 @@ class AboutScreen extends StatelessWidget {
               height: 1.6,
               size: 14,
               fontWeight: FontWeight.w700,
-              color: appBlack.withOpacity(0.8),
+              color: appBlack.withValues(alpha: 0.8),
             ),
           ],
         ),
@@ -147,7 +149,7 @@ class AboutScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: appBlack.withOpacity(0.04),
+              color: appBlack.withValues(alpha: 0.04),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -234,7 +236,7 @@ class AboutScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(13),
               ),
               child: Icon(icon, color: color, size: 20),
@@ -243,7 +245,7 @@ class AboutScreen extends StatelessWidget {
             AppText.body(
               title,
               fontWeight: FontWeight.w700,
-              color: appBlack.withOpacity(0.8),
+              color: appBlack.withValues(alpha: 0.8),
               size: 14,
             ),
             const Spacer(),
@@ -275,7 +277,7 @@ class AboutScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.s),
         AppText.caption(
           '© 2026 Yatrikaa',
-          color: appBlack.withOpacity(0.2),
+          color: appBlack.withValues(alpha: 0.2),
           size: 9,
         ),
       ],
@@ -296,13 +298,13 @@ class AboutScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: appBlack.withOpacity(0.03),
+              color: appBlack.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Icon(icon, color: appBlack.withOpacity(0.6), size: 16),
+        child: Icon(icon, color: appBlack.withValues(alpha: 0.6), size: 16),
       ),
     );
   }

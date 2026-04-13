@@ -81,7 +81,7 @@ class SplashScreen extends StatelessWidget {
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 4,
-                            color: appWhite.withOpacity(0.85),
+                            color: appWhite.withValues(alpha: 0.85),
                           ),
                         ).animate().fadeIn(delay: 100.ms, duration: 600.ms),
                       ],
@@ -100,7 +100,7 @@ class SplashScreen extends StatelessWidget {
                           width: 60,
                           height: 2,
                           child: LinearProgressIndicator(
-                            backgroundColor: appWhite.withOpacity(0.15),
+                            backgroundColor: appWhite.withValues(alpha: 0.15),
                             valueColor: const AlwaysStoppedAnimation<Color>(
                               appWhite,
                             ),
@@ -116,7 +116,7 @@ class SplashScreen extends StatelessWidget {
                             Icon(
                               Icons.favorite_rounded,
                               size: 14,
-                              color: appWhite.withOpacity(0.9),
+                              color: appWhite.withValues(alpha: 0.9),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -125,7 +125,7 @@ class SplashScreen extends StatelessWidget {
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 2,
-                                color: appWhite.withOpacity(0.75),
+                                color: appWhite.withValues(alpha: 0.75),
                               ),
                             ),
                           ],

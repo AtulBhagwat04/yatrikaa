@@ -4,6 +4,7 @@ import 'package:yatrikaa/Frontend/core/services/packages_service.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
 import 'package:yatrikaa/Frontend/core/utils/app_cache.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 import 'package:yatrikaa/Frontend/core/models/travel_package_model.dart';
 
 class TravelBloc extends Bloc<TravelEvent, TravelState> {
@@ -180,7 +181,7 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         );
       }
     } catch (e) {
-      print('TravelBloc._onLoadCache error: $e');
+      Log.e('TravelBloc._onLoadCache error: $e');
     }
   }
 
@@ -223,7 +224,9 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     Emitter<TravelState> emit,
   ) async {
     if (!state.packagesHasMore ||
-        state.packagesStatus == TravelStatus.loading) return;
+        state.packagesStatus == TravelStatus.loading) {
+      return;
+    }
 
     try {
       final nextPage = state.packagesPage + 1;
@@ -245,7 +248,7 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         ),
       );
     } catch (e) {
-      print('TravelBloc._onLoadMorePackages: $e');
+      Log.e('TravelBloc._onLoadMorePackages: $e');
     }
   }
 
@@ -319,7 +322,9 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     Emitter<TravelState> emit,
   ) async {
     if (!state.myPackagesHasMore ||
-        state.myPackagesStatus == TravelStatus.loading) return;
+        state.myPackagesStatus == TravelStatus.loading) {
+      return;
+    }
 
     try {
       final nextPage = state.myPackagesPage + 1;
@@ -336,7 +341,7 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         ),
       );
     } catch (e) {
-      print('TravelBloc._onLoadMoreMyPackages: $e');
+      Log.e('TravelBloc._onLoadMoreMyPackages: $e');
     }
   }
 
@@ -499,7 +504,9 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
     Emitter<TravelState> emit,
   ) async {
     if (!state.adminPackagesHasMore ||
-        state.adminPackagesStatus == TravelStatus.loading) return;
+        state.adminPackagesStatus == TravelStatus.loading) {
+      return;
+    }
 
     try {
       final nextPage = state.adminPackagesPage + 1;
@@ -520,7 +527,7 @@ class TravelBloc extends Bloc<TravelEvent, TravelState> {
         ),
       );
     } catch (e) {
-      print('TravelBloc._onLoadMoreAdminPackages: $e');
+      Log.e('TravelBloc._onLoadMoreAdminPackages: $e');
     }
   }
 

@@ -10,6 +10,7 @@ import 'package:yatrikaa/Frontend/core/services/auth_service.dart';
 
 import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
 import 'package:yatrikaa/Frontend/core/utils/app_cache.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 
 class PackagesService {
   final AuthService _authService = AuthService();
@@ -86,7 +87,7 @@ class PackagesService {
       }
       throw Exception('Failed to fetch packages');
     } catch (e) {
-      print('PackagesService.getPackagesPaginated: $e');
+      Log.e('PackagesService.getPackagesPaginated: $e');
 
       // Try falling back to cache (first page only)
       if (page == 1 && category == null && search == null) {
@@ -128,7 +129,7 @@ class PackagesService {
       }
       throw Exception('Failed to fetch packages');
     } catch (e) {
-      print('PackagesService.getPackages: $e');
+      Log.e('PackagesService.getPackages: $e');
       if (category == null && search == null) {
         final cachedData = await AppCache.getRawData(AppCache.keyPackages);
         if (cachedData.isNotEmpty) {
@@ -150,7 +151,7 @@ class PackagesService {
       }
       return null;
     } catch (e) {
-      print('PackagesService.getPackageDetails: $e');
+      Log.e('PackagesService.getPackageDetails: $e');
       return null;
     }
   }
@@ -179,7 +180,7 @@ class PackagesService {
       }
       throw Exception('Failed to fetch my packages');
     } catch (e) {
-      print('PackagesService.getMyPackages: $e');
+      Log.e('PackagesService.getMyPackages: $e');
       return {'packages': <TravelPackageModel>[], 'hasMore': false, 'totalCount': 0};
     }
   }
@@ -229,7 +230,7 @@ class PackagesService {
       final data = json.decode(res.body);
       throw Exception(data['error'] ?? 'Failed to create package');
     } catch (e) {
-      print('PackagesService.createPackage: $e');
+      Log.e('PackagesService.createPackage: $e');
       rethrow;
     }
   }
@@ -276,7 +277,7 @@ class PackagesService {
       final data = json.decode(res.body);
       throw Exception(data['error'] ?? 'Failed to update package');
     } catch (e) {
-      print('PackagesService.updatePackage: $e');
+      Log.e('PackagesService.updatePackage: $e');
       rethrow;
     }
   }
@@ -292,7 +293,7 @@ class PackagesService {
       final data = json.decode(response.body);
       throw Exception(data['error'] ?? 'Failed to delete package');
     } catch (e) {
-      print('PackagesService.deletePackage: $e');
+      Log.e('PackagesService.deletePackage: $e');
       rethrow;
     }
   }
@@ -326,7 +327,7 @@ class PackagesService {
       final err = json.decode(response.body);
       throw Exception(err['error'] ?? 'Failed to join package');
     } catch (e) {
-      print('PackagesService.joinPackage: $e');
+      Log.e('PackagesService.joinPackage: $e');
       rethrow;
     }
   }
@@ -345,7 +346,7 @@ class PackagesService {
       }
       throw Exception('Failed to fetch bookings');
     } catch (e) {
-      print('PackagesService.getMyBookings: $e');
+      Log.e('PackagesService.getMyBookings: $e');
       return [];
     }
   }
@@ -365,7 +366,7 @@ class PackagesService {
       }
       throw Exception(data['error'] ?? 'Failed to cancel booking');
     } catch (e) {
-      print('PackagesService.cancelBooking: $e');
+      Log.e('PackagesService.cancelBooking: $e');
       rethrow;
     }
   }
@@ -384,7 +385,7 @@ class PackagesService {
       }
       throw Exception('Failed to fetch participants');
     } catch (e) {
-      print('PackagesService.getPackageParticipants: $e');
+      Log.e('PackagesService.getPackageParticipants: $e');
       return [];
     }
   }
@@ -403,7 +404,7 @@ class PackagesService {
       }
       throw Exception('Failed to fetch all guide bookings');
     } catch (e) {
-      print('PackagesService.getGuideAllBookings: $e');
+      Log.e('PackagesService.getGuideAllBookings: $e');
       return [];
     }
   }
@@ -433,7 +434,7 @@ class PackagesService {
       }
       throw Exception(errorMsg);
     } catch (e) {
-      print('PackagesService.handleBooking: $e');
+      Log.e('PackagesService.handleBooking: $e');
       rethrow;
     }
   }
@@ -468,7 +469,7 @@ class PackagesService {
       }
       throw Exception(errorMsg);
     } catch (e) {
-      print('PackagesService.handleTravelerStatus: $e');
+      Log.e('PackagesService.handleTravelerStatus: $e');
       rethrow;
     }
   }
@@ -483,7 +484,7 @@ class PackagesService {
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('PackagesService.publishPackage: $e');
+      Log.e('PackagesService.publishPackage: $e');
       return false;
     }
   }
@@ -517,7 +518,7 @@ class PackagesService {
         'Failed to fetch admin packages (${response.statusCode})',
       );
     } catch (e) {
-      print('PackagesService.getAdminPackages Error: $e');
+      Log.e('PackagesService.getAdminPackages Error: $e');
       return {'packages': <TravelPackageModel>[], 'hasMore': false, 'totalCount': 0};
     }
   }
@@ -532,7 +533,7 @@ class PackagesService {
         headers: headers,
       );
       if (response.statusCode == 200) {
-        print('PackagesService.getGuideRequests Response: ${response.body}');
+        Log.d('PackagesService.getGuideRequests Response: ${response.body}');
         final data = json.decode(response.body);
         final List results = data['results'] ?? [];
         return results.map((j) => GuideRequestModel.fromJson(j)).toList();
@@ -541,7 +542,7 @@ class PackagesService {
         'Failed to fetch guide requests (${response.statusCode})',
       );
     } catch (e) {
-      print('PackagesService.getGuideRequests Error: $e');
+      Log.e('PackagesService.getGuideRequests Error: $e');
       rethrow;
     }
   }
@@ -557,7 +558,7 @@ class PackagesService {
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('PackagesService.handleGuideRequest: $e');
+      Log.e('PackagesService.handleGuideRequest: $e');
       return false;
     }
   }
@@ -571,7 +572,7 @@ class PackagesService {
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('PackagesService.requestGuideRole: $e');
+      Log.e('PackagesService.requestGuideRole: $e');
       return false;
     }
   }
@@ -594,7 +595,7 @@ class PackagesService {
       }
       return null;
     } catch (e) {
-      print('Error adding review to package: $e');
+      Log.e('Error adding review to package: $e');
       return null;
     }
   }
@@ -617,7 +618,7 @@ class PackagesService {
       }
       return null;
     } catch (e) {
-      print('Error updating review for package: $e');
+      Log.e('Error updating review for package: $e');
       return null;
     }
   }
@@ -626,7 +627,7 @@ class PackagesService {
     try {
       final headers = await _authHeaders();
       final url = '${ApiConstants.baseUrl}/packages/$packageId/reviews/$reviewId';
-      print('[PackagesService] DELETE Review URL: $url');
+      Log.d('[PackagesService] DELETE Review URL: $url');
       final response = await BackendHealthManager.instance.delete(
         url,
         headers: headers,
@@ -639,7 +640,7 @@ class PackagesService {
         throw Exception(errorData['error'] ?? 'Failed to delete review');
       }
     } catch (e) {
-      print('Error deleting review for package: $e');
+      Log.e('Error deleting review for package: $e');
       rethrow;
     }
   }

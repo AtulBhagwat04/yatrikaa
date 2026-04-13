@@ -1,6 +1,7 @@
 import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_assets.dart';
 import 'package:yatrikaa/Frontend/core/models/review_model.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 
 class ItineraryStep {
   final int day;
@@ -86,8 +87,9 @@ class OrganizerModel {
   }
 
   String get profileUrl {
-    if (profileImage == null || profileImage!.isEmpty)
+    if (profileImage == null || profileImage!.isEmpty) {
       return AppAssets.placeholderImageUrl;
+    }
     if (profileImage!.startsWith('http')) return profileImage!;
     return ApiConstants.getPhotoUrl(profileImage!);
   }
@@ -206,7 +208,7 @@ class TravelPackageModel {
             .toList(),
       );
     } catch (e) {
-      print('TravelPackageModel.fromJson error: $e');
+      Log.e('TravelPackageModel.fromJson error: $e');
       // Return a minimal model if parsing fails for this item
       return TravelPackageModel(
         id: json['_id'] ?? '',

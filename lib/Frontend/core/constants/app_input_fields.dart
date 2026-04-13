@@ -81,7 +81,7 @@ class _AppInputFieldState extends State<AppInputField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: primaryBlue.withOpacity(0.15),
+                  color: primaryBlue.withValues(alpha: 0.15),
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),
@@ -102,7 +102,7 @@ class _AppInputFieldState extends State<AppInputField> {
           hintText: widget.hint,
           hintStyle: TextStyle(
             fontSize: 13,
-            color: appBlack.withOpacity(0.4),
+            color: appBlack.withValues(alpha: 0.4),
             fontWeight: FontWeight.w400,
           ),
 

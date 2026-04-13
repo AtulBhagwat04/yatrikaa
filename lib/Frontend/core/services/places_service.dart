@@ -8,6 +8,7 @@ import '../constants/app_strings.dart';
 import 'auth_service.dart';
 import '../utils/app_cache.dart';
 import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 
 class PlacesService {
   final AuthService _authService = AuthService();
@@ -92,7 +93,7 @@ class PlacesService {
         throw Exception("Failed to fetch popular places from DB: ${response.statusCode}");
       }
     } catch (e) {
-      print('[PlacesService] Error fetching paginated places: $e');
+      Log.e('[PlacesService] Error fetching paginated places: $e');
 
       // Fall back to cache on first page only
       if (page == 1 && (category == null || category == AppStrings.catAll)) {
@@ -135,7 +136,7 @@ class PlacesService {
         throw Exception("Failed to fetch nearby places");
       }
     } catch (e) {
-      print('Error fetching nearby places from API: $e');
+      Log.e('Error fetching nearby places from API: $e');
       return [];
     }
   }
@@ -154,7 +155,7 @@ class PlacesService {
         throw Exception("Failed to search places");
       }
     } catch (e) {
-      print('Error searching places: $e');
+      Log.e('Error searching places: $e');
       return [];
     }
   }
@@ -185,7 +186,7 @@ class PlacesService {
       }
       return false;
     } catch (e) {
-      print('Error checking favorite status: $e');
+      Log.e('Error checking favorite status: $e');
       return false;
     }
   }
@@ -234,7 +235,7 @@ class PlacesService {
       if (response.statusCode == 200) {
         return true;
       } else {
-        print('[PlacesService] Update failed. Status: ${response.statusCode}, Body: ${response.body}');
+        Log.w('[PlacesService] Update failed. Status: ${response.statusCode}, Body: ${response.body}');
         String errorMessage = 'Failed to update place (${response.statusCode})';
         try {
           final errorData = jsonDecode(response.body);
@@ -243,7 +244,7 @@ class PlacesService {
         throw Exception(errorMessage);
       }
     } catch (e) {
-      print('[PlacesService] Error editing place: $e');
+      Log.e('[PlacesService] Error editing place: $e');
       rethrow;
     }
   }
@@ -287,11 +288,11 @@ class PlacesService {
       if (response.statusCode == 201) {
         return true;
       } else {
-        print('Add place error: ${response.body}');
+        Log.e('Add place error: ${response.body}');
         return false;
       }
     } catch (e) {
-      print('Error adding place: $e');
+      Log.e('Error adding place: $e');
       return false;
     }
   }
@@ -312,7 +313,7 @@ class PlacesService {
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('Error deleting place: $e');
+      Log.e('Error deleting place: $e');
       return false;
     }
   }
@@ -338,7 +339,7 @@ class PlacesService {
         throw Exception("Failed to toggle favorite");
       }
     } catch (e) {
-      print('Error toggling favorite: $e');
+      Log.e('Error toggling favorite: $e');
       return {'error': e.toString()};
     }
   }
@@ -359,7 +360,7 @@ class PlacesService {
         throw Exception("Failed to fetch favorite places");
       }
     } catch (e) {
-      print('Error fetching favorites: $e');
+      Log.e('Error fetching favorites: $e');
       return [];
     }
   }
@@ -385,7 +386,7 @@ class PlacesService {
       }
       return null;
     } catch (e) {
-      print('Error adding review to place: $e');
+      Log.e('Error adding review to place: $e');
       return null;
     }
   }
@@ -411,7 +412,7 @@ class PlacesService {
       }
       return null;
     } catch (e) {
-      print('Error updating review: $e');
+      Log.e('Error updating review: $e');
       return null;
     }
   }
@@ -420,7 +421,7 @@ class PlacesService {
     try {
       final token = await _authService.getToken();
       final url = '${ApiConstants.baseUrl}/places/$placeId/reviews/$reviewId';
-      print('[PlacesService] DELETE Review URL: $url');
+      Log.d('[PlacesService] DELETE Review URL: $url');
       final response = await http.delete(
         Uri.parse(url),
         headers: {
@@ -436,7 +437,7 @@ class PlacesService {
         throw Exception(errorData['error'] ?? 'Failed to delete review');
       }
     } catch (e) {
-      print('Error deleting review: $e');
+      Log.e('Error deleting review: $e');
       rethrow;
     }
   }

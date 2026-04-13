@@ -25,29 +25,37 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     
     final isLoggedIn = await _authService.isLoggedIn();
     if (isLoggedIn) {
-      final role = await _authService.getRole();
-      final guideStatus = await _authService.getGuideRequestStatus();
-      final name = await _authService.getName();
-      final email = await _authService.getEmail();
-      final id = await _authService.getUserId();
-      final tripsCount = await _authService.getTripsCount();
-      final savedCount = await _authService.getSavedCount();
-      final reviewsCount = await _authService.getReviewsCount();
-      final postsCount = await _authService.getPostsCount();
+      final results = await Future.wait([
+        _authService.getRole(),
+        _authService.getGuideRequestStatus(),
+        _authService.getName(),
+        _authService.getEmail(),
+        _authService.getUserId(),
+        _authService.getTripsCount(),
+        _authService.getSavedCount(),
+        _authService.getReviewsCount(),
+        _authService.getPostsCount(),
+        _authService.getPhoneNumber(),
+        _authService.getGender(),
+        _authService.getProfilePicture(),
+      ]);
+
+      if (state is! AuthLoading) return;
+      
       emit(
         Authenticated(
-          id: id ?? '',
-          role: role ?? 'user',
-          guideRequestStatus: guideStatus,
-          name: name ?? 'Traveler',
-          email: email ?? '',
-          tripsCount: tripsCount,
-          savedCount: savedCount,
-          reviewsCount: reviewsCount,
-          postsCount: postsCount,
-          phoneNumber: await _authService.getPhoneNumber(),
-          gender: await _authService.getGender(),
-          profilePicture: await _authService.getProfilePicture(),
+          id: results[4] as String? ?? '',
+          role: results[0] as String? ?? 'user',
+          guideRequestStatus: results[1] as String? ?? 'None',
+          name: results[2] as String? ?? 'Traveler',
+          email: results[3] as String? ?? '',
+          tripsCount: results[5] as int? ?? 0,
+          savedCount: results[6] as int? ?? 0,
+          reviewsCount: results[7] as int? ?? 0,
+          postsCount: results[8] as int? ?? 0,
+          phoneNumber: results[9] as String?,
+          gender: results[10] as String?,
+          profilePicture: results[11] as String?,
         ),
       );
     } else {
@@ -91,18 +99,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final newReviewsCount = event.reviewsCount ?? currentState.reviewsCount;
       final newPostsCount = event.postsCount ?? currentState.postsCount;
 
+      final List<Future<void>> updates = [];
       if (event.tripsCount != null) {
-        await _authService.updateTripsCount(newTripsCount);
+        updates.add(_authService.updateTripsCount(newTripsCount));
       }
       if (event.savedCount != null) {
-        await _authService.updateSavedCount(newSavedCount);
+        updates.add(_authService.updateSavedCount(newSavedCount));
       }
       if (event.reviewsCount != null) {
-        await _authService.updateReviewsCount(newReviewsCount);
+        updates.add(_authService.updateReviewsCount(newReviewsCount));
       }
       if (event.postsCount != null) {
-        await _authService.updatePostsCount(newPostsCount);
+        updates.add(_authService.updatePostsCount(newPostsCount));
       }
+
+      if (updates.isNotEmpty) {
+        await Future.wait(updates);
+      }
+
+      if (state is! Authenticated) return;
 
       emit(
         Authenticated(
@@ -134,22 +149,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         if (user != null) {
           final idToken = await user.getIdToken(true); // force refresh
           if (idToken != null) {
+            if (state is! Authenticated) return;
+
             final data = await _authService.syncWithBackend(idToken);
+            
+            if (state is! Authenticated) return;
+
             emit(
               Authenticated(
-                id: data['id'] ?? currentState.id,
-                role: data['role'] ?? currentState.role,
+                id: data['id'] ?? (state as Authenticated).id,
+                role: data['role'] ?? (state as Authenticated).role,
                 guideRequestStatus:
-                    data['guideRequestStatus'] ?? currentState.guideRequestStatus,
-                name: data['name'] ?? currentState.name,
-                email: data['email'] ?? currentState.email,
+                    data['guideRequestStatus'] ?? (state as Authenticated).guideRequestStatus,
+                name: data['name'] ?? (state as Authenticated).name,
+                email: data['email'] ?? (state as Authenticated).email,
                 tripsCount: (data['tripsCount'] as num?)?.toInt() ?? 0,
                 savedCount: (data['savedCount'] as num?)?.toInt() ?? 0,
                 reviewsCount: (data['reviewsCount'] as num?)?.toInt() ?? 0,
                 postsCount: (data['postsCount'] as num?)?.toInt() ?? 0,
-                phoneNumber: data['phoneNumber'] ?? currentState.phoneNumber,
-                gender: data['gender'] ?? currentState.gender,
-                profilePicture: data['profilePicture'] ?? currentState.profilePicture,
+                phoneNumber: data['phoneNumber'] ?? (state as Authenticated).phoneNumber,
+                gender: data['gender'] ?? (state as Authenticated).gender,
+                profilePicture: data['profilePicture'] ?? (state as Authenticated).profilePicture,
               ),
             );
           }

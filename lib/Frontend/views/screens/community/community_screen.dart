@@ -214,7 +214,7 @@ class _HeaderAction extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: (isPrimary ? primaryBlue : appBlack).withOpacity(0.12),
+              color: (isPrimary ? primaryBlue : appBlack).withValues(alpha: 0.12),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

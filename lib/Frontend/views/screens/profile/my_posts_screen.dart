@@ -125,7 +125,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: primaryBlue.withOpacity(0.1), blurRadius: 20),
+                BoxShadow(color: primaryBlue.withValues(alpha: 0.1), blurRadius: 20),
               ],
             ),
             child: const Icon(

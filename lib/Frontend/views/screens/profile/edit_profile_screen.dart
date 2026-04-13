@@ -191,9 +191,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: onboardingBlueDark.withOpacity(
-                                        0.2,
-                                      ),
+                                      color: onboardingBlueDark.withValues(alpha: 0.2,),
                                       width: 1.5,
                                     ),
                                   ),
@@ -209,7 +207,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.08),
+                                        color: Colors.black.withValues(alpha: 0.08),
                                         blurRadius: 15,
                                         offset: const Offset(0, 8),
                                       ),
@@ -250,7 +248,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                         ),
                                         // "Edit" Centered Overlay
                                         Container(
-                                          color: Colors.black.withOpacity(0.3),
+                                          color: Colors.black.withValues(alpha: 0.3),
                                           child: const Center(
                                             child: Icon(
                                               Icons.camera_alt,
@@ -279,12 +277,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
+                                color: Colors.black.withValues(alpha: 0.06),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
                               BoxShadow(
-                                color: primaryBlue.withOpacity(0.03),
+                                color: primaryBlue.withValues(alpha: 0.03),
                                 blurRadius: 10,
                                 spreadRadius: -2,
                               ),
@@ -354,7 +352,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               borderRadius: BorderRadius.circular(18),
                               boxShadow: [
                                 BoxShadow(
-                                  color: primaryBlue.withOpacity(0.4),
+                                  color: primaryBlue.withValues(alpha: 0.4),
                                   blurRadius: 20,
                                   offset: const Offset(0, 10),
                                   spreadRadius: -2,
@@ -387,7 +385,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: AppText.body(
         label,
         fontWeight: FontWeight.w700,
-        color: appBlack.withOpacity(0.8),
+        color: appBlack.withValues(alpha: 0.8),
         size: 14,
       ),
     );
@@ -403,7 +401,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         color: appWhite,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: onboardingBlueSoft.withOpacity(0.6),
+          color: onboardingBlueSoft.withValues(alpha: 0.6),
           width: 1.2,
         ),
       ),

@@ -61,9 +61,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: primaryBlue.withOpacity(0.05),
+          color: primaryBlue.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryBlue.withOpacity(0.1)),
+          border: Border.all(color: primaryBlue.withValues(alpha: 0.1)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,7 +79,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               'Your privacy is important to us. This policy explains how we handle your data to give you the best travel experience in India.',
               fontWeight: FontWeight.w700,
               size: 14,
-              color: appBlack.withOpacity(0.8),
+              color: appBlack.withValues(alpha: 0.8),
               height: 1.5,
             ),
           ],
@@ -99,7 +99,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: appBlack.withOpacity(0.04),
+              color: appBlack.withValues(alpha: 0.04),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -114,7 +114,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               content,
               size: 13,
               height: 1.6,
-              color: appBlack.withOpacity(0.7),
+              color: appBlack.withValues(alpha: 0.7),
               fontWeight: FontWeight.w600,
             ),
           ],

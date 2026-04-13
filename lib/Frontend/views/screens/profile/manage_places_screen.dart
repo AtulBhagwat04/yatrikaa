@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
@@ -17,6 +16,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yatrikaa/Frontend/views/widgets/shimmer_box.dart';
 import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
 import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 
 class ManagePlacesScreen extends StatefulWidget {
@@ -122,8 +122,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         final query = _searchController.text.trim().toLowerCase();
         if (query.isNotEmpty) {
           _filteredPlaces = _allPlaces.where((place) {
-            final name = (place.name ?? '').toLowerCase();
-            final address = (place.formattedAddress ?? '').toLowerCase();
+            final name = place.name.toLowerCase();
+            final address = place.formattedAddress.toLowerCase();
             return name.contains(query) || address.contains(query);
           }).toList();
         } else {
@@ -136,12 +136,14 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      print('[ManagePlaces] Error: $e');
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-        _isMoreLoading = false;
-      });
+      Log.e('[ManagePlaces] Error: $e');
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+          _isMoreLoading = false;
+        });
+      }
     }
   }
 
@@ -153,8 +155,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         _filteredPlaces = _allPlaces;
       } else {
         _filteredPlaces = _allPlaces.where((place) {
-          final name = (place.name ?? '').toLowerCase();
-          final address = (place.formattedAddress ?? '').toLowerCase();
+          final name = place.name.toLowerCase();
+          final address = place.formattedAddress.toLowerCase();
           return name.contains(lowQuery) || address.contains(lowQuery);
         }).toList();
       }
@@ -376,19 +378,19 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
 
   Widget _buildPlaceCard(PlaceModel place) {
     final photoRef = _getPlacePhotoReference(place);
-    final category = (place.types != null && place.types!.isNotEmpty)
-        ? place.types!.first
+    final category = (place.types.isNotEmpty)
+        ? place.types.first
         : 'Place';
 
     return Container(
-      key: ValueKey(place.id ?? place.name),
+      key: ValueKey(place.id),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -487,7 +489,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         AppText.subHeading(
-                          place.name ?? 'Unknown Place',
+                          place.name,
                           size: 16,
                           fontWeight: FontWeight.w800,
                         ),
@@ -502,8 +504,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                             const SizedBox(width: 4),
                             Expanded(
                               child: AppText.caption(
-                                place.formattedAddress ??
-                                    'No address available',
+                                place.formattedAddress,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -811,7 +812,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                       children: [
                                         Icon(
                                           Icons.add_photo_alternate_rounded,
-                                          color: primaryBlue.withOpacity(0.6),
+                                          color: primaryBlue.withValues(alpha: 0.6),
                                           size: 32,
                                         ),
                                         const SizedBox(height: 8),
@@ -874,7 +875,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                         () => isSheetLoading = true,
                                       );
                                       final success = await _handleUpdate(
-                                        place.id!,
+                                        place.id,
                                         {
                                           'place_id': place.id,
                                           'name': nameController.text.trim(),
@@ -907,12 +908,12 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                                         pickedFiles,
                                       );
 
-                                      if (success && mounted) {
-                                        Navigator.pop(ctx);
-                                      } else if (mounted) {
-                                        setSheetState(
-                                          () => isSheetLoading = false,
-                                        );
+                                      if (success) {
+                                        if (ctx.mounted) Navigator.pop(ctx);
+                                      } else {
+                                        if (mounted) {
+                                          setSheetState(() => isSheetLoading = false);
+                                        }
                                       }
                                     },
                               style: ElevatedButton.styleFrom(
@@ -972,7 +973,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: primaryBlue, size: 20),
             filled: true,
-            fillColor: onboardingBlueVeryLight.withOpacity(0.5),
+            fillColor: onboardingBlueVeryLight.withValues(alpha: 0.5),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -1045,15 +1046,17 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     setState(() => _isLoading = true);
     try {
       final token = await _authService.getToken();
+      if (!mounted) return;
+      
       final response = await http.delete(
         Uri.parse('${ApiConstants.baseUrl}/places/$placeId'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
-        if (mounted) {
-          CustomToast.success(context, 'Place deleted successfully');
-        }
+        CustomToast.success(context, 'Place deleted successfully');
         setState(() {
           _allPlaces.removeWhere((p) => p.id == placeId);
           _filterPlaces(_searchController.text);
@@ -1065,8 +1068,8 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     } catch (e) {
       if (mounted) {
         CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
+        setState(() => _isLoading = false);
       }
-      setState(() => _isLoading = false);
     }
   }
 
@@ -1084,7 +1087,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('[ManagePlaces] Error refreshing single place: $e');
+      Log.e('[ManagePlaces] Error refreshing single place: $e');
       // Fallback to full refresh if single fetch fails
       _fetchPlaces();
     }

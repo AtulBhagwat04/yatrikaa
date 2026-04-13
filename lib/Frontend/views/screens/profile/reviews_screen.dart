@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
-import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 
@@ -49,7 +48,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     blurRadius: 20,
                   ),
                 ],

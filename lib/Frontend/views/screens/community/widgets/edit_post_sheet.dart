@@ -11,7 +11,6 @@ import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
 
-import '../../../../core/widgets/custom_toast.dart';
 
 class EditPostSheet extends StatefulWidget {
   final PostModel post;
@@ -184,7 +183,7 @@ class _EditPostSheetState extends State<EditPostSheet> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -207,7 +206,7 @@ class _EditPostSheetState extends State<EditPostSheet> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -243,10 +242,10 @@ class _EditPostSheetState extends State<EditPostSheet> {
                       child: Container(
                         width: 110,
                         decoration: BoxDecoration(
-                          color: primaryBlue.withOpacity(0.03),
+                          color: primaryBlue.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: primaryBlue.withOpacity(0.1),
+                            color: primaryBlue.withValues(alpha: 0.1),
                             style: BorderStyle.solid,
                             width: 1.5,
                           ),
@@ -257,7 +256,7 @@ class _EditPostSheetState extends State<EditPostSheet> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: primaryBlue.withOpacity(0.1),
+                                color: primaryBlue.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -297,7 +296,7 @@ class _EditPostSheetState extends State<EditPostSheet> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: primaryBlue.withOpacity(0.3),
+                    color: primaryBlue.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -365,22 +364,22 @@ class _EditPostSheetState extends State<EditPostSheet> {
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: appGrey.withOpacity(0.6), fontSize: 14),
+            hintStyle: TextStyle(color: appGrey.withValues(alpha: 0.6), fontSize: 14),
             prefixIcon: Icon(icon, color: primaryBlue, size: 20),
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: appGreyVeryLight.withOpacity(0.5),
+            fillColor: appGreyVeryLight.withValues(alpha: 0.5),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: appGreyLight.withOpacity(0.3)),
+              borderSide: BorderSide(color: appGreyLight.withValues(alpha: 0.3)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: appGreyLight.withOpacity(0.3)),
+              borderSide: BorderSide(color: appGreyLight.withValues(alpha: 0.3)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),

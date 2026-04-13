@@ -11,7 +11,6 @@ import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_bloc.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
-import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart' as auth;
 import 'package:yatrikaa/Frontend/views/widgets/custom_alert_dialog.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 
@@ -220,7 +219,7 @@ class _UserBookingsScreenState extends State<UserBookingsScreen>
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: primaryBlue.withOpacity(0.1), blurRadius: 20),
+                BoxShadow(color: primaryBlue.withValues(alpha: 0.1), blurRadius: 20),
               ],
             ),
             child: Icon(
@@ -398,7 +397,7 @@ class _BookingCard extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: _statusColor.withOpacity(0.08),
+              color: _statusColor.withValues(alpha: 0.08),
               child: Row(
                 children: [
                   Icon(_statusIcon, size: 14, color: _statusColor),
@@ -499,10 +498,10 @@ class _BookingCard extends StatelessWidget {
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: onboardingBlueVeryLight.withOpacity(0.5),
+                              color: onboardingBlueVeryLight.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: primaryBlue.withOpacity(0.05),
+                                color: primaryBlue.withValues(alpha: 0.05),
                               ),
                             ),
                             child: Row(
@@ -514,7 +513,7 @@ class _BookingCard extends StatelessWidget {
                                     color: Colors.white,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: primaryBlue.withOpacity(0.1),
+                                      color: primaryBlue.withValues(alpha: 0.1),
                                     ),
                                   ),
                                   child: Center(
@@ -553,7 +552,7 @@ class _BookingCard extends StatelessWidget {
                               ],
                             ),
                           );
-                        }).toList(),
+                        }),
                       ],
                     ),
                   ),
@@ -667,7 +666,7 @@ class _BookingCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: errorColor.withOpacity(0.1),
+          color: errorColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6),
         ),
         child: AppText.caption(
@@ -682,7 +681,7 @@ class _BookingCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.orange.withOpacity(0.1),
+          color: Colors.orange.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6),
         ),
         child: AppText.caption(
@@ -698,7 +697,7 @@ class _BookingCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: successColorDark.withOpacity(0.1),
+          color: successColorDark.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6),
         ),
         child: AppText.caption(

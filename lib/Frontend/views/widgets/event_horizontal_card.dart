@@ -32,7 +32,7 @@ class EventHorizontalCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -65,8 +65,8 @@ class EventHorizontalCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.15),
-                      Colors.black.withOpacity(0.85),
+                      Colors.black.withValues(alpha: 0.15),
+                      Colors.black.withValues(alpha: 0.85),
                     ],
                     stops: const [0.4, 0.7, 1.0],
                   ),
@@ -87,7 +87,7 @@ class EventHorizontalCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -127,7 +127,7 @@ class EventHorizontalCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: appWhite.withOpacity(0.2),
+                        color: appWhite.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -153,14 +153,14 @@ class EventHorizontalCard extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.location_on_rounded,
-                          color: appWhite.withOpacity(0.7),
+                          color: appWhite.withValues(alpha: 0.7),
                           size: 14,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: AppText.caption(
                             event.venue,
-                            color: appWhite.withOpacity(0.8),
+                            color: appWhite.withValues(alpha: 0.8),
                             fontWeight: FontWeight.w600,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

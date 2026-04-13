@@ -14,6 +14,7 @@ import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_event.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_state.dart';
 import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 
 /// Screen for guides / admins to create a new travel package.
 /// All data is submitted to the backend via [PackagesService].
@@ -215,6 +216,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
     }
     try {
       final List<XFile> images = await _picker.pickMultiImage(imageQuality: 70);
+      if (!mounted) return;
       if (images.isNotEmpty) {
         setState(() {
           _pickedImages.addAll(
@@ -223,7 +225,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Error picking images: $e");
+      Log.e("Error picking images: $e");
     }
   }
 
@@ -539,7 +541,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
                     color: appGrey,
                   ),
                   value: _isComingSoon,
-                  activeColor: primaryBlue,
+                  activeThumbColor: primaryBlue,
                   contentPadding: EdgeInsets.zero,
                   onChanged: (val) => setState(() => _isComingSoon = val),
                 ),
@@ -858,7 +860,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
               decoration: BoxDecoration(
                 color: onboardingBlueVeryLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: primaryBlue.withOpacity(0.3)),
+                border: Border.all(color: primaryBlue.withValues(alpha: 0.3)),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -900,7 +902,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
         decoration: BoxDecoration(
           color: onboardingBlueVeryLight,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: primaryBlue.withOpacity(0.3)),
+          border: Border.all(color: primaryBlue.withValues(alpha: 0.3)),
         ),
         child: const Icon(Icons.add_rounded, color: primaryBlue, size: 30),
       ),
@@ -940,7 +942,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
             ),
             filled: true,
             fillColor: readOnly
-                ? appGreyVeryLight.withOpacity(0.5)
+                ? appGreyVeryLight.withValues(alpha: 0.5)
                 : appGreyVeryLight,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -1006,7 +1008,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
                 Icon(
                   Icons.calendar_today_rounded,
                   size: 16,
-                  color: primaryBlue.withOpacity(0.7),
+                  color: primaryBlue.withValues(alpha: 0.7),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -1077,7 +1079,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
       decoration: BoxDecoration(
         color: onboardingBlueVeryLight,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: primaryBlue.withOpacity(0.15)),
+        border: Border.all(color: primaryBlue.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1122,7 +1124,7 @@ class _CreatePackageScreenState extends State<CreatePackageScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: primaryBlue.withOpacity(0.08),
+                  color: primaryBlue.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(

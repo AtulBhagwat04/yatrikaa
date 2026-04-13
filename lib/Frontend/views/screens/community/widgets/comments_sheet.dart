@@ -140,7 +140,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                           children: [
                             CircleAvatar(
                               radius: 14,
-                              backgroundColor: primaryBlue.withOpacity(0.1),
+                              backgroundColor: primaryBlue.withValues(alpha: 0.1),
                               child: Text(
                                 comment.user.name.isNotEmpty
                                     ? comment.user.name[0]

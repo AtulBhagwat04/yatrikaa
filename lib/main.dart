@@ -10,7 +10,6 @@ import 'package:yatrikaa/Frontend/views/Routes/route_names.dart';
 import 'package:yatrikaa/Frontend/views/screens/travel/bloc/travel_bloc.dart';
 import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
 import 'package:yatrikaa/Frontend/core/bloc/connectivity/connectivity_bloc.dart';
-import 'package:yatrikaa/Frontend/views/widgets/global_connectivity_banner.dart';
 import 'package:yatrikaa/Frontend/views/Routes/route_observer.dart';
 import 'package:yatrikaa/Frontend/core/services/notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -124,7 +123,7 @@ class StaticSplashView extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 4,
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.85),
               ),
             ),
           ],

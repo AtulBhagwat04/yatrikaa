@@ -61,12 +61,12 @@ class CustomToast extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
           BoxShadow(
-            color: accentColor.withOpacity(0.12),
+            color: accentColor.withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -147,8 +147,10 @@ class CustomToast extends StatelessWidget {
                 width: double.infinity,
                 child: LinearProgressIndicator(
                   value: progressValue,
-                  backgroundColor: lightAccent.withOpacity(0.3),
-                  valueColor: AlwaysStoppedAnimation<Color>(accentColor.withOpacity(0.7)),
+                  backgroundColor: lightAccent.withValues(alpha: 0.3),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    accentColor.withValues(alpha: 0.7),
+                  ),
                 ),
               ),
           ],

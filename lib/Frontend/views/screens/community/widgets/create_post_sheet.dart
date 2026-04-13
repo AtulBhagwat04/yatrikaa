@@ -13,7 +13,6 @@ import 'package:yatrikaa/Frontend/core/bloc/auth/auth_event.dart';
 import 'package:yatrikaa/Frontend/core/bloc/auth/auth_state.dart';
 import '../../../../core/widgets/custom_toast.dart';
 import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
-import 'package:yatrikaa/Frontend/core/services/places_service.dart';
 
 class CreatePostSheet extends StatefulWidget {
   const CreatePostSheet({super.key});
@@ -28,7 +27,6 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
   final _postService = PostService();
   final _picker = ImagePicker();
   final List<XFile> _imageFiles = [];
-  final List<XFile> _images = [];
   bool _isLoading = false;
   bool _isPickerActive = false;
 
@@ -191,10 +189,10 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                         width: 110,
                         margin: const EdgeInsets.only(right: 12),
                         decoration: BoxDecoration(
-                          color: primaryBlue.withOpacity(0.03),
+                          color: primaryBlue.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: primaryBlue.withOpacity(0.1),
+                            color: primaryBlue.withValues(alpha: 0.1),
                             style: BorderStyle.solid,
                             width: 1.5,
                           ),
@@ -205,7 +203,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: primaryBlue.withOpacity(0.1),
+                                color: primaryBlue.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -242,7 +240,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -288,7 +286,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: primaryBlue.withOpacity(0.3),
+                    color: primaryBlue.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -355,22 +353,22 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: appGrey.withOpacity(0.6), fontSize: 14),
+            hintStyle: TextStyle(color: appGrey.withValues(alpha: 0.6), fontSize: 14),
             prefixIcon: Icon(icon, color: primaryBlue, size: 20),
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: appGreyVeryLight.withOpacity(0.5),
+            fillColor: appGreyVeryLight.withValues(alpha: 0.5),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: appGreyLight.withOpacity(0.3)),
+              borderSide: BorderSide(color: appGreyLight.withValues(alpha: 0.3)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: appGreyLight.withOpacity(0.3)),
+              borderSide: BorderSide(color: appGreyLight.withValues(alpha: 0.3)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),

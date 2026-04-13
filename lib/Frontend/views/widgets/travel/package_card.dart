@@ -190,10 +190,10 @@ class _PackageCardState extends State<PackageCard> {
       margin: const EdgeInsets.only(bottom: 8, top: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(widget.radius),
-        border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.2),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 25,
             spreadRadius: -4,
             offset: const Offset(0, 12),
@@ -228,10 +228,10 @@ class _PackageCardState extends State<PackageCard> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.2),
+                      Colors.black.withValues(alpha: 0.2),
                       Colors.transparent,
-                      Colors.black.withOpacity(0.4),
-                      Colors.black.withOpacity(0.85),
+                      Colors.black.withValues(alpha: 0.4),
+                      Colors.black.withValues(alpha: 0.85),
                     ],
                     stops: const [0.0, 0.4, 0.7, 1.0],
                   ),
@@ -281,8 +281,8 @@ class _PackageCardState extends State<PackageCard> {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.4),
-                        Colors.black.withOpacity(0.8),
+                        Colors.black.withValues(alpha: 0.4),
+                        Colors.black.withValues(alpha: 0.8),
                       ],
                     ),
                   ),
@@ -314,7 +314,7 @@ class _PackageCardState extends State<PackageCard> {
                                       : Icons.local_offer_rounded,
                                   color: widget.package.isPopular
                                       ? Colors.amber
-                                      : Colors.white.withOpacity(0.7),
+                                      : Colors.white.withValues(alpha: 0.7),
                                   size: 13,
                                 ),
                                 const SizedBox(width: 4),
@@ -329,8 +329,7 @@ class _PackageCardState extends State<PackageCard> {
                                           alignment: Alignment.centerLeft,
                                           children: <Widget>[
                                             ...previousChildren,
-                                            if (currentChild != null)
-                                              currentChild,
+                                            ?currentChild,
                                           ],
                                         );
                                       },
@@ -359,7 +358,7 @@ class _PackageCardState extends State<PackageCard> {
                                         style: TextStyle(
                                           color: widget.package.isPopular
                                               ? Colors.amber
-                                              : Colors.white.withOpacity(0.7),
+                                              : Colors.white.withValues(alpha: 0.7),
                                           fontSize: 11,
                                           fontWeight: FontWeight.w800,
                                         ),
@@ -381,7 +380,7 @@ class _PackageCardState extends State<PackageCard> {
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
-                                  color: primaryBlue.withOpacity(0.3),
+                                  color: primaryBlue.withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
@@ -418,10 +417,10 @@ class _PackageCardState extends State<PackageCard> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: backgroundColor ?? Colors.black.withOpacity(0.35),
+            color: backgroundColor ?? Colors.black.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               width: 0.8,
             ),
           ),

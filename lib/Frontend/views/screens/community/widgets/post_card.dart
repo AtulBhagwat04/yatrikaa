@@ -131,8 +131,10 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _handleShare() {
-    Share.share(
-      'Check out this journey at ${widget.post.location} by ${widget.post.author.name}!\n\n"${widget.post.caption}"\n\nShared via Yatrikaa App',
+    SharePlus.instance.share(
+      ShareParams(
+        text: 'Check out this journey at ${widget.post.location} by ${widget.post.author.name}!\n\n"${widget.post.caption}"\n\nShared via Yatrikaa App',
+      ),
     );
   }
 
@@ -195,7 +197,7 @@ class _PostCardState extends State<PostCard> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: appGreyLight.withOpacity(0.5),
+                color: appGreyLight.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -404,7 +406,7 @@ class _PostCardState extends State<PostCard> {
                         children: [
                           CircleAvatar(
                             radius: 12,
-                            backgroundColor: primaryBlue.withOpacity(0.1),
+                            backgroundColor: primaryBlue.withValues(alpha: 0.1),
                             child: Text(
                               p.author.name.isNotEmpty ? p.author.name[0] : '?',
                               style: const TextStyle(
@@ -544,7 +546,7 @@ class _OptionTile extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: iconColor, size: 22),
@@ -582,21 +584,21 @@ class _PillButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = active ? (activeColor ?? primaryBlue) : appGrey;
     return Material(
-      color: active ? color.withOpacity(0.08) : appGreyVeryLight,
+      color: active ? color.withValues(alpha: 0.08) : appGreyVeryLight,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        splashColor: color.withOpacity(0.1),
-        highlightColor: color.withOpacity(0.05),
+        splashColor: color.withValues(alpha: 0.1),
+        highlightColor: color.withValues(alpha: 0.05),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: active
-                  ? color.withOpacity(0.2)
-                  : appGreyLight.withOpacity(0.4),
+                  ? color.withValues(alpha: 0.2)
+                  : appGreyLight.withValues(alpha: 0.4),
               width: 0.8,
             ),
           ),

@@ -272,12 +272,12 @@ class _UserManagementScreenState extends State<UserManagementScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.06),
+            color: color.withValues(alpha: 0.06),
             blurRadius: 30,
             offset: const Offset(0, 15),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 5),
           ),
@@ -294,7 +294,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: color.withOpacity(0.04),
+                color: color.withValues(alpha: 0.04),
               ),
             ),
           ),
@@ -315,13 +315,13 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: color.withOpacity(0.2),
+                            color: color.withValues(alpha: 0.2),
                             width: 1.5,
                           ),
                         ),
                         child: CircleAvatar(
                           radius: 36,
-                          backgroundColor: color.withOpacity(0.08),
+                          backgroundColor: color.withValues(alpha: 0.08),
                           child: ClipOval(
                             child:
                                 profilePic != null &&
@@ -414,7 +414,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                     PopupMenuButton(
                       icon: Icon(
                         Icons.more_vert_rounded,
-                        color: appGrey.withOpacity(0.5),
+                        color: appGrey.withValues(alpha: 0.5),
                         size: 24,
                       ),
                       padding: EdgeInsets.zero,
@@ -482,7 +482,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                     vertical: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: onboardingBlueLight.withOpacity(0.3),
+                    color: onboardingBlueLight.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: appWhite, width: 2),
                   ),

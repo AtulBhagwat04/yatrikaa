@@ -204,7 +204,7 @@ class _ModernSearchBarState extends State<ModernSearchBar> {
               constraints: const BoxConstraints(maxHeight: 250),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: primaryBlue.withOpacity(0.1)),
+                border: Border.all(color: primaryBlue.withValues(alpha: 0.1)),
               ),
               child: _isSearching
                   ? const Padding(
@@ -221,7 +221,7 @@ class _ModernSearchBarState extends State<ModernSearchBar> {
                       padding: EdgeInsets.zero,
                       shrinkWrap: true,
                       itemCount: _suggestions.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final suggestion = _suggestions[index];
                         return ListTile(
@@ -274,12 +274,12 @@ class _ModernSearchBarState extends State<ModernSearchBar> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
             BoxShadow(
-              color: primaryBlue.withOpacity(0.04),
+              color: primaryBlue.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -296,7 +296,7 @@ class _ModernSearchBarState extends State<ModernSearchBar> {
           decoration: InputDecoration(
             hintText: _displayText,
             hintStyle: TextStyle(
-              color: appGrey.withOpacity(0.6),
+              color: appGrey.withValues(alpha: 0.6),
               fontSize: 15,
               fontWeight: FontWeight.w400,
             ),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 
 class RatingBadge extends StatelessWidget {
@@ -20,7 +20,7 @@ class RatingBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color:
             backgroundColor ??
-            Colors.amber.withAlpha(50), // Replaced withOpacity(0.15)
+            Colors.amber.withValues(alpha: 0.15), // Migrated to withValues
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

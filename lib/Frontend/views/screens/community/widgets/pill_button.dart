@@ -25,7 +25,7 @@ class PillButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: active ? color.withOpacity(0.08) : Colors.grey.shade100,
+          color: active ? color.withValues(alpha: 0.08) : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(

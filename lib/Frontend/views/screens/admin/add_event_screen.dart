@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,7 +12,6 @@ import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/constants/spacing.dart';
 import 'package:yatrikaa/Frontend/core/services/events_service.dart';
-import 'package:yatrikaa/Frontend/core/services/places_service.dart';
 import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dart';
 
 class AddEventScreen extends StatefulWidget {
@@ -110,7 +110,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Image picking error: $e");
+      Log.e("Image picking error: $e");
     } finally {
       if (mounted) setState(() => _isPickerActive = false);
     }
@@ -210,7 +210,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         _addressController.text = addressParts.join(", ");
       }
     } catch (e) {
-      debugPrint("Location error: $e");
+      Log.e("Location error: $e");
     } finally {
       if (mounted) setState(() => _isLocationLoading = false);
     }
@@ -393,7 +393,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                                 if (_venueController.text.isEmpty) {
                                   _venueController.text = place.name;
                                 }
-                                _addressController.text = place.formattedAddress ?? place.name;
+                                _addressController.text = place.formattedAddress;
                                 _latController.text = place.lat.toString();
                                 _lngController.text = place.lng.toString();
                               });
@@ -607,7 +607,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 decoration: BoxDecoration(
                   color: onboardingBlueVeryLight,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: primaryBlue.withOpacity(0.2)),
+                  border: Border.all(color: primaryBlue.withValues(alpha: 0.2)),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -816,7 +816,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: onboardingBlueVeryLight.withOpacity(0.5),
+          color: onboardingBlueVeryLight.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -845,7 +845,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: onboardingBlueVeryLight.withOpacity(0.4),
+        color: onboardingBlueVeryLight.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -870,7 +870,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     bool isSecondary = false,
     bool isLoading = false,
   }) {
-    final baseColor = isSecondary ? primaryBlue.withOpacity(0.08) : primaryBlue;
+    final baseColor = isSecondary ? primaryBlue.withValues(alpha: 0.08) : primaryBlue;
     final fgColor = isSecondary ? primaryBlue : Colors.white;
 
     return Container(
@@ -888,7 +888,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
             side: isSecondary
-                ? BorderSide(color: primaryBlue.withOpacity(0.3))
+                ? BorderSide(color: primaryBlue.withValues(alpha: 0.3))
                 : BorderSide.none,
           ),
         ),

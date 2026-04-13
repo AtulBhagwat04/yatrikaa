@@ -93,7 +93,7 @@ class PlaceNearbyCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: primaryBlue.withOpacity(0.08),
+                          color: primaryBlue.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: AppText.small(

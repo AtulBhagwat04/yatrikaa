@@ -16,6 +16,7 @@ import 'package:yatrikaa/Frontend/views/widgets/modern/modern_location_field.dar
 import 'package:yatrikaa/Frontend/views/widgets/modern/modern_search_bar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 
@@ -568,7 +569,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         endTime = TimeOfDay.fromDateTime(dt);
       }
     } catch (e) {
-      debugPrint("Time parsing error: $e");
+      Log.e("Time parsing error: $e");
     }
 
     List<String> existingImages = List.from(event.images);
@@ -792,7 +793,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                         children: [
                                           Icon(
                                             Icons.add_photo_alternate_rounded,
-                                            color: primaryBlue.withOpacity(0.6),
+                                            color: primaryBlue.withValues(alpha: 0.6),
                                             size: 32,
                                           ),
                                           const SizedBox(height: 8),
@@ -990,10 +991,12 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
                                         pickedFiles.map((x) => File(x.path)).toList(),
                                       );
 
-                                      if (success && mounted) {
-                                        Navigator.pop(ctx);
-                                      } else if (mounted) {
-                                        setSheetState(() => isSheetLoading = false);
+                                      if (success) {
+                                        if (ctx.mounted) Navigator.pop(ctx);
+                                      } else {
+                                        if (mounted) {
+                                          setSheetState(() => isSheetLoading = false);
+                                        }
                                       }
                                     },
                               style: ElevatedButton.styleFrom(
@@ -1062,7 +1065,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
             decoration: InputDecoration(
               prefixIcon: Icon(icon, color: primaryBlue, size: 18),
               filled: true,
-              fillColor: onboardingBlueVeryLight.withOpacity(0.4),
+              fillColor: onboardingBlueVeryLight.withValues(alpha: 0.4),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -1099,7 +1102,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: onboardingBlueVeryLight.withOpacity(0.4),
+              color: onboardingBlueVeryLight.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(12),
             ),
             child: DropdownButtonHideUnderline(
@@ -1141,7 +1144,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               decoration: BoxDecoration(
-                color: onboardingBlueVeryLight.withOpacity(0.4),
+                color: onboardingBlueVeryLight.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -1193,6 +1196,8 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     setState(() => _isLoading = true);
     try {
       final token = await _authService.getToken();
+      if (!mounted) return;
+
       final response = await http.delete(
         Uri.parse('${ApiConstants.baseUrl}/events/$eventId'),
         headers: {'Authorization': 'Bearer $token'},
@@ -1213,8 +1218,8 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
     } catch (e) {
       if (mounted) {
         CustomToast.error(context, ErrorHandler.getFriendlyMessage(e));
+        setState(() => _isLoading = false);
       }
-      setState(() => _isLoading = false);
     }
   }
 
@@ -1232,7 +1237,7 @@ class _ManageEventsScreenState extends State<ManageEventsScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('[ManageEvents] Error refreshing single event: $e');
+      Log.e('[ManageEvents] Error refreshing single event: $e');
       _fetchEvents();
     }
   }

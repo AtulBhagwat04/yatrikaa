@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:yatrikaa/Frontend/core/widgets/custom_toast.dart';
 import 'package:yatrikaa/Frontend/core/utils/error_handler.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -141,7 +142,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Image picking error: $e");
+      Log.e("Image picking error: $e");
     } finally {
       if (mounted) setState(() => _isPickerActive = false);
     }
@@ -164,6 +165,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       setState(() => _isLocationLoading = true);
       Position position = await Geolocator.getCurrentPosition();
 
+      if (!mounted) return;
       setState(() {
         _latController.text = position.latitude.toString();
         _lngController.text = position.longitude.toString();
@@ -174,6 +176,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         position.longitude,
       );
 
+      if (!mounted) return;
       if (placemarks.isNotEmpty) {
         final p = placemarks[0];
 
@@ -208,7 +211,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         _stateController.text = p.administrativeArea ?? "";
       }
     } catch (e) {
-      debugPrint("Location error: $e");
+      Log.e("Location error: $e");
     } finally {
       if (mounted) setState(() => _isLocationLoading = false);
     }
@@ -415,7 +418,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                             icon: Icons.map_rounded,
                             onSelected: (place) {
                               setState(() {
-                                _addressController.text = place.formattedAddress ?? place.name;
+                                _addressController.text = place.formattedAddress;
                                 _cityController.text = place.city ?? "";
                                 _stateController.text = place.state ?? "Maharashtra";
                                 _latController.text = place.lat.toString();
@@ -684,7 +687,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                                     decoration: InputDecoration(
                                       hintText: "Add facility",
                                       fillColor: onboardingBlueVeryLight
-                                          .withOpacity(0.5),
+                                          .withValues(alpha: 0.5),
                                       filled: true,
                                       isDense: true,
                                       contentPadding: const EdgeInsets.all(12),
@@ -764,7 +767,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -812,7 +815,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                   Icon(
                     Icons.add_photo_alternate_rounded,
                     size: 40,
-                    color: primaryBlue.withOpacity(0.5),
+                    color: primaryBlue.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 8),
                   AppText.small(
@@ -836,16 +839,16 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                       child: Container(
                         width: 140,
                         decoration: BoxDecoration(
-                          color: primaryBlue.withOpacity(0.1),
+                          color: primaryBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: primaryBlue.withOpacity(0.3),
+                            color: primaryBlue.withValues(alpha: 0.3),
                             style: BorderStyle.solid,
                           ),
                         ),
                         child: Icon(
                           Icons.add_a_photo_rounded,
-                          color: primaryBlue.withOpacity(0.5),
+                          color: primaryBlue.withValues(alpha: 0.5),
                         ),
                       ),
                     ),
@@ -933,7 +936,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
               ),
               prefixIcon: Icon(icon, color: primaryBlue, size: 16),
               filled: true,
-              fillColor: onboardingBlueVeryLight.withOpacity(0.5),
+              fillColor: onboardingBlueVeryLight.withValues(alpha: 0.5),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none,
@@ -975,7 +978,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       height: 48, // Improved height consistency
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
       decoration: BoxDecoration(
-        color: onboardingBlueVeryLight.withOpacity(0.5),
+        color: onboardingBlueVeryLight.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
       ),
       child: DropdownButtonHideUnderline(
@@ -1032,7 +1035,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: onboardingBlueVeryLight.withOpacity(0.5),
+          color: onboardingBlueVeryLight.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1060,7 +1063,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: onboardingBlueVeryLight.withOpacity(0.4),
+        color: onboardingBlueVeryLight.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -1075,7 +1078,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
           Switch(
             value: value,
             activeThumbColor: primaryBlue,
-            activeTrackColor: primaryBlue.withOpacity(0.2),
+            activeTrackColor: primaryBlue.withValues(alpha: 0.2),
             onChanged: onChanged,
           ),
         ],
@@ -1090,7 +1093,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
     bool isSecondary = false,
     bool isLoading = false,
   }) {
-    final baseColor = isSecondary ? primaryBlue.withOpacity(0.08) : primaryBlue;
+    final baseColor = isSecondary ? primaryBlue.withValues(alpha: 0.08) : primaryBlue;
     final fgColor = isSecondary ? primaryBlue : Colors.white;
 
     final style = ElevatedButton.styleFrom(
@@ -1102,7 +1105,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: isSecondary
-            ? BorderSide(color: primaryBlue.withOpacity(0.3))
+            ? BorderSide(color: primaryBlue.withValues(alpha: 0.3))
             : BorderSide.none,
       ),
     );
@@ -1124,7 +1127,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
             ? null
             : [
                 BoxShadow(
-                  color: primaryBlue.withOpacity(0.25),
+                  color: primaryBlue.withValues(alpha: 0.25),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),

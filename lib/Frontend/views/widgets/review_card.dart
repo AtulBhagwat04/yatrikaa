@@ -40,18 +40,18 @@ class ReviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isOwner
-              ? primaryBlue.withOpacity(0.2)
-              : Colors.black.withOpacity(0.05),
+              ? primaryBlue.withValues(alpha: 0.2)
+              : Colors.black.withValues(alpha: 0.05),
           width: isOwner ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -77,7 +77,7 @@ class ReviewCard extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isOwner
-                              ? primaryBlue.withOpacity(0.3)
+                              ? primaryBlue.withValues(alpha: 0.3)
                               : Colors.transparent,
                           width: 1.5,
                         ),
@@ -127,7 +127,7 @@ class ReviewCard extends StatelessWidget {
                   child: Divider(
                     height: 1,
                     thickness: 1,
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                   ),
                 ),
                 // Review Commentary
@@ -135,7 +135,7 @@ class ReviewCard extends StatelessWidget {
                   review.text,
                   size: 13.5,
                   fontWeight: FontWeight.w500,
-                  color: appBlack.withOpacity(0.85),
+                  color: appBlack.withValues(alpha: 0.85),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   height: 1.5,
@@ -151,9 +151,9 @@ class ReviewCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.amber[50]!.withOpacity(0.9),
+                color: Colors.amber[50]!.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.amber[200]!.withOpacity(0.5)),
+                border: Border.all(color: Colors.amber[200]!.withValues(alpha: 0.5)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

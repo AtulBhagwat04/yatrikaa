@@ -105,7 +105,7 @@ class HelpCenterScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: appBlack.withOpacity(0.03),
+            color: appBlack.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -122,7 +122,7 @@ class HelpCenterScreen extends StatelessWidget {
             AppText.body(
               answer,
               size: 13,
-              color: appBlack.withOpacity(0.6),
+              color: appBlack.withValues(alpha: 0.6),
               height: 1.5,
               fontWeight: FontWeight.w500,
             ),
@@ -142,7 +142,7 @@ class HelpCenterScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: primaryBlue.withOpacity(0.3),
+              color: primaryBlue.withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -155,7 +155,7 @@ class HelpCenterScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: appWhite.withOpacity(0.2),
+                    color: appWhite.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -178,7 +178,7 @@ class HelpCenterScreen extends StatelessWidget {
                       const SizedBox(height: 2),
                       AppText.caption(
                         'Our team is available 24/7 for you',
-                        color: appWhite.withOpacity(0.8),
+                        color: appWhite.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w600,
                       ),
                     ],

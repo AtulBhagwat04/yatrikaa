@@ -122,7 +122,7 @@ class _ModernLocationFieldState extends State<ModernLocationField> {
               constraints: const BoxConstraints(maxHeight: 250),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: primaryBlue.withOpacity(0.1)),
+                border: Border.all(color: primaryBlue.withValues(alpha: 0.1)),
               ),
               child: _isSearching
                   ? const Padding(
@@ -139,7 +139,7 @@ class _ModernLocationFieldState extends State<ModernLocationField> {
                       padding: EdgeInsets.zero,
                       shrinkWrap: true,
                       itemCount: _suggestions.length,
-                      separatorBuilder: (_, __) => Divider(
+                      separatorBuilder: (_, _) => Divider(
                         height: 1,
                         color: appGreyVeryLight,
                       ),
@@ -149,7 +149,7 @@ class _ModernLocationFieldState extends State<ModernLocationField> {
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: primaryBlue.withOpacity(0.1),
+                              color: primaryBlue.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -166,7 +166,7 @@ class _ModernLocationFieldState extends State<ModernLocationField> {
                             ),
                           ),
                           subtitle: Text(
-                            place.formattedAddress ?? "Maharashtra, India",
+                            place.formattedAddress,
                             style: GoogleFonts.montserrat(
                               fontSize: 11,
                               color: appGrey,
@@ -262,7 +262,7 @@ class _ModernLocationFieldState extends State<ModernLocationField> {
                       : null,
               filled: true,
               fillColor: widget.isDense
-                  ? Colors.black.withOpacity(0.04)
+                  ? Colors.black.withValues(alpha: 0.04)
                   : appGreyVeryLight,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(widget.isDense ? 8 : 12),

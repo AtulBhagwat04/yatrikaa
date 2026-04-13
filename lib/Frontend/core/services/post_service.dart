@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/post_model.dart';
@@ -6,6 +6,7 @@ import '../constants/api_constants.dart';
 import 'auth_service.dart';
 import '../utils/app_cache.dart';
 import 'package:yatrikaa/Frontend/core/services/backend_health_manager.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 
 class PostService {
   final AuthService _authService = AuthService();
@@ -27,7 +28,7 @@ class PostService {
         throw Exception("Failed to fetch posts");
       }
     } catch (e) {
-      print('Error fetching posts: $e');
+      Log.e('Error fetching posts: $e');
 
       // Fallback to cache if network fails
       final cachedData = await AppCache.getRawData(AppCache.keyPosts);
@@ -87,11 +88,11 @@ class PostService {
       if (streamedResponse.statusCode == 201) {
         return PostModel.fromJson(json.decode(responseBody));
       } else {
-        print('Post failed: ${streamedResponse.statusCode} - $responseBody');
+        Log.e('Post failed: ${streamedResponse.statusCode} - $responseBody');
         return null;
       }
     } catch (e) {
-      print('PostService Exception: $e');
+      Log.e('PostService Exception: $e');
       return null;
     }
   }
@@ -109,7 +110,7 @@ class PostService {
       }
       return null;
     } catch (e) {
-      print('Error liking post: $e');
+      Log.e('Error liking post: $e');
       return null;
     }
   }
@@ -131,7 +132,7 @@ class PostService {
       }
       return null;
     } catch (e) {
-      print('Error commenting on post: $e');
+      Log.e('Error commenting on post: $e');
       return null;
     }
   }
@@ -149,7 +150,7 @@ class PostService {
       }
       return null;
     } catch (e) {
-      print('Error deleting comment: $e');
+      Log.e('Error deleting comment: $e');
       return null;
     }
   }
@@ -175,7 +176,7 @@ class PostService {
       }
       return null;
     } catch (e) {
-      print('Error editing comment: \$e');
+      Log.e('Error editing comment: $e');
       return null;
     }
   }
@@ -190,7 +191,7 @@ class PostService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Error deleting post: $e');
+      Log.e('Error deleting post: $e');
       return false;
     }
   }
@@ -244,11 +245,11 @@ class PostService {
       if (streamedResponse.statusCode == 200) {
         return PostModel.fromJson(json.decode(responseBody));
       } else {
-        print('Update failed: ${streamedResponse.statusCode} - $responseBody');
+        Log.e('Update failed: ${streamedResponse.statusCode} - $responseBody');
         return null;
       }
     } catch (e) {
-      print('PostService update Exception: $e');
+      Log.e('PostService update Exception: $e');
       return null;
     }
   }

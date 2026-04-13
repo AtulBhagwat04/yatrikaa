@@ -30,7 +30,7 @@ class TripsScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: primaryBlue.withOpacity(0.1),
+                    color: primaryBlue.withValues(alpha: 0.1),
                     blurRadius: 20,
                   ),
                 ],

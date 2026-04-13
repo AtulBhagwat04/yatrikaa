@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yatrikaa/Frontend/core/utils/logger_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
@@ -97,7 +98,7 @@ class _PackageApprovalQueue extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<TravelBloc, TravelState>(
       builder: (ctx, state) {
-        debugPrint(
+        Log.d(
           'AdminApprovalQueue: adminPackagesStatus=${state.adminPackagesStatus}, drafts=${state.adminPackages.length}',
         );
         if (state.adminPackagesStatus == TravelStatus.loading) {
@@ -182,7 +183,7 @@ class _PackageApprovalQueue extends StatelessWidget {
         label: AppText.body("Show More Packages", fontWeight: FontWeight.bold),
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryBlue,
-          side: BorderSide(color: primaryBlue.withOpacity(0.3)),
+          side: BorderSide(color: primaryBlue.withValues(alpha: 0.3)),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -196,7 +197,7 @@ class _GuideApprovalQueue extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<TravelBloc, TravelState>(
       builder: (ctx, state) {
-        debugPrint(
+        Log.d(
           'AdminApprovalQueue: adminGuideRequestsStatus=${state.adminGuideRequestsStatus}, requests=${state.adminGuideRequests.length}',
         );
         if (state.adminGuideRequestsStatus == TravelStatus.loading) {
@@ -279,7 +280,7 @@ class _EmptyQueue extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 80, color: appGreyLight.withOpacity(0.5)),
+          Icon(icon, size: 80, color: appGreyLight.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           AppText.subHeading(
             title,
@@ -308,7 +309,7 @@ class _PackageReviewCard extends StatelessWidget {
         border: Border.all(color: appGreyVeryLight, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: shadowColorLight.withOpacity(0.04),
+            color: shadowColorLight.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -326,7 +327,7 @@ class _PackageReviewCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -353,7 +354,7 @@ class _PackageReviewCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: ratingColor.withOpacity(0.1),
+                          color: ratingColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: AppText.small(
@@ -488,7 +489,7 @@ class _GuideRequestCard extends StatelessWidget {
         border: Border.all(color: onboardingBlueLight, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: appBlack.withOpacity(0.03),
+            color: appBlack.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -506,14 +507,14 @@ class _GuideRequestCard extends StatelessWidget {
                 height: 60,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [primaryBlue, primaryBlue.withOpacity(0.8)],
+                    colors: [primaryBlue, primaryBlue.withValues(alpha: 0.8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryBlue.withOpacity(0.2),
+                      color: primaryBlue.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -565,7 +566,7 @@ class _GuideRequestCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: primaryBlue.withOpacity(0.1),
+                  color: primaryBlue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(100),
                 ),
                 child: Text(

@@ -174,7 +174,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -223,7 +223,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.65),
+                          color: Colors.black.withValues(alpha: 0.65),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -338,7 +338,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -350,7 +350,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.08),
+              color: Colors.red.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -394,7 +394,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           backgroundColor: primaryBlue,
           foregroundColor: Colors.white,
           elevation: 8,
-          shadowColor: primaryBlue.withOpacity(0.4),
+          shadowColor: primaryBlue.withValues(alpha: 0.4),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

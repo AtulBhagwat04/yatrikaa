@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
@@ -21,10 +20,10 @@ class AppBottomNav extends StatelessWidget {
       decoration: BoxDecoration(
         color: appWhite,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        border: Border.all(color: primaryBlue.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: primaryBlue.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -67,7 +66,7 @@ class AppBottomNav extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: isActive
-                    ? primaryBlue.withOpacity(0.25)
+                    ? primaryBlue.withValues(alpha: 0.25)
                     : Colors.transparent,
                 blurRadius: 10,
                 offset: const Offset(0, 3),

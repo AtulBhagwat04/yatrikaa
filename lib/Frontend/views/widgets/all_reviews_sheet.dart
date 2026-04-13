@@ -3,7 +3,6 @@ import 'package:yatrikaa/Frontend/core/constants/app_colors.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_text.dart';
 import 'package:yatrikaa/Frontend/core/models/review_model.dart';
 import 'package:yatrikaa/Frontend/views/widgets/review_card.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AllReviewsSheet extends StatelessWidget {
   final String title;
@@ -99,7 +98,7 @@ class AllReviewsSheet extends StatelessWidget {
                     ),
                     physics: const BouncingScrollPhysics(),
                     itemCount: reviews.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final review = reviews[index];
                       return ReviewCard(

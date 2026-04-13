@@ -108,12 +108,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
+                                color: Colors.black.withValues(alpha: 0.06),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
                               BoxShadow(
-                                color: primaryBlue.withOpacity(0.03),
+                                color: primaryBlue.withValues(alpha: 0.03),
                                 blurRadius: 10,
                                 spreadRadius: -2,
                               ),
@@ -186,7 +186,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                               borderRadius: BorderRadius.circular(18),
                               boxShadow: [
                                 BoxShadow(
-                                  color: primaryBlue.withOpacity(0.4),
+                                  color: primaryBlue.withValues(alpha: 0.4),
                                   blurRadius: 20,
                                   offset: const Offset(0, 10),
                                   spreadRadius: -2,
@@ -219,7 +219,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       child: AppText.body(
         label,
         fontWeight: FontWeight.w700,
-        color: appBlack.withOpacity(0.8),
+        color: appBlack.withValues(alpha: 0.8),
         size: 14,
       ),
     );

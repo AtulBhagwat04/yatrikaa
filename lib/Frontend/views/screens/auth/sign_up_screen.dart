@@ -106,7 +106,7 @@ class _SignUpScreenState extends State<SignUpScreen>
           child: AppText.caption(
             "Joining as",
             fontWeight: FontWeight.w700,
-            color: appBlack.withOpacity(0.7),
+            color: appBlack.withValues(alpha: 0.7),
           ),
         ),
         Row(
@@ -126,12 +126,12 @@ class _SignUpScreenState extends State<SignUpScreen>
                   decoration: BoxDecoration(
                     color: isSelected
                         ? primaryBlue
-                        : onboardingBlueVeryLight.withOpacity(0.5),
+                        : onboardingBlueVeryLight.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected
                           ? primaryBlue
-                          : primaryBlue.withOpacity(0.6),
+                          : primaryBlue.withValues(alpha: 0.6),
                       width: 1.5,
                     ),
                   ),
@@ -239,10 +239,10 @@ class _SignUpScreenState extends State<SignUpScreen>
                                   bottom: AppSpacing.m,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: errorColorLight.withOpacity(0.8),
+                                  color: errorColorLight.withValues(alpha: 0.8),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: errorColor.withOpacity(0.2),
+                                    color: errorColor.withValues(alpha: 0.2),
                                   ),
                                 ),
                                 child: Row(
@@ -345,7 +345,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                               children: [
                                 AppText.caption(
                                   'Already have an account?',
-                                  color: appBlack.withOpacity(0.6),
+                                  color: appBlack.withValues(alpha: 0.6),
                                 ),
                                 TextButton(
                                   onPressed: () {
