@@ -15,5 +15,6 @@ module.exports = {
     CLOUD_NAME: process.env.CLOUD_NAME,
     API_KEY: process.env.CLOUDINARY_API_KEY,
     API_SECRET: process.env.CLOUDINARY_API_SECRET
-  }
+  },
+  OPEN_TRIP_MAP_API: process.env.OPEN_TRIP_MAP_API
 };

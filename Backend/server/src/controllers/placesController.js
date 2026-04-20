@@ -1,6 +1,7 @@
 const Place = require('../models/Place');
 const User = require('../models/User');
 const googlePlacesService = require('../services/placesService');
+const wikipediaService = require('../services/wikipediaService');
 const notificationService = require('../services/notificationService');
 const { uploadImage } = require('../services/cloudinaryService');
 
@@ -10,18 +11,20 @@ class PlacesController {
    * Query params: category, page (default 1), limit (default 12, 0 = all)
    */
   async getPopularPlaces(req, res, next) {
-    const { category } = req.query;
+    const { category, query } = req.query;
+    const activeCategory = category || query; // Handle both param names
     const page  = Math.max(1, parseInt(req.query.page  || '1',  10));
     const limit = Math.max(0, parseInt(req.query.limit || '12', 10));
 
     try {
       let filter = {};
-      if (category && category !== 'All') {
+      if (activeCategory && activeCategory !== 'All') {
         filter = {
           $or: [
-            { types: { $regex: category, $options: 'i' } },
-            { name: { $regex: category, $options: 'i' } },
-            { formatted_address: { $regex: category, $options: 'i' } }
+            { types: { $regex: activeCategory, $options: 'i' } },
+            { name: { $regex: activeCategory, $options: 'i' } },
+            { formatted_address: { $regex: activeCategory, $options: 'i' } },
+            { category: { $regex: activeCategory, $options: 'i' } }
           ]
         };
       }
@@ -40,17 +43,22 @@ class PlacesController {
           .populate('reviews.user', 'name profilePicture');
       }
 
+      let results = [...places];
+
+      // If DB results are low for a specific category, no external supplementing for category
+      // (Wikipedia GeoSearch is location-based, not category-based)
+
       const totalPages = limit > 0 ? Math.ceil(totalCount / limit) : 1;
       const hasMore    = limit > 0 && page < totalPages;
 
       res.status(200).json({
         status: "OK",
-        count: places.length,
-        totalCount,
+        count: results.length,
+        totalCount: Math.max(totalCount, results.length),
         page,
         totalPages,
         hasMore,
-        results: places,
+        results: results,
       });
     } catch (error) {
       next(error);
@@ -61,7 +69,7 @@ class PlacesController {
    * Fetch nearby places, prioritizing DB then falling back to Google
    */
   async getNearbyPlaces(req, res, next) {
-    const { lat, lng, radius = 5000 } = req.query;
+    const { lat, lng, radius = 10000 } = req.query;
     if (!lat || !lng) {
       return res.status(400).json({ error: "Missing lat/lng" });
     }
@@ -71,7 +79,7 @@ class PlacesController {
       const longitude = parseFloat(lng);
       const rad = parseInt(radius);
 
-      // 1. Search DB using $near sphere (2D sphere index needed)
+      // 1. Search DB — only fetch places that have at least one stored image
       let dbPlaces = [];
       try {
         dbPlaces = await Place.find({
@@ -79,35 +87,57 @@ class PlacesController {
             $nearSphere: {
               $geometry: {
                 type: "Point",
-                coordinates: [longitude, latitude] // MongoDB uses [lng, lat]
+                coordinates: [longitude, latitude],
               },
-              $maxDistance: rad
-            }
-          }
+              $maxDistance: rad,
+            },
+          },
+          // ✅ Only DB places that have a real stored image
+          $or: [
+            { "photos.0.photo_reference": { $exists: true, $ne: "" } },
+            { "images.0": { $exists: true, $ne: "" } },
+          ],
         }).limit(10);
       } catch (dbErr) {
         console.error("Geo Search Error (Check if Index exists):", dbErr.message);
         // Fallback to simple find if index missing
       }
 
-      // 2. Supplement with Google
+      // 2. Supplement with Wikipedia (free, no API key required)
       let results = [...dbPlaces];
-      if (dbPlaces.length < 5) {
+      console.log(`[Nearby] Initial DB found ${dbPlaces.length} places.`);
+
+      if (results.length < 5) {
         try {
-          const googleResult = await googlePlacesService.getNearbyPlaces(latitude, longitude, rad);
-          if (googleResult && googleResult.results) {
-            const dbIds = new Set(dbPlaces.map(p => p.place_id));
-            const uniqueGoogle = googleResult.results.filter(p => !dbIds.has(p.place_id));
-            results = [...dbPlaces, ...uniqueGoogle];
+          console.log('[Nearby] Supplementing with Wikipedia GeoSearch...');
+          const wikiResult = await wikipediaService.getNearbyPlaces(latitude, longitude, rad);
+          if (wikiResult && wikiResult.results) {
+            const currentIds = new Set(results.map(p => p.place_id));
+            const uniqueWiki = wikiResult.results.filter(p => !currentIds.has(p.place_id));
+            console.log(`[Nearby] Wikipedia found ${uniqueWiki.length} unique results.`);
+            results = [...results, ...uniqueWiki];
           }
-        } catch (gErr) {
-          console.error("Google Nearby Error:", gErr.message);
+        } catch (wikiErr) {
+          console.error('[Nearby] Wikipedia fallback error:', wikiErr.message);
         }
       }
 
+      // ✅ Filter out places with no images before sending to frontend
+      const hasImage = (p) => {
+        const photos = p.photos || p.images || [];
+        if (photos.length === 0) return false;
+        const ref = photos[0]?.photo_reference || photos[0];
+        return ref && typeof ref === 'string' && ref.startsWith('http');
+      };
+      const withImages = results.filter(hasImage);
+
+      console.log(`[Nearby] Final: ${withImages.length} places with images (of ${results.length} total)`);
+      if (withImages.length > 0) {
+        console.log(`[Nearby] Sample: ${withImages[0].name} (from ${withImages[0].source || 'DB'})`);
+      }
       res.status(200).json({
         status: "OK",
-        results: results
+        results: withImages
       });
     } catch (error) {
       next(error);
@@ -169,7 +199,10 @@ class PlacesController {
         });
       }
 
-      // 2. Fallback to Google
+      // 2. Fallback to Google if not in DB
+      console.log(`[PlaceDetails] Not in DB, falling back to Google for: ${placeId}`);
+
+      // 3. Last fallback to Google
       const result = await googlePlacesService.getPlaceDetails(placeId);
       res.status(200).json(result);
     } catch (error) {

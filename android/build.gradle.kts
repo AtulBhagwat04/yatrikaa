@@ -28,10 +28,8 @@ subprojects {
             }
         }
     }
-    afterEvaluate {
-        tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
-            enabled = false
-        }
+    tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+        enabled = false
     }
 }
 

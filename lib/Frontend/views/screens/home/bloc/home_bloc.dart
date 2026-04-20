@@ -4,6 +4,7 @@ import 'package:yatrikaa/Frontend/core/constants/api_constants.dart';
 import 'package:yatrikaa/Frontend/core/constants/app_strings.dart';
 import 'package:yatrikaa/Frontend/core/models/place_model.dart';
 import 'package:yatrikaa/Frontend/core/services/places_service.dart';
+import 'package:yatrikaa/Frontend/core/services/wikipedia_service.dart';
 import 'package:yatrikaa/Frontend/core/services/events_service.dart';
 import 'package:yatrikaa/Frontend/core/models/event_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,6 +20,7 @@ import 'package:yatrikaa/Frontend/core/utils/app_cache.dart';
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final PlacesService _placesService = PlacesService();
   final EventsService _eventsService = EventsService();
+  final WikipediaService _wikipediaService = WikipediaService();
   StreamSubscription<Position>? _positionStreamSubscription;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   StreamSubscription<ServiceStatus>? _serviceStatusSubscription;
@@ -141,7 +143,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       final recommended = List<PlaceModel>.from(
         cachedData['recommended'] ?? [],
       );
-      final nearby = List<PlaceModel>.from(cachedData['nearby'] ?? []);
+      // ✅ Strip imageless places from cache — avoids showing stale bad data
+      final nearby = List<PlaceModel>.from(
+        cachedData['nearby'] ?? [],
+      ).where(_hasImage).toList();
       final events = List<EventModel>.from(cachedData['events'] ?? []);
       final location = cachedData['location'] as String?;
 
@@ -452,6 +457,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 
+  /// Returns true only if the place has at least one valid HTTP image URL.
+  bool _hasImage(PlaceModel p) {
+    if (p.images.isNotEmpty) return p.images.first.startsWith('http');
+    if (p.photoReference != null) return p.photoReference!.startsWith('http');
+    return false;
+  }
+
   Future<void> _fetchAllData(Emitter<HomeState> emit) async {
     if (isClosed) return;
     if (_currentPosition == null) return;
@@ -459,10 +471,25 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(isLoadingNearby: true));
 
     try {
-      final nearbyPlaces = await _placesService.getNearbyPlaces(
+      // 1. Try backend nearby places (uses DB + Wikipedia on server)
+      List<PlaceModel> nearbyPlaces = await _placesService.getNearbyPlaces(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
       );
+
+      // 2. If backend returned nothing, call Wikipedia API directly (free, no key)
+      if (nearbyPlaces.isEmpty && !isClosed) {
+        debugPrint('[HomeBloc] Backend nearby empty — falling back to Wikipedia directly');
+        nearbyPlaces = await _wikipediaService.getNearbyPlaces(
+          _currentPosition!.latitude,
+          _currentPosition!.longitude,
+          radius: 10000,
+          limit: 30,
+        );
+      }
+
+      // ✅ Final safety filter — drop any place without a valid image
+      nearbyPlaces = nearbyPlaces.where(_hasImage).toList();
 
       if (!isClosed && nearbyPlaces.isNotEmpty) {
         emit(
@@ -473,8 +500,21 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         emit(state.copyWith(isLoadingNearby: false));
       }
     } catch (e) {
-      if (!isClosed) {
-        emit(state.copyWith(isLoadingNearby: false));
+      // Final fallback: try Wikipedia directly even after an exception
+      try {
+        final wikiPlaces = (await _wikipediaService.getNearbyPlaces(
+          _currentPosition!.latitude,
+          _currentPosition!.longitude,
+          radius: 10000,
+        )).where(_hasImage).toList();
+        if (!isClosed) {
+          emit(state.copyWith(
+            nearbyPlaces: wikiPlaces,
+            isLoadingNearby: false,
+          ));
+        }
+      } catch (_) {
+        if (!isClosed) emit(state.copyWith(isLoadingNearby: false));
       }
     }
   }

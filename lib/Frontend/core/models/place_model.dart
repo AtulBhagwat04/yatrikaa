@@ -76,29 +76,19 @@ class PlaceModel {
     final location = geometry != null ? geometry['location'] : null;
 
     // Extract images if available
-    // Extract images if available - Filter for High Quality Only
     List<String> imagesList = [];
-    if (json['photos'] != null && json['photos'] is List) {
+    if (json['images'] != null && json['images'] is List) {
+      imagesList = List<String>.from(json['images']);
+    } else if (json['photos'] != null && json['photos'] is List) {
       imagesList = (json['photos'] as List)
-          .where((p) {
-            final width = p['width'] as int? ?? 0;
-            final height = p['height'] as int? ?? 0;
-            return p['photo_reference'] != null &&
-                (width >= 500 || height >= 500);
-          })
+          .where((p) => p['photo_reference'] != null)
           .map((p) => p['photo_reference'] as String)
-          .take(10)
           .toList();
     }
 
-    // Merge Cloudinary images into imagesList if present
-    if (json['images'] != null && json['images'] is List) {
-      final List<String> customImages = List<String>.from(json['images']);
-      for (var img in customImages) {
-        if (!imagesList.contains(img)) {
-          imagesList.add(img);
-        }
-      }
+    // Fallback: Check if photo_reference is directly a string (from our toJson)
+    if (imagesList.isEmpty && json['photo_reference'] != null && json['photo_reference'] is String) {
+      imagesList = [json['photo_reference']];
     }
 
     // Extract City and State from address_components
@@ -161,10 +151,7 @@ class PlaceModel {
           json['opening_hours']['weekday_text'] is List) {
         final List weekdayText = json['opening_hours']['weekday_text'];
         if (weekdayText.isNotEmpty) {
-          // Google's weekday_text usually leads with Monday (index 0).
-          // DateTime.weekday is 1 (Mon) to 7 (Sun).
-          int todayIndex = DateTime.now().weekday - 1; // 0 for Mon, 6 for Sun
-
+          int todayIndex = DateTime.now().weekday - 1;
           if (todayIndex >= 0 && todayIndex < weekdayText.length) {
             timings = weekdayText[todayIndex];
           } else {
@@ -195,9 +182,9 @@ class PlaceModel {
     }
 
     return PlaceModel(
-      id: json['place_id'] ?? '',
+      id: json['place_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
-      address: json['formatted_address'] ?? json['vicinity'],
+      address: json['formatted_address'] ?? json['vicinity'] ?? json['address'],
       city: city ?? json['city'],
       state: state ?? json['state'],
       category: category ?? json['category'],
@@ -205,20 +192,20 @@ class PlaceModel {
       images: imagesList,
       rating: (json['rating'] ?? 0.0).toDouble(),
       userRatingsTotal: json['user_ratings_total'] ?? 0,
-      photoReference: imagesList.isNotEmpty ? imagesList[0] : null,
-      lat: (location != null ? location['lat'] : 0.0).toDouble(),
-      lng: (location != null ? location['lng'] : 0.0).toDouble(),
+      photoReference: json['photo_reference'] ?? (imagesList.isNotEmpty ? imagesList[0] : null),
+      lat: (location != null ? (location['lat'] as num).toDouble() : (json['lat'] as num?)?.toDouble() ?? 0.0),
+      lng: (location != null ? (location['lng'] as num).toDouble() : (json['lng'] as num?)?.toDouble() ?? 0.0),
       distance: (json['distanceCalculated'] != null)
           ? (json['distanceCalculated'] as num).toDouble()
-          : null,
+          : (json['distance'] != null ? (json['distance'] as num).toDouble() : null),
       icon: json['icon'],
-      timings: timings,
-      entryFee: json['entry_fee'],
-      bestTimeToVisit: json['best_time'],
+      timings: timings ?? json['timings'],
+      entryFee: json['entry_fee'] ?? json['entryFee'],
+      bestTimeToVisit: json['best_time'] ?? json['bestTimeToVisit'],
       difficulty: json['difficulty'],
-      parkingAvailable: json['parking_available'],
-      suitableFor: json['suitable_for'],
-      photographyAllowed: json['photography_allowed'],
+      parkingAvailable: json['parking_available'] ?? json['parkingAvailable'],
+      suitableFor: json['suitable_for'] ?? json['suitableFor'],
+      photographyAllowed: json['photography_allowed'] ?? json['photographyAllowed'],
       facilities: json['facilities'] != null
           ? List<String>.from(json['facilities'])
           : null,
@@ -237,17 +224,21 @@ class PlaceModel {
       'state': state,
       'category': category,
       'description': description,
+      'images': images,
       'rating': rating,
       'user_ratings_total': userRatingsTotal,
       'photo_reference': photoReference,
       'lat': lat,
       'lng': lng,
+      'distanceCalculated': distance,
       'timings': timings,
-      'entry_fee': entryFee,
-      'best_time': bestTimeToVisit,
+      'entryFee': entryFee,
+      'bestTimeToVisit': bestTimeToVisit,
       'difficulty': difficulty,
-      'parking_available': parkingAvailable,
-      'suitable_for': suitableFor,
+      'parkingAvailable': parkingAvailable,
+      'suitableFor': suitableFor,
+      'photographyAllowed': photographyAllowed,
+      'facilities': facilities,
       'website': website,
     };
   }

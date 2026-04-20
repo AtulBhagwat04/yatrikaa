@@ -118,10 +118,9 @@ class PlacesService {
   Future<List<PlaceModel>> getNearbyPlaces(double lat, double lng) async {
     try {
       final response = await BackendHealthManager.instance.get(
-        ApiConstants.getSearchPlacesUrl(
-          AppStrings.pdDiscoveryQuery,
-          lat: lat,
-          lng: lng,
+        ApiConstants.getNearbyPlacesUrl(
+          lat,
+          lng,
         ),
       );
 

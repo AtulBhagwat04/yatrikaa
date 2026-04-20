@@ -90,11 +90,12 @@ class BackendHealthManager {
       // 1. Local Request (Primary)
       final localFuture = requestExecutor(
         originalUrl,
-      ).timeout(const Duration(seconds: 6));
+      ).timeout(const Duration(seconds: 12));
 
-      // 2. Cloud Request (Race Start after 400ms delay for Local)
+      // 2. Cloud Request (Race Start after 3.5s delay for Local)
+      // We give Local more time because it might be fetching from external APIs (OTM/Google)
       Timer? cloudTimer;
-      cloudTimer = Timer(const Duration(milliseconds: 400), () async {
+      cloudTimer = Timer(const Duration(milliseconds: 3500), () async {
         if (!resolved) {
           try {
             // Always race with Railway first because it is always ON (instant)

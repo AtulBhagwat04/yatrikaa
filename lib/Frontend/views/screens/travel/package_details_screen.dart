@@ -255,7 +255,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                             child: _buildReviewsSection(),
                           ),
 
-                          const SizedBox(height: 250),
+                          const SizedBox(height: 160),
                         ],
                       ),
                     ),
@@ -587,7 +587,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
           ),
           const SizedBox(width: 8),
           AppText.subHeading(title, fontWeight: FontWeight.w700, size: 18),
-          ?trailing,
+          if (trailing != null) trailing,
         ],
       ),
     );
@@ -829,12 +829,91 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
 
   Widget _buildReviewsSection() {
     final reviews = widget.package.reviews;
-    if (reviews.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Reviews'),
-          const SizedBox(height: 24),
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionTitle(
+              'Reviews',
+              onTap: reviews.isNotEmpty
+                  ? () {
+                      final authState = context.read<AuthBloc>().state;
+                      final currentUserId = authState is Authenticated
+                          ? authState.id
+                          : null;
+                      final isAdmin =
+                          authState is Authenticated &&
+                          authState.role == 'admin';
+
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => AllReviewsSheet(
+                          title: 'All Reviews',
+                          reviews: reviews,
+                          currentUserId: currentUserId,
+                          isAdmin: isAdmin,
+                        ),
+                      );
+                    }
+                  : null,
+              trailing: reviews.isNotEmpty
+                  ? const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: primaryBlue,
+                      size: 24,
+                    )
+                  : null,
+            ),
+            const Spacer(),
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, authState) {
+                if (authState is! Authenticated) return const SizedBox.shrink();
+                return TextButton(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => AddReviewSheet(
+                        id: widget.package.id,
+                        isPackage: true,
+                        onSubmitted: (rating, comment) {
+                          context.read<TravelBloc>().add(
+                            TravelReviewAdded(
+                              packageId: widget.package.id,
+                              rating: rating,
+                              comment: comment,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        },
+                      ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: AppText.small(
+                    "Add Yours",
+                    color: primaryBlue,
+                    fontWeight: FontWeight.w900,
+                    size: 14,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+        if (reviews.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(32),
@@ -863,22 +942,117 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                 ),
               ],
             ),
-          ),
-        ],
-      );
-    }
+          )
+        else
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Builder(
+                builder: (context) {
+                  final authState = context.read<AuthBloc>().state;
+                  final currentUserId = authState is Authenticated
+                      ? authState.id
+                      : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: _buildSectionTitle(
-                'Reviews',
-                onTap: reviews.isNotEmpty
-                    ? () {
+                  // Filter for "Top Reviews" (4+ stars) and non-empty quality text
+                  List<ReviewModel> displayReviews = reviews.where((r) {
+                    final isHighRating = r.rating >= 4;
+                    final hasText = r.text.trim().isNotEmpty;
+                    return isHighRating && hasText;
+                  }).toList();
+
+                  if (currentUserId != null) {
+                    final userIndex = displayReviews.indexWhere(
+                      (r) => r.userId == currentUserId,
+                    );
+                    if (userIndex != -1) {
+                      final userReview = displayReviews.removeAt(userIndex);
+                      displayReviews.insert(0, userReview);
+                    }
+                  }
+
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    clipBehavior: Clip.none,
+                    child: Row(
+                      children: displayReviews.take(5).map((review) {
+                        final isAdmin =
+                            authState is Authenticated &&
+                            authState.role == 'admin';
+                        return ReviewCard(
+                          width: MediaQuery.of(context).size.width * 0.85,
+                          review: review,
+                          currentUserId: currentUserId,
+                          isAdmin: isAdmin,
+                          onEdit: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => AddReviewSheet(
+                                id: widget.package.id,
+                                initialRating: review.rating,
+                                initialComment: review.text,
+                                onSubmitted: (rating, comment) {
+                                  context.read<TravelBloc>().add(
+                                    TravelReviewUpdated(
+                                      packageId: widget.package.id,
+                                      reviewId: review.id!,
+                                      rating: rating,
+                                      comment: comment,
+                                    ),
+                                  );
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            );
+                          },
+                          onDelete: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Delete Review'),
+                                content: const Text(
+                                  'Are you sure you want to delete this review?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      context.read<TravelBloc>().add(
+                                        TravelReviewDeleted(
+                                          packageId: widget.package.id,
+                                          reviewId: review.id!,
+                                        ),
+                                      );
+                                      Navigator.pop(ctx);
+                                    },
+                                    child: const Text(
+                                      'Delete',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  );
+                },
+              ),
+              if (reviews.length > 5)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Center(
+                    child: TextButton(
+                      onPressed: () {
+                        // Reusing the same logic for viewing all reviews
                         final authState = context.read<AuthBloc>().state;
                         final currentUserId = authState is Authenticated
                             ? authState.id
@@ -898,172 +1072,16 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                             isAdmin: isAdmin,
                           ),
                         );
-                      }
-                    : null,
-                trailing: reviews.isNotEmpty
-                    ? const Icon(
-                        Icons.keyboard_arrow_down_rounded,
+                      },
+                      child: AppText.body(
+                        "View All ${reviews.length} Reviews",
                         color: primaryBlue,
-                        size: 24,
-                      )
-                    : null,
-              ),
-            ),
-            BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, authState) {
-                if (authState is! Authenticated) return const SizedBox.shrink();
-                return TextButton(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => AddReviewSheet(
-                        id: widget.package.id,
-                        isPackage: true,
-                        onSubmitted: (rating, comment) {
-                          context.read<TravelBloc>().add(
-                            TravelReviewAdded(
-                              packageId: widget.package.id,
-                              rating: rating,
-                              comment: comment,
-                            ),
-                          );
-                          Navigator.pop(context);
-                        },
+                        fontWeight: FontWeight.w700,
                       ),
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
-                  child: AppText.small(
-                    "Add Yours",
-                    color: primaryBlue,
-                    fontWeight: FontWeight.w900,
-                    size: 14,
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Builder(
-          builder: (context) {
-            final authState = context.read<AuthBloc>().state;
-            final currentUserId = authState is Authenticated
-                ? authState.id
-                : null;
-
-            // Filter for "Top Reviews" (4+ stars) and non-empty quality text
-            List<ReviewModel> displayReviews = reviews.where((r) {
-              final isHighRating = r.rating >= 4;
-              final hasText = r.text.trim().isNotEmpty;
-              return isHighRating && hasText;
-            }).toList();
-
-            if (currentUserId != null) {
-              final userIndex = displayReviews.indexWhere(
-                (r) => r.userId == currentUserId,
-              );
-              if (userIndex != -1) {
-                final userReview = displayReviews.removeAt(userIndex);
-                displayReviews.insert(0, userReview);
-              }
-            }
-
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              clipBehavior: Clip.none,
-              child: Row(
-                children: displayReviews.take(5).map((review) {
-                  final isAdmin =
-                      authState is Authenticated && authState.role == 'admin';
-                  return ReviewCard(
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    review: review,
-                    currentUserId: currentUserId,
-                    isAdmin: isAdmin,
-                    onEdit: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => AddReviewSheet(
-                          id: widget.package.id,
-                          initialRating: review.rating,
-                          initialComment: review.text,
-                          onSubmitted: (rating, comment) {
-                            context.read<TravelBloc>().add(
-                              TravelReviewUpdated(
-                                packageId: widget.package.id,
-                                reviewId: review.id!,
-                                rating: rating,
-                                comment: comment,
-                              ),
-                            );
-                            Navigator.pop(context);
-                          },
-                        ),
-                      );
-                    },
-                    onDelete: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Delete Review'),
-                          content: const Text(
-                            'Are you sure you want to delete this review?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                context.read<TravelBloc>().add(
-                                  TravelReviewDeleted(
-                                    packageId: widget.package.id,
-                                    reviewId: review.id!,
-                                  ),
-                                );
-                                Navigator.pop(ctx);
-                              },
-                              child: const Text(
-                                'Delete',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                }).toList(),
-              ),
-            );
-          },
-        ),
-        if (reviews.length > 5)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Center(
-              child: TextButton(
-                onPressed: () {
-                  // Future: show all reviews screen
-                },
-                child: AppText.body(
-                  "View All ${reviews.length} Reviews",
-                  color: primaryBlue,
-                  fontWeight: FontWeight.w700,
                 ),
-              ),
-            ),
+            ],
           ),
       ],
     );
@@ -1079,13 +1097,13 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
     final isComingSoon = widget.package.isComingSoon;
 
     return Positioned(
-      bottom: 24,
+      bottom: 16,
       left: 16,
       right: 16,
       child: SafeArea(
         top: false,
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: primaryBlue,
             borderRadius: BorderRadius.circular(18),
@@ -1178,7 +1196,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -1194,7 +1212,7 @@ class _PackageDetailsViewState extends State<_PackageDetailsView> {
                         ),
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
-                    height: 48,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: (isFull || isComingSoon)
                           ? Colors.white24
@@ -1517,7 +1535,9 @@ class _ItineraryTileState extends State<_ItineraryTile> {
                                       ),
                                       child: Divider(
                                         height: 1,
-                                        color: primaryBlue.withValues(alpha: 0.3),
+                                        color: primaryBlue.withValues(
+                                          alpha: 0.3,
+                                        ),
                                       ),
                                     ),
                                   ...widget.step.activities.map(
